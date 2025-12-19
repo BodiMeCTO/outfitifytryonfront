@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -36,6 +36,7 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -66,12 +67,28 @@ export class LoginComponent {
         this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {
+        this.error = this.extractErrorMessage(err);
         this.loading = false;
-        this.error = err?.error?.error_description || err?.error?.message || 'Unable to sign in. Please check your credentials and try again.';
+        this.cdr.markForCheck();
       },
       complete: () => {
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
+  }
+
+  private extractErrorMessage(err: unknown): string {
+    if (typeof err === 'string') return err;
+
+    const errorResponse: any = err && typeof err === 'object' ? err : null;
+
+    const apiDescription = errorResponse?.error?.error_description || errorResponse?.error_description;
+    const apiMessage = errorResponse?.error?.message || errorResponse?.message;
+
+    if (apiDescription) return apiDescription;
+    if (apiMessage) return apiMessage;
+
+    return 'Unable to sign in. Please check your credentials and try again.';
   }
 }
