@@ -1,4 +1,4 @@
-# Uniform Try On
+# Outfitify Tryon Front
 
 This repository contains a mobile-first Angular 18 proof-of-concept that demonstrates an outfit creation workflow
 powered by Angular Material and the provided green design palette.
