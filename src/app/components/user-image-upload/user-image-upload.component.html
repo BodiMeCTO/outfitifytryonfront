@@ -1,0 +1,77 @@
+<section class="section-card user-image-upload">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Choose or upload a user image</mat-card-title>
+      <mat-card-subtitle>
+        Pick a photo to use for trying on uniforms and generating outfits.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- EXISTING USER IMAGES -->
+      <div class="existing-images" *ngIf="userImages$ | async as userImages">
+        <h3 class="section-title">Use a saved photo</h3>
+
+        <div *ngIf="userImages.length; else noSavedImages" class="image-grid">
+          <button
+            mat-stroked-button
+            type="button"
+            class="image-tile"
+            *ngFor="let img of userImages"
+            (click)="selectExisting(img)"
+            [class.is-selected]="(inspiration$ | async)?.id === img.id"
+          >
+            <img
+              [src]="img.previewUrl || img.remoteUrl"
+              alt="Saved model photo"
+            />
+          </button>
+        </div>
+
+        <ng-template #noSavedImages>
+          <p class="hint">
+            You don't have any saved photos yet. Upload one to get started.
+          </p>
+        </ng-template>
+      </div>
+
+      <!-- UPLOAD NEW IMAGE -->
+      <div class="upload-zone">
+        <input
+          #fileInput
+          type="file"
+          accept="image/*"
+          (change)="handleFileSelection($event)"
+          hidden
+        />
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="fileInput.click()"
+          [disabled]="isUploading()"
+        >
+          <mat-icon>photo_library</mat-icon>
+          {{ isUploading() ? 'Uploading…' : 'Upload a new photo' }}
+        </button>
+        <p class="hint">
+          For this proof of concept, your image is only used for generating outfits.
+        </p>
+        <mat-progress-bar *ngIf="isUploading()" mode="indeterminate"></mat-progress-bar>
+      </div>
+
+      <!-- CURRENT SELECTION PREVIEW -->
+      <div class="preview" *ngIf="inspiration$ | async as inspiration">
+        <img
+          [src]="inspiration.previewUrl || inspiration.remoteUrl"
+          alt="Selected user image"
+        />
+        <div class="actions">
+          <button mat-stroked-button color="primary" routerLink="/garment-library">
+            Continue to garments
+          </button>
+          <button mat-button type="button" (click)="clearSelection()">Remove</button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</section>

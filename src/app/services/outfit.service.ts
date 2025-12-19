@@ -1,0 +1,814 @@
+﻿import { Injectable } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+  BehaviorSubject,
+  Observable,
+  combineLatest,
+  of,
+  throwError,
+  forkJoin
+} from 'rxjs';
+import {
+  catchError,
+  distinctUntilChanged,
+  map,
+  tap,
+  switchMap,
+  take
+} from 'rxjs/operators';
+
+import {
+  Garment,
+  GarmentCategory,
+  GeneratedImage,
+  OutfitRequest,
+  OutfitRequestSnapshot,
+  SelectedInspiration,
+  CreateOutfitDto,
+  OutfitDto
+} from '../models/outfit';
+
+import {
+  GarmentSummaryDto,
+  CreateGarmentInstanceRequest,
+  CatalogueOption
+} from '../models/outfitify-api';
+
+import { OutfitifyApiService } from './outfitify-api.service';
+import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
+import { UserProfile } from '../models/user';
+
+// -------------------------------------
+// DTO for /api/model-images endpoints
+// -------------------------------------
+export interface ModelImageDto {
+  id: string;
+  name: string;
+  imageUrl: string;
+  poseOptionId: string;
+  notes: string | null;
+  isActive: boolean;
+  createdAtUtc: string | null;
+}
+
+export interface CreateModelImageDto {
+  name: string;
+  poseOptionId?: string | null;
+  notes?: string | null;
+}
+
+@Injectable({ providedIn: 'root' })
+export class OutfitService {
+  private readonly apiBaseUrl = environment.apiBaseUrl;
+
+  // --- Core selection state ---
+
+  private readonly inspirationSubject = new BehaviorSubject<SelectedInspiration | null>(
+    null
+  );
+
+  // All model images the user has uploaded
+  private readonly userModelImagesSubject = new BehaviorSubject<SelectedInspiration[]>(
+    []
+  );
+  private userModelImagesLoaded = false;
+
+  private readonly topGarmentSubject = new BehaviorSubject<Garment | null>(null);
+  private readonly bottomGarmentSubject = new BehaviorSubject<Garment | null>(null);
+  private readonly fullBodyGarmentSubject = new BehaviorSubject<Garment | null>(null);
+  private readonly jacketGarmentSubject = new BehaviorSubject<Garment | null>(null);
+  private readonly accessoriesGarmentSubject = new BehaviorSubject<Garment | null>(
+    null
+  );
+
+  private readonly topSizeSubject = new BehaviorSubject<string | null>(null);
+  private readonly bottomSizeSubject = new BehaviorSubject<string | null>(null);
+  private readonly fullBodySizeSubject = new BehaviorSubject<string | null>(null);
+  private readonly jacketSizeSubject = new BehaviorSubject<string | null>(null);
+  private readonly accessoriesSizeSubject = new BehaviorSubject<string | null>(null);
+
+  // Model image / pose / background
+  // modelIdSubject now holds the ModelImageId (user upload)
+  private readonly modelIdSubject = new BehaviorSubject<string | null>(null);
+  private readonly poseIdSubject = new BehaviorSubject<string | null>(null);
+  private readonly backgroundIdSubject = new BehaviorSubject<string | null>(null);
+
+  // --- Gallery state ---
+
+  private readonly garmentsSubject = new BehaviorSubject<Garment[]>([]);
+  private garmentsLoaded = false;
+
+  private readonly generatedImagesSubject = new BehaviorSubject<GeneratedImage[]>([]);
+  private readonly galleryIndexSubject = new BehaviorSubject<number>(0);
+  private currentUser: UserProfile | null = null;
+
+  constructor(
+    private readonly outfitifyApi: OutfitifyApiService,
+    private readonly auth: AuthService
+  ) {
+    this.initialiseDefaultPoseAndBackground();
+    this.auth.user$.subscribe((user) => this.applyUserContext(user));
+  }
+
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+
+  private createApiUnavailableError(action: string, error: unknown): Error {
+    const baseUrl = this.apiBaseUrl?.trim();
+
+    if (error instanceof HttpErrorResponse && error.status === 0) {
+      return new Error(
+        `Unable to reach OutfitifyAPI while ${action}. Check that \`${baseUrl}\` is a valid, reachable endpoint.`
+      );
+    }
+
+    if (error instanceof Error) {
+      return new Error(
+        `${error.message} (while ${action}; OutfitifyAPI base URL: ${
+          baseUrl || 'not configured'
+        })`
+      );
+    }
+
+    return new Error(
+      `OutfitifyAPI request failed while ${action}. Verify \`${
+        baseUrl || 'environment.apiBaseUrl'
+      }\` and authentication settings.`
+    );
+  }
+
+  private getApiBaseUrlOrThrow(): string {
+    const baseUrl = this.apiBaseUrl?.trim();
+
+    if (!baseUrl) {
+      throw new Error(
+        'OutfitifyAPI base URL is not configured. Update environment.apiBaseUrl in src/environments/*.ts to point to your OutfitifyAPI deployment.'
+      );
+    }
+
+    return baseUrl;
+  }
+
+  private applyUserContext(user: UserProfile | null): void {
+    this.currentUser = user;
+
+    if (!user) {
+      this.modelIdSubject.next(null);
+      return;
+    }
+
+    if (user.modelImageId) {
+      this.modelIdSubject.next(user.modelImageId);
+    }
+
+    if (user.poseOptionId) {
+      this.poseIdSubject.next(user.poseOptionId);
+    }
+
+    if (user.backgroundOptionId) {
+      this.backgroundIdSubject.next(user.backgroundOptionId);
+    }
+  }
+
+  private initialiseDefaultPoseAndBackground(): void {
+    // Pose
+    this.outfitifyApi
+      .listPoses()
+      .pipe(take(1))
+      .subscribe({
+        next: (poses: CatalogueOption[]) => {
+          const first = poses[0];
+          if (first?.id) {
+            this.poseIdSubject.next(first.id);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to load default pose', err);
+        }
+      });
+
+    // Background
+    this.outfitifyApi
+      .listBackgrounds()
+      .pipe(take(1))
+      .subscribe({
+        next: (backgrounds: CatalogueOption[]) => {
+          const first = backgrounds[0];
+          if (first?.id) {
+            this.backgroundIdSubject.next(first.id);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to load default background', err);
+        }
+      });
+  }
+
+  // -----------------------------
+  // Public streams
+  // -----------------------------
+
+  readonly selectedInspiration$ = this.inspirationSubject.asObservable();
+
+  // Saved model images for current user
+  readonly userModelImages$ = this.userModelImagesSubject.asObservable();
+
+  readonly selectedTop$ = this.topGarmentSubject.asObservable();
+  readonly selectedBottom$ = this.bottomGarmentSubject.asObservable();
+  readonly selectedFullBody$ = this.fullBodyGarmentSubject.asObservable();
+  readonly selectedJacket$ = this.jacketGarmentSubject.asObservable();
+  readonly selectedAccessories$ = this.accessoriesGarmentSubject.asObservable();
+
+  readonly selectedTopSize$ = this.topSizeSubject.asObservable();
+  readonly selectedBottomSize$ = this.bottomSizeSubject.asObservable();
+  readonly selectedFullBodySize$ = this.fullBodySizeSubject.asObservable();
+  readonly selectedJacketSize$ = this.jacketSizeSubject.asObservable();
+  readonly selectedAccessoriesSize$ = this.accessoriesSizeSubject.asObservable();
+
+  readonly selectedModelId$ = this.modelIdSubject.asObservable();
+  readonly selectedPoseId$ = this.poseIdSubject.asObservable();
+  readonly selectedBackgroundId$ = this.backgroundIdSubject.asObservable();
+
+  readonly selectedGarments$ = combineLatest([
+    this.selectedTop$,
+    this.selectedBottom$,
+    this.selectedFullBody$,
+    this.selectedJacket$,
+    this.selectedAccessories$
+  ]).pipe(
+    map(([top, bottom, fullBody, jacket, accessories]) => ({
+      top,
+      bottom,
+      fullBody,
+      jacket,
+      accessories
+    }))
+  );
+
+  readonly selectedSizes$ = combineLatest([
+    this.selectedTopSize$,
+    this.selectedBottomSize$,
+    this.selectedFullBodySize$,
+    this.selectedJacketSize$,
+    this.selectedAccessoriesSize$
+  ]).pipe(
+    map(([top, bottom, fullBody, jacket, accessories]) => ({
+      top,
+      bottom,
+      fullBody,
+      jacket,
+      accessories
+    }))
+  );
+
+  readonly garments$ = this.garmentsSubject.asObservable();
+
+  // âœ… These two are what `garment-library.component.ts` expects
+  readonly hasCompleteGarmentSelection$ = this.selectedGarments$.pipe(
+    map((garments) => {
+      const hasFullBody = !!garments.fullBody;
+      const hasTopBottom = !!(garments.top && garments.bottom);
+      const invalidMix = !!(garments.fullBody && (garments.top || garments.bottom));
+
+      return !invalidMix && (hasFullBody || hasTopBottom);
+    }),
+    distinctUntilChanged()
+  );
+
+  readonly hasCompleteSelection$ = combineLatest([
+    this.selectedGarments$,
+    this.selectedSizes$
+  ]).pipe(
+    map(([garments, sizes]) => {
+      const hasFullBody = !!(garments.fullBody && sizes.fullBody);
+      const hasTopBottom =
+        !!garments.top && !!garments.bottom && !!sizes.top && !!sizes.bottom;
+      const invalidMix = !!(garments.fullBody && (garments.top || garments.bottom));
+
+      return !invalidMix && (hasFullBody || hasTopBottom);
+    }),
+    distinctUntilChanged()
+  );
+
+  readonly generatedImages$ = this.generatedImagesSubject.asObservable();
+  readonly currentGalleryIndex$ = this.galleryIndexSubject.asObservable();
+
+  readonly outfitRequest$: Observable<OutfitRequestSnapshot> = combineLatest([
+    this.selectedInspiration$,
+    this.selectedGarments$,
+    this.selectedSizes$
+  ]).pipe(
+    map(([inspiration, garments, sizes]) => ({
+      inspiration,
+      garments,
+      sizes
+    }) satisfies OutfitRequest)
+  );
+
+  // -----------------------------
+  // Mutators
+  // -----------------------------
+
+  setInspiration(selection: SelectedInspiration | null): void {
+    this.inspirationSubject.next(selection);
+  }
+
+  // -----------------------------
+  // User model images (/api/model-images)
+  // -----------------------------
+
+  ensureUserModelImagesLoaded(): Observable<SelectedInspiration[]> {
+    if (this.userModelImagesLoaded) {
+      return of(this.userModelImagesSubject.value);
+    }
+    return this.loadUserModelImages();
+  }
+
+  private loadUserModelImages(): Observable<SelectedInspiration[]> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Unable to load model images from OutfitifyAPI', error);
+      this.userModelImagesSubject.next([]);
+      return throwError(() => error);
+    }
+
+    return this.outfitifyApi
+      .listModelImages()
+      .pipe(
+        map((items: ModelImageDto[]) =>
+          items.map((dto) => this.mapModelImageDtoToInspiration(dto))
+        ),
+        tap((images: SelectedInspiration[]) => {
+          this.userModelImagesSubject.next(images);
+          this.userModelImagesLoaded = true;
+        }),
+        catchError((error: unknown) => {
+          console.error(
+            'Unable to load model images from OutfitifyAPI',
+            this.createApiUnavailableError('loading model images', error)
+          );
+          this.userModelImagesSubject.next([]);
+          return throwError(() =>
+            this.createApiUnavailableError('loading model images', error)
+          );
+        })
+      );
+  }
+
+  // -----------------------------
+  // Upload /api/model-images/upload
+  // -----------------------------
+
+uploadAndSetInspiration(
+  file: File,
+  previewUrl: string
+): Observable<SelectedInspiration> {
+  try {
+    this.getApiBaseUrlOrThrow();
+  } catch (error) {
+    console.error('Failed to upload model image', error);
+
+    const selection: SelectedInspiration = {
+      file,
+      previewUrl,
+      source: 'upload'
+    };
+    this.setInspiration(selection);
+    return of(selection);
+  }
+
+  const poseOptionId = this.poseIdSubject.value;
+  if (!poseOptionId) {
+    const selection: SelectedInspiration = {
+      file,
+      previewUrl,
+      source: 'upload'
+    };
+    this.setInspiration(selection);
+    return of(selection);
+  }
+
+  const formData = new FormData();
+  formData.append('fileData', file, file.name);
+
+  // Must match CreateModelImageDto property names
+  formData.append('Name', file.name);
+  formData.append('PoseOptionId', poseOptionId);
+
+  return this.outfitifyApi
+    .uploadModelImage(formData)
+    .pipe(
+      map((response: ModelImageDto) => {
+        const selection: SelectedInspiration = {
+          file,
+          previewUrl,
+          source: 'upload',
+          remoteUrl: response.imageUrl,
+          id: response.id
+        };
+
+        this.modelIdSubject.next(response.id);
+        return selection;
+      }),
+      tap((selection) => {
+        this.setInspiration(selection);
+
+        if (selection.id) {
+          const current = this.userModelImagesSubject.value;
+          const exists = current.some((img) => img.id === selection.id);
+          if (!exists) {
+            this.userModelImagesSubject.next([...current, selection]);
+          }
+        }
+      }),
+      catchError((error: unknown) => {
+        console.error('Failed to upload model image', error);
+
+        const selection: SelectedInspiration = {
+          file,
+          previewUrl,
+          source: 'upload'
+        };
+        this.setInspiration(selection);
+        return of(selection);
+      })
+    );
+}
+
+
+  // -----------------------------
+  // Garment selection
+  // -----------------------------
+
+  setSelectedGarment(category: GarmentCategory, garment: Garment | null): void {
+    let garmentSubject: BehaviorSubject<Garment | null>;
+    let sizeSubject: BehaviorSubject<string | null>;
+
+    switch (category) {
+      case 'tops':
+        garmentSubject = this.topGarmentSubject;
+        sizeSubject = this.topSizeSubject;
+        break;
+      case 'bottoms':
+        garmentSubject = this.bottomGarmentSubject;
+        sizeSubject = this.bottomSizeSubject;
+        break;
+      case 'full-body':
+        garmentSubject = this.fullBodyGarmentSubject;
+        sizeSubject = this.fullBodySizeSubject;
+        break;
+      case 'jackets':
+        garmentSubject = this.jacketGarmentSubject;
+        sizeSubject = this.jacketSizeSubject;
+        break;
+      case 'accessories':
+        garmentSubject = this.accessoriesGarmentSubject;
+        sizeSubject = this.accessoriesSizeSubject;
+        break;
+      default:
+        return;
+    }
+
+    const previous = garmentSubject.value;
+    garmentSubject.next(garment);
+
+    if (!garment || !previous || garment.id !== previous.id) {
+      sizeSubject.next(null);
+    }
+  }
+
+  setSelectedSize(category: GarmentCategory, size: string | null): void {
+    switch (category) {
+      case 'tops':
+        this.topSizeSubject.next(size);
+        break;
+      case 'bottoms':
+        this.bottomSizeSubject.next(size);
+        break;
+      case 'full-body':
+        this.fullBodySizeSubject.next(size);
+        break;
+      case 'jackets':
+        this.jacketSizeSubject.next(size);
+        break;
+      case 'accessories':
+        this.accessoriesSizeSubject.next(size);
+        break;
+    }
+  }
+
+  // For Shopify / admin where model/pose/background are explicit choices
+  setSelectedModel(option: { id: string } | null): void {
+    this.modelIdSubject.next(option?.id ?? null);
+  }
+
+  setSelectedPose(option: { id: string } | null): void {
+    this.poseIdSubject.next(option?.id ?? null);
+  }
+
+  setSelectedBackground(option: { id: string } | null): void {
+    this.backgroundIdSubject.next(option?.id ?? null);
+  }
+
+  // -----------------------------
+  // Garments catalogue
+  // -----------------------------
+
+  ensureGarmentsLoaded(): Observable<Garment[]> {
+    if (this.garmentsLoaded) {
+      return of(this.garmentsSubject.value);
+    }
+    return this.loadGarments();
+  }
+
+  loadGarments(): Observable<Garment[]> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Unable to load garments from OutfitifyAPI', error);
+      this.garmentsSubject.next([]);
+      return throwError(() => error);
+    }
+
+    return this.outfitifyApi
+      .listGarments()
+      .pipe(
+        map((items: GarmentSummaryDto[]) =>
+          items.map((dto) => this.mapGarmentSummaryToGarment(dto))
+        ),
+        tap((garments: Garment[]) => {
+          this.garmentsSubject.next(garments);
+          this.garmentsLoaded = true;
+        }),
+        catchError((error: unknown) => {
+          console.error('Unable to load garments from OutfitifyAPI', error);
+          this.garmentsSubject.next([]);
+          return throwError(() =>
+            this.createApiUnavailableError('loading garments', error)
+          );
+        })
+      );
+  }
+
+  // -----------------------------
+  // Gallery helpers
+  // -----------------------------
+
+  setCurrentGalleryIndex(index: number): void {
+    this.galleryIndexSubject.next(index);
+  }
+
+  getGeneratedImageById(id: string): GeneratedImage | undefined {
+    return this.generatedImagesSubject.value.find((image) => image.id === id);
+  }
+
+  getAdjacentImageId(currentId: string, direction: 1 | -1): string | null {
+    const images = this.generatedImagesSubject.value.filter(
+      (image) => image.status === 'ready'
+    );
+    if (!images.length) {
+      return null;
+    }
+    const currentIndex = images.findIndex((image) => image.id === currentId);
+    if (currentIndex === -1) {
+      return images[0]?.id ?? null;
+    }
+    const targetIndex = (currentIndex + direction + images.length) % images.length;
+    return images[targetIndex]?.id ?? null;
+  }
+
+  // -----------------------------
+  // Garment instance helper
+  // -----------------------------
+
+  private ensureGarmentInstancesForSelection(
+    garments: {
+      top: Garment | null;
+      bottom: Garment | null;
+      fullBody: Garment | null;
+      jacket: Garment | null;
+      accessories: Garment | null;
+    },
+    sizes: {
+      top: string | null;
+      bottom: string | null;
+      fullBody: string | null;
+      jacket: string | null;
+      accessories: string | null;
+    }
+  ): Observable<string[]> {
+    const requests: Observable<string>[] = [];
+
+    const add = (garment: Garment | null, size: string | null) => {
+      if (!garment || !size) return;
+
+      const payload: CreateGarmentInstanceRequest = {
+        garmentEntityId: garment.id,
+        sizeName: size
+      };
+
+      const req$ = this.outfitifyApi
+        .createGarmentInstance(payload)
+        .pipe(map((dto) => dto.id));
+
+      requests.push(req$);
+    };
+
+    add(garments.fullBody, sizes.fullBody);
+    add(garments.top, sizes.top);
+    add(garments.bottom, sizes.bottom);
+    add(garments.jacket, sizes.jacket);
+    add(garments.accessories, sizes.accessories);
+
+    if (requests.length === 0) {
+      return of([]);
+    }
+
+    return forkJoin(requests);
+  }
+
+  // -----------------------------
+  // Outfit creation
+  // -----------------------------
+
+  private getActiveModelImageId(): string | null {
+    return this.modelIdSubject.value ?? this.currentUser?.modelImageId ?? null;
+  }
+
+  private getActivePoseOptionId(): string | null {
+    return this.poseIdSubject.value ?? this.currentUser?.poseOptionId ?? null;
+  }
+
+  private getActiveBackgroundOptionId(): string | null {
+    return (
+      this.backgroundIdSubject.value ?? this.currentUser?.backgroundOptionId ?? null
+    );
+  }
+
+  createOutfit(): Observable<GeneratedImage> {
+    const garments = {
+      top: this.topGarmentSubject.value,
+      bottom: this.bottomGarmentSubject.value,
+      fullBody: this.fullBodyGarmentSubject.value,
+      jacket: this.jacketGarmentSubject.value,
+      accessories: this.accessoriesGarmentSubject.value
+    };
+
+    const sizes = {
+      top: this.topSizeSubject.value,
+      bottom: this.bottomSizeSubject.value,
+      fullBody: this.fullBodySizeSubject.value,
+      jacket: this.jacketSizeSubject.value,
+      accessories: this.accessoriesSizeSubject.value
+    };
+
+    const hasFullBody = !!(garments.fullBody && sizes.fullBody);
+    const hasTopBottom =
+      !!(garments.top && garments.bottom && sizes.top && sizes.bottom);
+    const invalidMix =
+      !!(garments.fullBody && (garments.top || garments.bottom));
+
+    if (invalidMix) {
+      throw new Error(
+        'You cannot combine a full-body garment with a separate top or bottom.'
+      );
+    }
+
+    if (!hasFullBody && !hasTopBottom) {
+      throw new Error(
+        'Select either a full-body garment and size, or a top and bottom with sizes, before creating an outfit.'
+      );
+    }
+
+    const modelId = this.getActiveModelImageId();
+    const poseId = this.getActivePoseOptionId();
+    const backgroundId = this.getActiveBackgroundOptionId();
+
+    if (!modelId) {
+      throw new Error(
+        'No model image is set. Upload a photo (consumer app) or select a model (Shopify app) before creating an outfit.'
+      );
+    }
+
+    if (!poseId || !backgroundId) {
+      throw new Error(
+        'Pose or background is not available yet. Please try again in a moment.'
+      );
+    }
+
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      return throwError(() => error);
+    }
+
+    return this.ensureGarmentInstancesForSelection(garments, sizes).pipe(
+      switchMap((garmentInstanceIds) => {
+        const payload: CreateOutfitDto = {
+          garmentInstanceIds,
+          modelImageId: modelId,
+          poseOptionId: poseId,
+          backgroundOptionId: backgroundId,
+          garmentInstances: null
+        };
+
+        return this.outfitifyApi
+          .createOutfitRequest(payload)
+          .pipe(map((response: OutfitDto) => this.mapOutfitDto(response)));
+      }),
+      tap((generatedImage: GeneratedImage) => {
+        const images = this.generatedImagesSubject.value.filter(
+          (image) => image.id !== generatedImage.id
+        );
+        this.generatedImagesSubject.next([generatedImage, ...images]);
+      }),
+      catchError((error: unknown) =>
+        throwError(() => this.createApiUnavailableError('creating an outfit', error))
+      )
+    );
+  }
+
+  refreshGeneratedImages(): Observable<GeneratedImage[]> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Unable to refresh generated outfits', error);
+      return of(this.generatedImagesSubject.value);
+    }
+
+    return this.outfitifyApi
+      .listOutfitRequests()
+      .pipe(
+        map((items: OutfitDto[]) => items.map((item) => this.mapOutfitDto(item))),
+        tap((images: GeneratedImage[]) => this.generatedImagesSubject.next(images)),
+        catchError((error: unknown) => {
+          console.error(
+            'Unable to refresh generated outfits',
+            this.createApiUnavailableError('refreshing generated outfits', error)
+          );
+          return of(this.generatedImagesSubject.value);
+        })
+      );
+  }
+
+  removeGeneratedImage(id: string): void {
+    const remaining = this.generatedImagesSubject.value.filter(
+      (image) => image.id !== id
+    );
+    this.generatedImagesSubject.next(remaining);
+
+    const current = this.galleryIndexSubject.value;
+    if (current >= remaining.length) {
+      this.galleryIndexSubject.next(Math.max(remaining.length - 1, 0));
+    }
+  }
+
+  // -----------------------------
+  // Mapping helpers
+  // -----------------------------
+
+  private mapGarmentSummaryToGarment(dto: GarmentSummaryDto): Garment {
+    const fallbackCategory: GarmentCategory = 'full-body';
+    const category = (dto.category as GarmentCategory | undefined) ?? fallbackCategory;
+
+    return {
+      id: dto.id,
+      name: dto.name,
+      description: dto.description ?? '',
+      category,
+      image: dto.imageUrl ?? 'assets/generated/placeholder-ready-1.svg',
+      sizes: dto.sizes ?? []
+    };
+  }
+
+  private mapOutfitDto(response: OutfitDto): GeneratedImage {
+    const isReady = response.status === 'ready' || response.status === 'completed';
+    const defaultImage = isReady
+      ? 'assets/generated/placeholder-ready-1.svg'
+      : 'assets/generated/placeholder-processing.svg';
+
+    const primaryImageUrl =
+      response.outfitImages && response.outfitImages.length > 0
+        ? response.outfitImages[0].assetUrl
+        : defaultImage;
+
+    return {
+      id: response.id,
+      imageUrl: primaryImageUrl,
+      createdAt: response.createdAtUtc ? new Date(response.createdAtUtc) : new Date(),
+      status: isReady ? 'ready' : 'processing'
+    };
+  }
+
+  private mapModelImageDtoToInspiration(dto: ModelImageDto): SelectedInspiration {
+    return {
+      previewUrl: dto.imageUrl,
+      source: 'upload',
+      remoteUrl: dto.imageUrl,
+      id: dto.id
+    };
+  }
+}

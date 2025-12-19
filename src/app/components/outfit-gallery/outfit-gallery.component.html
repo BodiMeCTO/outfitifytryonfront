@@ -1,0 +1,79 @@
+<section class="section-card outfit-gallery">
+  <header class="header">
+    <h1>Generated outfits</h1>
+    <p>
+      This gallery refreshes automatically every 30 seconds. Ready images are shown first so you can review and share
+      them straight away.
+    </p>
+  </header>
+
+  <!-- Empty state (no outfits yet) -->
+  <div class="empty" *ngIf="(generatedImages$ | async)?.length === 0">
+    <mat-icon>hourglass_empty</mat-icon>
+    <p>No generated outfits yet. Start by uploading a user image and choosing your garments.</p>
+    <!-- Button removed as requested: no more "Create your first outfit" -->
+  </div>
+
+  <!-- Gallery with actions and items -->
+  <div class="grid" *ngIf="(generatedImages$ | async) as images">
+    <div class="gallery-actions">
+      <span>Ready to create a new outfit?</span>
+      <div class="actions">
+        <!-- Keep this button, it starts a new outfit flow -->
+        <button mat-raised-button color="accent" routerLink="/user-image-upload">
+          <mat-icon>add_circle</mat-icon>
+          Create new outfit
+        </button>
+      </div>
+    </div>
+
+    <mat-card
+      class="gallery-item"
+      appearance="outlined"
+      *ngFor="let image of images; index as i; trackBy: trackById"
+    >
+      <figure (click)="viewImage(image, i)" tabindex="0" role="button" aria-label="View generated outfit">
+        <img [src]="image.imageUrl" alt="Generated outfit" />
+      </figure>
+      <mat-card-content>
+        <div class="meta">
+          <span>{{ image.createdAt | date: 'short' }}</span>
+          <span
+            class="status-badge"
+            [class.status-badge--ready]="image.status === 'ready'"
+          >
+            <mat-icon>{{ image.status === 'ready' ? 'check_circle' : 'timelapse' }}</mat-icon>
+            {{ image.status === 'ready' ? 'Ready' : 'Processing' }}
+          </span>
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="imageActions"
+            [matMenuTriggerData]="{ image: image, index: i }"
+            aria-label="More actions"
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary" (click)="viewImage(image, i)">
+          Review
+          <mat-icon>open_in_new</mat-icon>
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <mat-menu #imageActions="matMenu">
+    <ng-template matMenuContent let-data="matMenuTriggerData">
+      <button mat-menu-item (click)="viewImage(data.image, data.index)">
+        <mat-icon>open_in_new</mat-icon>
+        Review
+      </button>
+      <button mat-menu-item (click)="remove(data.image)">
+        <mat-icon>delete</mat-icon>
+        Delete outfit
+      </button>
+    </ng-template>
+  </mat-menu>
+</section>

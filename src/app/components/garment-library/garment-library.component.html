@@ -1,0 +1,135 @@
+<section class="section-card garment-library">
+  <header class="section-header">
+    <h1>Select garments to build your outfit</h1>
+    <p class="subtitle">
+      After uploading a user image, choose a full-body look or mix a top and bottom.
+      You can optionally add a jacket or accessories, then generate your outfit.
+    </p>
+  </header>
+
+  <div class="category-toggle">
+    <mat-button-toggle-group
+      name="category"
+      [value]="category()"
+      (change)="handleCategoryChange($event)"
+      [attr.aria-label]="'Garment category'"
+    >
+      <mat-button-toggle value="tops">Tops</mat-button-toggle>
+      <mat-button-toggle value="bottoms">Bottoms</mat-button-toggle>
+      <mat-button-toggle value="full-body">Full body</mat-button-toggle>
+      <mat-button-toggle value="jackets">Jacket</mat-button-toggle>
+      <mat-button-toggle value="accessories">Accessories</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  <section class="garment-grid">
+    <div class="garment-grid__status" *ngIf="isLoadingGarments()">
+      Loading garments…
+    </div>
+    <div class="garment-grid__status error" *ngIf="garmentsError()">
+      {{ garmentsError() }}
+    </div>
+    <div
+      class="garment-grid__status"
+      *ngIf="!isLoadingGarments() && !garmentsError() && garmentsForCategory().length === 0"
+    >
+      No garments available for this category yet.
+    </div>
+
+    <mat-card
+      appearance="outlined"
+      class="garment"
+      *ngFor="let garment of garmentsForCategory()"
+      [class.selected]="isSelected(garment)"
+    >
+      <img
+        class="garment__image"
+        [src]="garment.image"
+        [alt]="garment.name"
+        loading="lazy"
+        (error)="handleImageError($event, garment)"
+      />
+      <mat-card-header>
+        <mat-card-title>{{ garment.name }}</mat-card-title>
+        <mat-card-subtitle>{{ garment.description }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="size-inline" *ngIf="sizeOptionsForGarment(garment).length > 0">
+          <span class="size-inline__label">
+            {{
+              garment.category === 'tops'
+                ? 'Choose top size'
+                : garment.category === 'bottoms'
+                  ? 'Choose bottom size'
+                  : garment.category === 'full-body'
+                    ? 'Choose outfit size'
+                    : garment.category === 'jackets'
+                      ? 'Jacket size (optional)'
+                      : 'Accessories size (optional)'
+            }}
+          </span>
+
+          <mat-button-toggle-group
+            class="size-inline__group"
+            [value]="isSelected(garment) ? selectedSizeForCategory(garment.category) : null"
+            (change)="handleSizeClick(garment, $event.value)"
+          >
+            <mat-button-toggle
+              *ngFor="let size of sizeOptionsForGarment(garment)"
+              [value]="size"
+            >
+              {{ size }}
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <span class="selection-indicator" *ngIf="isSelected(garment)">
+          <mat-icon>check_circle</mat-icon>
+          Selected
+        </span>
+        <span class="selection-indicator muted" *ngIf="!isSelected(garment)">
+          <mat-icon>radio_button_unchecked</mat-icon>
+          Tap a size to select
+        </span>
+      </mat-card-actions>
+    </mat-card>
+  </section>
+
+  <footer class="library-actions">
+    <div class="helper" [class.error]="!hasCompleteOutfitSelection()">
+      <mat-icon aria-hidden="true">info</mat-icon>
+
+      <ng-container *ngIf="selectedFullBody(); else separateHint">
+        <span *ngIf="!hasCompleteOutfitSelection()">
+          Pick a size on your full-body garment to continue.
+        </span>
+        <span *ngIf="hasCompleteOutfitSelection()">
+          Ready! You can create your outfit now.
+        </span>
+      </ng-container>
+
+      <ng-template #separateHint>
+        <span *ngIf="!hasCompleteOutfitSelection()">
+          Pick a size on one top and one bottom, or choose a full-body garment instead.
+        </span>
+        <span *ngIf="hasCompleteOutfitSelection()">
+          Ready! You can create your outfit now.
+        </span>
+      </ng-template>
+    </div>
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="submitOutfit()"
+      [disabled]="isSubmitting() || !hasCompleteOutfitSelection()"
+    >
+      {{ isSubmitting() ? 'Creating…' : 'Create outfit' }}
+      <mat-icon>bolt</mat-icon>
+    </button>
+  </footer>
+</section>

@@ -1,0 +1,57 @@
+<ng-container *ngIf="(isAuthRoute$ | async) === false; else authOutlet">
+  <mat-sidenav-container class="app-shell" autosize>
+    <mat-sidenav
+      #drawer
+      class="app-drawer"
+      [mode]="(isHandset$ | async) ? 'over' : 'side'"
+      [opened]="(isHandset$ | async) === false"
+      [disableClose]="(isHandset$ | async) === false"
+    >
+      <mat-nav-list *ngIf="(isLoggedIn$ | async)">
+        <a
+          mat-list-item
+          *ngFor="let link of links"
+          [routerLink]="link.path"
+          routerLinkActive="active-link"
+          (click)="drawer.close()"
+        >
+          {{ link.label }}
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <mat-toolbar color="primary" class="app-toolbar" role="navigation">
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Toggle navigation"
+          (click)="drawer.toggle()"
+          class="menu-button"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span class="brand">Uniform Try On</span>
+        <span class="spacer"></span>
+        <nav class="desktop-links" *ngIf="(isHandset$ | async) === false && (isLoggedIn$ | async)">
+          <a mat-button *ngFor="let link of links" [routerLink]="link.path" routerLinkActive="active-link">
+            {{ link.label }}
+          </a>
+        </nav>
+        <button mat-stroked-button color="accent" type="button" (click)="onLogout()" *ngIf="(isLoggedIn$ | async)">
+          Sign out
+        </button>
+      </mat-toolbar>
+
+      <main class="app-content">
+        <router-outlet />
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</ng-container>
+
+<ng-template #authOutlet>
+  <main class="auth-content">
+    <router-outlet />
+  </main>
+</ng-template>

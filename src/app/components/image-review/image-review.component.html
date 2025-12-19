@@ -1,0 +1,33 @@
+<section class="section-card image-review">
+  <ng-container *ngIf="image() as current">
+    <figure class="preview">
+      <img [src]="current.imageUrl" alt="Selected generated outfit" />
+    </figure>
+
+    <div class="controls">
+      <button mat-stroked-button color="primary" (click)="navigate(-1)">
+        <mat-icon>navigate_before</mat-icon>
+        Previous
+      </button>
+      <button mat-stroked-button color="primary" (click)="navigate(1)">
+        Next
+        <mat-icon>navigate_next</mat-icon>
+      </button>
+    </div>
+
+    <div class="actions">
+      <button mat-raised-button color="primary" (click)="share()">
+        <mat-icon>ios_share</mat-icon>
+        Share
+      </button>
+      <button mat-stroked-button (click)="download()">
+        <mat-icon>download</mat-icon>
+        Download
+      </button>
+      <button mat-button routerLink="/generated-gallery">
+        <mat-icon>grid_view</mat-icon>
+        Back to gallery
+      </button>
+    </div>
+  </ng-container>
+</section>

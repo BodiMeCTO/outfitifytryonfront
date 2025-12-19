@@ -1,0 +1,63 @@
+<section class="section-card size-selection">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Choose a size for your outfit</mat-card-title>
+      <mat-card-subtitle>
+        Select one top and one bottom, then pick the best shared size before creating the outfit.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <ng-container *ngIf="selectedGarmentList().length > 0; else missingSelection">
+        <div class="summary">
+          <div class="garment-pair">
+            <figure class="garment" *ngFor="let entry of selectedGarmentList()">
+              <img [src]="entry.garment.image" [alt]="entry.garment.name" />
+              <figcaption>
+                <h2>{{ entry.garment.name }}</h2>
+                <p>{{ entry.garment.description }}</p>
+              </figcaption>
+              <div class="size-picker">
+                <span class="label">{{ entry.category === 'tops' ? 'Top size' : 'Bottom size' }}</span>
+                <mat-button-toggle-group
+                  [name]="entry.category + '-size-review'"
+                  [value]="selectedSize(entry.category) ?? null"
+                  (change)="handleSizeChange(entry.category, $event)"
+                >
+                  <mat-button-toggle *ngFor="let size of sizeOptions(entry.category)" [value]="size">
+                    {{ size }}
+                  </mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
+            </figure>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #missingSelection>
+        <p class="empty">
+          Please select a top and a bottom before setting sizes.
+          <button mat-button color="primary" routerLink="/garment-library">Go back</button>
+        </p>
+      </ng-template>
+    </mat-card-content>
+
+    <mat-progress-bar *ngIf="isSubmitting()" mode="indeterminate"></mat-progress-bar>
+
+    <mat-card-actions class="actions">
+      <button mat-stroked-button routerLink="/garment-library">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="createOutfit()"
+        [disabled]="isSubmitting() || !hasCompleteSelection()"
+      >
+        <mat-icon>check_circle</mat-icon>
+        Create outfit
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</section>

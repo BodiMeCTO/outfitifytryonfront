@@ -1,0 +1,117 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal
+} from '@angular/core';
+import { AsyncPipe, CommonModule, NgIf } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { RouterLink } from '@angular/router';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { take } from 'rxjs/operators';
+
+import { OutfitService } from '../../services/outfit.service';
+import { SelectedInspiration } from '../../models/outfit';
+
+@Component({
+  standalone: true,
+  selector: 'app-user-image-upload',
+  imports: [
+    CommonModule,
+    NgIf,
+    AsyncPipe,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule,
+    MatProgressBarModule,
+    RouterLink
+  ],
+  templateUrl: './user-image-upload.component.html',
+  styleUrls: ['./user-image-upload.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class UserImageUploadComponent implements OnInit {
+  private readonly outfitService = inject(OutfitService);
+  private readonly snackBar = inject(MatSnackBar);
+
+  readonly inspiration$ = this.outfitService.selectedInspiration$;
+  readonly userImages$ = this.outfitService.userModelImages$;
+  readonly isUploading = signal(false);
+
+  ngOnInit(): void {
+    this.outfitService
+      .ensureUserModelImagesLoaded()
+      .pipe(take(1))
+      .subscribe({
+        error: (err) => console.error('Failed to load user model images', err)
+      });
+  }
+
+  handleFileSelection(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.snackBar.open('Please select an image file to upload.', 'Dismiss', {
+        duration: 4000
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const previewUrl = reader.result as string;
+      this.isUploading.set(true);
+      this.outfitService
+        .uploadAndSetInspiration(file, previewUrl)
+        .pipe(take(1))
+        .subscribe({
+          next: (selection: SelectedInspiration) => {
+            this.isUploading.set(false);
+            this.snackBar.open('User image uploaded successfully.', 'Great!', {
+              duration: 2500
+            });
+            if (!selection.remoteUrl) {
+              this.snackBar.open(
+                'OutfitifyAPI accepted your image but did not return a URL; your local photo will be used.',
+                'OK',
+                { duration: 4000 }
+              );
+            }
+          },
+          error: () => {
+            this.isUploading.set(false);
+            this.snackBar.open(
+              'Unable to upload your image to OutfitifyAPI right now.',
+              'Dismiss',
+              { duration: 4000 }
+            );
+          }
+        });
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  selectExisting(inspiration: SelectedInspiration): void {
+    this.outfitService.setInspiration(inspiration);
+
+    if (inspiration.id) {
+      this.outfitService.setSelectedModel({ id: inspiration.id });
+    }
+
+    this.snackBar.open('Using your saved photo.', undefined, { duration: 1500 });
+  }
+
+  clearSelection(): void {
+    this.outfitService.setInspiration(null);
+  }
+}

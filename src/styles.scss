@@ -1,0 +1,90 @@
+@use '@angular/material' as mat;
+
+$green-palette: (
+  50: #e9f5ed,
+  100: #c7e6d1,
+  200: #a2d6b3,
+  300: #7dc694,
+  400: #60ba7d,
+  500: #43af66,
+  600: #3da960,
+  700: #349f57,
+  800: #2c964f,
+  900: #1f863f,
+  A100: #d5ffd3,
+  A200: #a6ffa5,
+  A400: #77ff77,
+  A700: #60ff60,
+  contrast: (
+    50: #00210f,
+    100: #00210f,
+    200: #00210f,
+    300: #001808,
+    400: #001808,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: #00210f,
+    A200: #00210f,
+    A400: #00210f,
+    A700: #00210f
+  )
+);
+
+$primary: mat.m2-define-palette($green-palette, 500);
+$accent: mat.m2-define-palette(mat.$m2-amber-palette, 500);
+$warn: mat.m2-define-palette(mat.$m2-red-palette, 500);
+
+$uniform-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $primary,
+    accent: $accent,
+    warn: $warn
+  ),
+  typography: mat.m2-define-typography-config(),
+  density: 0
+));
+
+@include mat.core();
+@include mat.all-component-themes($uniform-theme);
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+  background: #f3f7f5;
+  color: rgba(20, 41, 30, 0.92);
+}
+
+a {
+  color: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+  padding: 1.5rem 1rem;
+  margin: 0 auto;
+  width: min(100%, 960px);
+}
+
+.section-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .app-content {
+    padding: 2.5rem 2rem 3rem;
+  }
+}

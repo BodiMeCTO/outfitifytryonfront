@@ -1,0 +1,75 @@
+.size-selection mat-card {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.summary {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.garment-pair {
+  display: grid;
+  gap: 1rem;
+}
+
+.garment {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.garment img {
+  width: min(100%, 220px);
+  border-radius: 12px;
+  background: rgba(67, 175, 102, 0.12);
+  padding: 1rem;
+}
+
+.garment h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.garment p {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.62);
+  font-size: 0.95rem;
+}
+
+.size-picker {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.size-picker .label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.56);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.empty {
+  margin: 0;
+}
+
+@media (min-width: 720px) {
+  .summary {
+    grid-template-columns: 1fr minmax(220px, 280px);
+    align-items: start;
+  }
+
+  .garment-pair {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}

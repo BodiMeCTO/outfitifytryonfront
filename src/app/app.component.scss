@@ -1,0 +1,46 @@
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  gap: 0.5rem;
+  padding-inline: 0.75rem;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.desktop-links a.active-link {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.menu-button {
+  margin-right: 0.25rem;
+}
+
+.auth-content {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.25rem;
+  background: radial-gradient(circle at 20% 20%, rgba(67, 175, 102, 0.08), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(67, 175, 102, 0.08), transparent 40%),
+    #f3f7f5;
+}
+
+@media (min-width: 768px) {
+  .menu-button {
+    display: none;
+  }
+
+  .app-drawer {
+    display: none;
+  }
+}
