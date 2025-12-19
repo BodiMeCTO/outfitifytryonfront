@@ -19,7 +19,7 @@ module.exports = function (config) {
       suppressAll: true
     },
     coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/uniform-try-on'),
+      dir: require('path').join(__dirname, './coverage/outfitifytryonfront'),
       subdir: '.',
       reporters: [{ type: 'html' }, { type: 'text-summary' }]
     },
