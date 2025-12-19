@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "uniform-try-on": {
+    "outfitifytryonfront": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/uniform-try-on",
+            "outputPath": "dist/outfitifytryonfront",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -61,10 +61,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "uniform-try-on:build:production"
+              "browserTarget": "outfitifytryonfront:build:production"
             },
             "development": {
-              "browserTarget": "uniform-try-on:build:development"
+              "browserTarget": "outfitifytryonfront:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -72,7 +72,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "uniform-try-on:build"
+            "browserTarget": "outfitifytryonfront:build"
           }
         },
         "test": {
