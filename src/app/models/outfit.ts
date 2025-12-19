@@ -4,7 +4,7 @@
 // Frontend garment models
 // -----------------------
 
-export type GarmentCategory =
+export type GarmentGroup =
   | 'tops'
   | 'bottoms'
   | 'full-body'
@@ -15,7 +15,7 @@ export interface Garment {
   id: string;
   name: string;
   description: string;
-  category: GarmentCategory;
+  group: GarmentGroup;
   image: string;
   sizes?: string[];
 }
@@ -89,7 +89,7 @@ export interface GarmentResponse {
   id: string;
   name: string;
   description: string;
-  category: GarmentCategory;
+  group: GarmentGroup;
   imageUrl?: string;
   image?: string;
   sizes?: string[];

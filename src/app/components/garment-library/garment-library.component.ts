@@ -5,12 +5,16 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { take } from 'rxjs/operators';
 
-import { Garment, GarmentCategory } from '../../models/outfit';
+import { Garment, GarmentGroup } from '../../models/outfit';
 import { OutfitService } from '../../services/outfit.service';
+import { GarmentCategoryDto } from '../../models/outfitify-api';
 
 @Component({
   selector: 'app-garment-library',
@@ -21,7 +25,10 @@ import { OutfitService } from '../../services/outfit.service';
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatProgressBarModule
   ],
   templateUrl: './garment-library.component.html',
   styleUrls: ['./garment-library.component.scss'],
@@ -32,13 +39,36 @@ export class GarmentLibraryComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
 
-  // Active category tab
-  readonly category = signal<GarmentCategory>('tops');
+  // Active garment group tab
+  readonly group = signal<GarmentGroup>('tops');
 
   // Catalogue from API
   readonly garments = toSignal(this.outfitService.garments$, { initialValue: [] });
   readonly isLoadingGarments = signal(false);
   readonly garmentsError = signal<string | null>(null);
+  readonly garmentCategories = toSignal(this.outfitService.garmentCategories$, {
+    initialValue: []
+  });
+  readonly garmentCategoryOptions = computed(() => {
+    const categories = [...this.garmentCategories()];
+    return categories.sort((a, b) => {
+      const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      const groupCompare =
+        (a.group ?? '').toLowerCase().localeCompare((b.group ?? '').toLowerCase());
+      if (groupCompare !== 0) {
+        return groupCompare;
+      }
+      return (a.category ?? '').toLowerCase().localeCompare((b.category ?? '').toLowerCase());
+    });
+  });
+  readonly isLoadingCategories = signal(false);
+  readonly garmentCategoriesError = signal<string | null>(null);
+  readonly selectedGarmentCategoryId = signal<number | null>(null);
+  readonly isUploadingGarment = signal(false);
 
   // Selected garments from the service
   readonly selectedTop = toSignal(this.outfitService.selectedTop$, { initialValue: null });
@@ -74,9 +104,9 @@ export class GarmentLibraryComponent implements OnInit {
   readonly isSubmitting = signal(false);
   private readonly attemptedImageFallbacks = signal<Record<string, number>>({});
 
-  // Garments visible for the active category tab
-  readonly garmentsForCategory = computed(() =>
-    this.garments().filter((garment) => garment.category === this.category())
+  // Garments visible for the active group tab
+  readonly garmentsForGroup = computed(() =>
+    this.garments().filter((garment) => garment.group === this.group())
   );
 
   ngOnInit(): void {
@@ -101,24 +131,126 @@ export class GarmentLibraryComponent implements OnInit {
           });
         }
       });
+
+    this.isLoadingCategories.set(true);
+    this.outfitService
+      .ensureGarmentCategoriesLoaded()
+      .pipe(take(1))
+      .subscribe({
+        next: (categories) => {
+          this.isLoadingCategories.set(false);
+          this.garmentCategoriesError.set(null);
+          const firstId = this.categoryId(categories[0]);
+          if (firstId && !this.selectedGarmentCategoryId()) {
+            this.selectedGarmentCategoryId.set(firstId);
+          }
+        },
+        error: (err) => {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Unable to load garment groups. Please check your API configuration.';
+          this.isLoadingCategories.set(false);
+          this.garmentCategoriesError.set(message);
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 3500
+          });
+        }
+      });
   }
 
-  handleCategoryChange(event: { value: GarmentCategory }): void {
-    this.category.set(event.value);
+  handleGroupChange(event: { value: GarmentGroup }): void {
+    this.group.set(event.value);
+  }
+
+  categoryId(category: GarmentCategoryDto | undefined): number | null {
+    if (!category) return null;
+
+    return (
+      category.garmentCategoryEntityId ??
+      (category as { garmentCategoryEntityID?: number }).garmentCategoryEntityID ??
+      null
+    );
+  }
+
+  categoryLabel(category: GarmentCategoryDto): string {
+    const groupLabel = category.group || 'Group';
+    const specific = category.category;
+
+    if (specific && specific !== category.group) {
+      return `${specific} • ${groupLabel}`;
+    }
+
+    return groupLabel;
+  }
+
+  handleGarmentUploadFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.snackBar.open('Please select an image file to upload.', 'Dismiss', {
+        duration: 4000
+      });
+      return;
+    }
+
+    const selectedCategoryId = this.selectedGarmentCategoryId();
+    if (!selectedCategoryId) {
+      this.snackBar.open('Choose a garment group before uploading an image.', 'Got it', {
+        duration: 3500
+      });
+      return;
+    }
+
+    this.isUploadingGarment.set(true);
+
+    this.outfitService
+      .uploadGarmentImage(file, selectedCategoryId)
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.isUploadingGarment.set(false);
+          const targetGroup = this.groupForCategoryId(selectedCategoryId);
+          if (targetGroup) {
+            this.group.set(targetGroup);
+          }
+          this.snackBar.open(
+            'Garment image uploaded. It’s now available in this group.',
+            'Great!',
+            { duration: 3000 }
+          );
+        },
+        error: (err) => {
+          this.isUploadingGarment.set(false);
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Unable to upload your garment image right now.';
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 4000
+          });
+        }
+      });
   }
 
   // --- Card & size helpers ---
 
   isSelected(garment: Garment): boolean {
     const ids = this.selectedGarmentIds();
-    return ids[garment.category] === garment.id;
+    return ids[garment.group] === garment.id;
   }
 
   sizeOptionsForGarment(garment: Garment): readonly string[] {
     if (garment.sizes && garment.sizes.length > 0) {
       return garment.sizes;
     }
-    switch (garment.category) {
+    switch (garment.group) {
       case 'tops':
       case 'full-body':
       case 'jackets':
@@ -131,8 +263,8 @@ export class GarmentLibraryComponent implements OnInit {
     }
   }
 
-  selectedSizeForCategory(category: GarmentCategory): string | null {
-    switch (category) {
+  selectedSizeForGroup(group: GarmentGroup): string | null {
+    switch (group) {
       case 'tops':
         return this.selectedTopSize();
       case 'bottoms':
@@ -150,12 +282,12 @@ export class GarmentLibraryComponent implements OnInit {
 
   /**
    * ONE-CLICK selection: picking a size on a card selects
-   * both the garment and that size for its category.
+   * both the garment and that size for its group.
    */
   handleSizeClick(garment: Garment, size: string): void {
-    const category = garment.category;
+    const group = garment.group;
 
-    switch (category) {
+    switch (group) {
       case 'full-body':
         // Full-body is mutually exclusive with separate top/bottom
         this.outfitService.setSelectedGarment('tops', null);
@@ -171,15 +303,15 @@ export class GarmentLibraryComponent implements OnInit {
         // Selecting separates clears full-body
         this.outfitService.setSelectedGarment('full-body', null);
         this.outfitService.setSelectedSize('full-body', null);
-        this.outfitService.setSelectedGarment(category, garment);
-        this.outfitService.setSelectedSize(category, size);
+        this.outfitService.setSelectedGarment(group, garment);
+        this.outfitService.setSelectedSize(group, size);
         break;
 
       case 'jackets':
       case 'accessories':
         // Optional layers, independent
-        this.outfitService.setSelectedGarment(category, garment);
-        this.outfitService.setSelectedSize(category, size);
+        this.outfitService.setSelectedGarment(group, garment);
+        this.outfitService.setSelectedSize(group, size);
         break;
     }
   }
@@ -265,6 +397,21 @@ export class GarmentLibraryComponent implements OnInit {
     currentFallbacks[garment.id] = attemptIndex + 1;
     this.attemptedImageFallbacks.set(currentFallbacks);
     img.src = nextSrc;
+  }
+
+  private groupForCategoryId(categoryId: number | null): GarmentGroup | null {
+    if (!categoryId) {
+      return null;
+    }
+    const category = this.garmentCategories().find(
+      (item) => this.categoryId(item) === categoryId
+    );
+    return this.toGarmentGroup(category?.group);
+  }
+
+  private toGarmentGroup(value: string | null | undefined): GarmentGroup | null {
+    const allowed: GarmentGroup[] = ['tops', 'bottoms', 'full-body', 'jackets', 'accessories'];
+    return allowed.includes(value as GarmentGroup) ? (value as GarmentGroup) : null;
   }
 }
 

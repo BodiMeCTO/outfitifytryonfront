@@ -11,7 +11,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { take } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
-import { Garment, GarmentCategory } from '../../models/outfit';
+import { Garment, GarmentGroup } from '../../models/outfit';
 
 type GarmentSelectionState = {
   top: Garment | null;
@@ -31,7 +31,7 @@ type SizeSelectionState = {
 
 type ReviewEntry = {
   garment: Garment;
-  category: 'tops' | 'bottoms';
+  group: 'tops' | 'bottoms';
 };
 
 const EMPTY_SELECTION: GarmentSelectionState = {
@@ -96,10 +96,10 @@ export class SizeSelectionComponent {
     const entries: ReviewEntry[] = [];
 
     if (g.top) {
-      entries.push({ garment: g.top, category: 'tops' });
+      entries.push({ garment: g.top, group: 'tops' });
     }
     if (g.bottom) {
-      entries.push({ garment: g.bottom, category: 'bottoms' });
+      entries.push({ garment: g.bottom, group: 'bottoms' });
     }
 
     return entries;
@@ -114,8 +114,8 @@ export class SizeSelectionComponent {
 
   readonly isSubmitting = signal(false);
 
-  sizeOptions(category: GarmentCategory): readonly string[] {
-    switch (category) {
+  sizeOptions(group: GarmentGroup): readonly string[] {
+    switch (group) {
       case 'tops':
         return this.topSizeOptions();
       case 'bottoms':
@@ -125,9 +125,9 @@ export class SizeSelectionComponent {
     }
   }
 
-  selectedSize(category: GarmentCategory): string | null {
+  selectedSize(group: GarmentGroup): string | null {
     const sizes = this.sizes();
-    switch (category) {
+    switch (group) {
       case 'tops':
         return sizes.top;
       case 'bottoms':
@@ -137,9 +137,9 @@ export class SizeSelectionComponent {
     }
   }
 
-  handleSizeChange(category: GarmentCategory, event: MatButtonToggleChange): void {
+  handleSizeChange(group: GarmentGroup, event: MatButtonToggleChange): void {
     // We only expect 'tops' or 'bottoms' here
-    this.outfitService.setSelectedSize(category, event.value ?? null);
+    this.outfitService.setSelectedSize(group, event.value ?? null);
   }
 
   createOutfit(): void {
