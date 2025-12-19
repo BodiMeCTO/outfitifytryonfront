@@ -19,7 +19,7 @@ import {
 
 import {
   Garment,
-  GarmentCategory,
+  GarmentGroup,
   GeneratedImage,
   OutfitRequest,
   OutfitRequestSnapshot,
@@ -31,7 +31,9 @@ import {
 import {
   GarmentSummaryDto,
   CreateGarmentInstanceRequest,
-  CatalogueOption
+  CatalogueOption,
+  GarmentCategoryDto,
+  GarmentImageDto
 } from '../models/outfitify-api';
 
 import { OutfitifyApiService } from './outfitify-api.service';
@@ -100,6 +102,8 @@ export class OutfitService {
 
   private readonly garmentsSubject = new BehaviorSubject<Garment[]>([]);
   private garmentsLoaded = false;
+  private readonly garmentCategoriesSubject = new BehaviorSubject<GarmentCategoryDto[]>([]);
+  private garmentCategoriesLoaded = false;
 
   private readonly generatedImagesSubject = new BehaviorSubject<GeneratedImage[]>([]);
   private readonly galleryIndexSubject = new BehaviorSubject<number>(0);
@@ -270,6 +274,7 @@ export class OutfitService {
   );
 
   readonly garments$ = this.garmentsSubject.asObservable();
+  readonly garmentCategories$ = this.garmentCategoriesSubject.asObservable();
 
   // âœ… These two are what `garment-library.component.ts` expects
   readonly hasCompleteGarmentSelection$ = this.selectedGarments$.pipe(
@@ -449,11 +454,11 @@ uploadAndSetInspiration(
   // Garment selection
   // -----------------------------
 
-  setSelectedGarment(category: GarmentCategory, garment: Garment | null): void {
+  setSelectedGarment(group: GarmentGroup, garment: Garment | null): void {
     let garmentSubject: BehaviorSubject<Garment | null>;
     let sizeSubject: BehaviorSubject<string | null>;
 
-    switch (category) {
+    switch (group) {
       case 'tops':
         garmentSubject = this.topGarmentSubject;
         sizeSubject = this.topSizeSubject;
@@ -486,8 +491,8 @@ uploadAndSetInspiration(
     }
   }
 
-  setSelectedSize(category: GarmentCategory, size: string | null): void {
-    switch (category) {
+  setSelectedSize(group: GarmentGroup, size: string | null): void {
+    switch (group) {
       case 'tops':
         this.topSizeSubject.next(size);
         break;
@@ -621,6 +626,13 @@ uploadAndSetInspiration(
     return this.loadGarments();
   }
 
+  ensureGarmentCategoriesLoaded(): Observable<GarmentCategoryDto[]> {
+    if (this.garmentCategoriesLoaded) {
+      return of(this.garmentCategoriesSubject.value);
+    }
+    return this.loadGarmentCategories();
+  }
+
   loadGarments(): Observable<Garment[]> {
     try {
       this.getApiBaseUrlOrThrow();
@@ -648,6 +660,81 @@ uploadAndSetInspiration(
           );
         })
       );
+  }
+
+  private loadGarmentCategories(): Observable<GarmentCategoryDto[]> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Unable to load garment groups from OutfitifyAPI', error);
+      this.garmentCategoriesSubject.next([]);
+      return throwError(() => error);
+    }
+
+    return this.outfitifyApi.listGarmentCategories().pipe(
+      tap((categories: GarmentCategoryDto[]) => {
+        this.garmentCategoriesSubject.next(categories);
+        this.garmentCategoriesLoaded = true;
+      }),
+      catchError((error: unknown) => {
+        console.error(
+          'Unable to load garment groups from OutfitifyAPI',
+          this.createApiUnavailableError('loading garment groups', error)
+        );
+        this.garmentCategoriesSubject.next([]);
+        return throwError(() =>
+          this.createApiUnavailableError('loading garment groups', error)
+        );
+      })
+    );
+  }
+
+  uploadGarmentImage(file: File, garmentCategoryEntityId: number): Observable<Garment[]> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Failed to upload garment image', error);
+      return throwError(() => error);
+    }
+
+    if (!garmentCategoryEntityId) {
+      return throwError(() => new Error('Select a garment group before uploading the image.'));
+    }
+
+    const formData = new FormData();
+    formData.append('fileData', file, file.name);
+    formData.append('Name', file.name);
+    formData.append('GarmentCategoryEntityId', garmentCategoryEntityId.toString());
+    formData.append('GarmentCategoryEntityID', garmentCategoryEntityId.toString());
+
+    const matchedCategory = this.garmentCategoriesSubject.value.find(
+      (category) =>
+        category.garmentCategoryEntityId === garmentCategoryEntityId ||
+        (category as { garmentCategoryEntityID?: number }).garmentCategoryEntityID ===
+          garmentCategoryEntityId
+    );
+    if (matchedCategory?.group) {
+      formData.append('Group', matchedCategory.group);
+    }
+    if (matchedCategory?.category) {
+      formData.append('Category', matchedCategory.category);
+    }
+
+    return this.outfitifyApi.uploadGarmentImage(formData).pipe(
+      switchMap((_: GarmentImageDto) => {
+        this.garmentsLoaded = false;
+        return this.loadGarments();
+      }),
+      catchError((error: unknown) => {
+        console.error(
+          'Failed to upload garment image',
+          this.createApiUnavailableError('uploading a garment image', error)
+        );
+        return throwError(() =>
+          this.createApiUnavailableError('uploading a garment image', error)
+        );
+      })
+    );
   }
 
   // -----------------------------
@@ -868,14 +955,14 @@ uploadAndSetInspiration(
   // -----------------------------
 
   private mapGarmentSummaryToGarment(dto: GarmentSummaryDto): Garment {
-    const fallbackCategory: GarmentCategory = 'full-body';
-    const category = (dto.category as GarmentCategory | undefined) ?? fallbackCategory;
+    const fallbackGroup: GarmentGroup = 'full-body';
+    const group = (dto.category as GarmentGroup | undefined) ?? fallbackGroup;
 
     return {
       id: dto.id,
       name: dto.name,
       description: dto.description ?? '',
-      category,
+      group,
       image: dto.imageUrl ?? 'assets/generated/placeholder-ready-1.svg',
       sizes: dto.sizes ?? []
     };

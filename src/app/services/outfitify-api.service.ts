@@ -10,13 +10,15 @@ import {
   CreditsLedgerEntryDto,
   InventoryItemDto,
   GarmentSummaryDto,
+  GarmentCategoryDto,
   ShopifyBillingCallbackRequest,
   ShopifyUsageRequest,
   SubscriptionPlanDto,
   TokenResponse,
   CreateGarmentInstanceRequest,
   GarmentInstanceDto,
-  ModelProfileDto
+  ModelProfileDto,
+  GarmentImageDto
 } from '../models/outfitify-api';
 import { CreateOutfitDto, OutfitDto } from '../models/outfit';
 import { CreateModelImageDto, ModelImageDto } from './outfit.service';
@@ -73,6 +75,14 @@ export class OutfitifyApiService {
   // --- Garments ---
   listGarments(): Observable<GarmentSummaryDto[]> {
     return this.http.get<GarmentSummaryDto[]>(this.buildUrl('/api/products'));
+  }
+
+  listGarmentCategories(): Observable<GarmentCategoryDto[]> {
+    return this.http.get<GarmentCategoryDto[]>(this.buildUrl('/api/garments/categories'));
+  }
+
+  uploadGarmentImage(formData: FormData): Observable<GarmentImageDto> {
+    return this.http.post<GarmentImageDto>(this.buildUrl('/api/garment-images/upload'), formData);
   }
 
   // --- Garment Instances ---

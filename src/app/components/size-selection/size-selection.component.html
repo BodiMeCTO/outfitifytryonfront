@@ -18,13 +18,13 @@
                 <p>{{ entry.garment.description }}</p>
               </figcaption>
               <div class="size-picker">
-                <span class="label">{{ entry.category === 'tops' ? 'Top size' : 'Bottom size' }}</span>
+                <span class="label">{{ entry.group === 'tops' ? 'Top size' : 'Bottom size' }}</span>
                 <mat-button-toggle-group
-                  [name]="entry.category + '-size-review'"
-                  [value]="selectedSize(entry.category) ?? null"
-                  (change)="handleSizeChange(entry.category, $event)"
+                  [name]="entry.group + '-size-review'"
+                  [value]="selectedSize(entry.group) ?? null"
+                  (change)="handleSizeChange(entry.group, $event)"
                 >
-                  <mat-button-toggle *ngFor="let size of sizeOptions(entry.category)" [value]="size">
+                  <mat-button-toggle *ngFor="let size of sizeOptions(entry.group)" [value]="size">
                     {{ size }}
                   </mat-button-toggle>
                 </mat-button-toggle-group>

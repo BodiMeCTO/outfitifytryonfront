@@ -25,6 +25,14 @@ export interface CatalogueOption {
   description?: string;
 }
 
+export interface GarmentCategoryDto {
+  garmentCategoryEntityId?: number;
+  group?: string | null;
+  category?: string | null;
+  gender?: string | null;
+  displayOrder?: number | null;
+}
+
 export interface GarmentDto {
   id: string;
   name: string;
@@ -32,6 +40,13 @@ export interface GarmentDto {
   category: 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'accessories';
   imageUrl?: string | null;
   sizes: string[];
+}
+
+export interface GarmentImageDto {
+  id: string;
+  imageUrl?: string | null;
+  garmentCategoryEntityId?: number | null;
+  name?: string | null;
 }
 
 
@@ -134,4 +149,3 @@ export interface GarmentInstanceDto {
   garmentSizeEntityId: number | null;
   sizeStr?: string | null;
 }
-
