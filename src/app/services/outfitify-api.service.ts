@@ -63,7 +63,7 @@ export class OutfitifyApiService {
   }
 
   listBackgroundImages(): Observable<BackgroundImageDto[]> {
-    return this.http.get<BackgroundImageDto[]>(this.buildUrl('/api/backgrounds'));
+    return this.http.get<BackgroundImageDto[]>(this.buildUrl('/api/background-images'));
   }
 
   getBackgroundImage(id: string): Observable<BackgroundImageDto> {
@@ -71,18 +71,18 @@ export class OutfitifyApiService {
   }
 
   uploadBackgroundImage(formData: FormData): Observable<BackgroundImageDto> {
-    return this.http.post<BackgroundImageDto>(this.buildUrl('/api/backgrounds/upload'), formData);
+    return this.http.post<BackgroundImageDto>(this.buildUrl('/api/background-images/upload'), formData);
   }
 
   updateBackgroundImage(
     id: string,
     payload: UpdateBackgroundImageDto
   ): Observable<BackgroundImageDto> {
-    return this.http.put<BackgroundImageDto>(this.buildUrl(`/api/backgrounds/${id}`), payload);
+    return this.http.put<BackgroundImageDto>(this.buildUrl(`/api/background-images/${id}`), payload);
   }
 
   deleteBackgroundImage(id: string): Observable<void> {
-    return this.http.delete<void>(this.buildUrl(`/api/backgrounds/${id}`));
+    return this.http.delete<void>(this.buildUrl(`/api/background-images/${id}`));
   }
 
   listAssets(): Observable<CatalogueOption[]> {
@@ -91,7 +91,7 @@ export class OutfitifyApiService {
 
   // --- Garments ---
   listGarments(): Observable<GarmentSummaryDto[]> {
-    return this.http.get<GarmentSummaryDto[]>(this.buildUrl('/api/products'));
+    return this.http.get<GarmentSummaryDto[]>(this.buildUrl('/api/garments'));
   }
 
   listGarmentCategories(): Observable<GarmentCategoryDto[]> {
