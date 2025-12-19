@@ -183,13 +183,6 @@ export class OutfitService {
       this.backgroundIdSubject.next(null);
       this.backgroundOptionsLoaded = false;
       this.backgroundOptionsSubject.next([]);
-
-      this.ensureBackgroundOptionsLoaded()
-        .pipe(take(1))
-        .subscribe({
-          error: (err) =>
-            console.error('Failed to refresh background options for user context change', err)
-        });
     }
 
     if (user.backgroundOptionId) {
@@ -214,14 +207,6 @@ export class OutfitService {
         }
       });
 
-    // Background
-    this.ensureBackgroundOptionsLoaded()
-      .pipe(take(1))
-      .subscribe({
-        error: (err) => {
-          console.error('Failed to load default background', err);
-        }
-      });
   }
 
   // -----------------------------
