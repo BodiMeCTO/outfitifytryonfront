@@ -159,10 +159,15 @@ export class OutfitService {
   }
 
   private applyUserContext(user: UserProfile | null): void {
+    const clientChanged = this.currentUser?.clientId !== user?.clientId;
     this.currentUser = user;
 
     if (!user) {
       this.modelIdSubject.next(null);
+      this.poseIdSubject.next(null);
+      this.backgroundIdSubject.next(null);
+      this.backgroundOptionsLoaded = false;
+      this.backgroundOptionsSubject.next([]);
       return;
     }
 
@@ -172,6 +177,19 @@ export class OutfitService {
 
     if (user.poseOptionId) {
       this.poseIdSubject.next(user.poseOptionId);
+    }
+
+    if (clientChanged) {
+      this.backgroundIdSubject.next(null);
+      this.backgroundOptionsLoaded = false;
+      this.backgroundOptionsSubject.next([]);
+
+      this.ensureBackgroundOptionsLoaded()
+        .pipe(take(1))
+        .subscribe({
+          error: (err) =>
+            console.error('Failed to refresh background options for user context change', err)
+        });
     }
 
     if (user.backgroundOptionId) {
