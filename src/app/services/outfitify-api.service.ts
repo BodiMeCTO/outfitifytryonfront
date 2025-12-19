@@ -62,6 +62,10 @@ export class OutfitifyApiService {
     return this.http.get<CatalogueOption[]>(this.buildUrl('/api/backgrounds'));
   }
 
+  uploadBackground(formData: FormData): Observable<CatalogueOption> {
+    return this.http.post<CatalogueOption>(this.buildUrl('/api/backgrounds/upload'), formData);
+  }
+
   listAssets(): Observable<CatalogueOption[]> {
     return this.http.get<CatalogueOption[]>(this.buildUrl('/api/assets'));
   }

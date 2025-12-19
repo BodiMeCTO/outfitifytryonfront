@@ -1,0 +1,84 @@
+<section class="section-card background-upload">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Choose or upload a background image</mat-card-title>
+      <mat-card-subtitle>
+        Optional: pick or upload a background to place behind your outfits.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- EXISTING BACKGROUNDS -->
+      <div class="existing-images" *ngIf="backgroundOptions$ | async as options">
+        <h3 class="section-title">Use a saved background</h3>
+
+        <div *ngIf="options.length; else noOptions" class="image-grid">
+          <button
+            mat-stroked-button
+            type="button"
+            class="image-tile"
+            *ngFor="let option of options"
+            (click)="selectExisting(option)"
+            [class.is-selected]="(selectedBackground$ | async)?.id === option.id"
+          >
+            <ng-container *ngIf="option.thumbnailUrl; else nameOnly">
+              <img [src]="option.thumbnailUrl" [alt]="option.name || 'Background option'" />
+            </ng-container>
+            <ng-template #nameOnly>
+              <span class="placeholder">{{ option.name || 'Background' }}</span>
+            </ng-template>
+          </button>
+        </div>
+
+        <ng-template #noOptions>
+          <p class="hint">No saved backgrounds yet. Upload one to customise your scene.</p>
+        </ng-template>
+      </div>
+
+      <!-- UPLOAD NEW IMAGE -->
+      <div class="upload-zone">
+        <input
+          #fileInput
+          type="file"
+          accept="image/*"
+          (change)="handleFileSelection($event)"
+          hidden
+        />
+        <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="isUploading()">
+          <mat-icon>photo_library</mat-icon>
+          {{ isUploading() ? 'Uploading…' : 'Upload a new background' }}
+        </button>
+        <p class="hint">
+          Backgrounds are optional. You can upload a new one or keep the default selection.
+        </p>
+        <mat-progress-bar *ngIf="isUploading()" mode="indeterminate"></mat-progress-bar>
+      </div>
+
+      <!-- CURRENT SELECTION PREVIEW -->
+      <div class="preview" *ngIf="selectedBackground$ | async as selected">
+        <ng-container *ngIf="selected.thumbnailUrl; else previewNameOnly">
+          <img [src]="selected.thumbnailUrl" [alt]="selected.name || 'Selected background'" />
+        </ng-container>
+        <ng-template #previewNameOnly>
+          <div class="name-preview">
+            <mat-icon>image</mat-icon>
+            <div>
+              <p class="label">Selected background</p>
+              <p class="name">{{ selected.name || 'Background' }}</p>
+            </div>
+          </div>
+        </ng-template>
+
+        <div class="actions">
+          <button mat-stroked-button color="primary" routerLink="/garment-library">
+            Continue to garments
+          </button>
+          <button mat-button routerLink="/user-image-upload" type="button">
+            Back to model upload
+          </button>
+          <button mat-button type="button" (click)="clearSelection()">Remove</button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</section>
