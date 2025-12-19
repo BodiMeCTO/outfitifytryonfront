@@ -33,7 +33,8 @@ import {
   CreateGarmentInstanceRequest,
   CatalogueOption,
   GarmentCategoryDto,
-  GarmentImageDto
+  GarmentImageDto,
+  BackgroundImageDto
 } from '../models/outfitify-api';
 
 import { OutfitifyApiService } from './outfitify-api.service';
@@ -541,7 +542,10 @@ uploadAndSetInspiration(
       return throwError(() => error);
     }
 
-    return this.outfitifyApi.listBackgrounds().pipe(
+    return this.outfitifyApi.listBackgroundImages().pipe(
+      map((backgrounds: BackgroundImageDto[]) =>
+        backgrounds.map((dto) => this.mapBackgroundImageDtoToCatalogueOption(dto))
+      ),
       tap((backgrounds: CatalogueOption[]) => {
         this.backgroundOptionsSubject.next(backgrounds);
         this.backgroundOptionsLoaded = true;
@@ -584,12 +588,11 @@ uploadAndSetInspiration(
     const formData = new FormData();
     formData.append('fileData', file, file.name);
     formData.append('Name', file.name);
+    formData.append('EnvironmentType', 'Custom');
+    formData.append('IsActive', 'true');
 
-    return this.outfitifyApi.uploadBackground(formData).pipe(
-      map((option: CatalogueOption) => ({
-        ...option,
-        thumbnailUrl: option.thumbnailUrl ?? previewUrl
-      })),
+    return this.outfitifyApi.uploadBackgroundImage(formData).pipe(
+      map((dto: BackgroundImageDto) => this.mapBackgroundImageDtoToCatalogueOption(dto, previewUrl)),
       tap((option) => {
         this.setSelectedBackground(option);
 
@@ -993,6 +996,17 @@ uploadAndSetInspiration(
       source: 'upload',
       remoteUrl: dto.imageUrl,
       id: dto.id
+    };
+  }
+
+  private mapBackgroundImageDtoToCatalogueOption(
+    dto: BackgroundImageDto,
+    fallbackThumbnail?: string
+  ): CatalogueOption {
+    return {
+      id: dto.backgroundImageId,
+      name: dto.name,
+      thumbnailUrl: dto.imageUrl ?? fallbackThumbnail
     };
   }
 }

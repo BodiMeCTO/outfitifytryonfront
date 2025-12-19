@@ -8,6 +8,7 @@ import {
   CatalogueOption,
   CreditsBalanceDto,
   CreditsLedgerEntryDto,
+  BackgroundImageDto,
   InventoryItemDto,
   GarmentSummaryDto,
   GarmentCategoryDto,
@@ -18,7 +19,8 @@ import {
   CreateGarmentInstanceRequest,
   GarmentInstanceDto,
   ModelProfileDto,
-  GarmentImageDto
+  GarmentImageDto,
+  UpdateBackgroundImageDto
 } from '../models/outfitify-api';
 import { CreateOutfitDto, OutfitDto } from '../models/outfit';
 import { CreateModelImageDto, ModelImageDto } from './outfit.service';
@@ -60,12 +62,27 @@ export class OutfitifyApiService {
     return this.http.get<CatalogueOption[]>(this.buildUrl('/api/poses'));
   }
 
-  listBackgrounds(): Observable<CatalogueOption[]> {
-    return this.http.get<CatalogueOption[]>(this.buildUrl('/api/backgrounds'));
+  listBackgroundImages(): Observable<BackgroundImageDto[]> {
+    return this.http.get<BackgroundImageDto[]>(this.buildUrl('/api/backgrounds'));
   }
 
-  uploadBackground(formData: FormData): Observable<CatalogueOption> {
-    return this.http.post<CatalogueOption>(this.buildUrl('/api/backgrounds/upload'), formData);
+  getBackgroundImage(id: string): Observable<BackgroundImageDto> {
+    return this.http.get<BackgroundImageDto>(this.buildUrl(`/api/backgrounds/${id}`));
+  }
+
+  uploadBackgroundImage(formData: FormData): Observable<BackgroundImageDto> {
+    return this.http.post<BackgroundImageDto>(this.buildUrl('/api/backgrounds/upload'), formData);
+  }
+
+  updateBackgroundImage(
+    id: string,
+    payload: UpdateBackgroundImageDto
+  ): Observable<BackgroundImageDto> {
+    return this.http.put<BackgroundImageDto>(this.buildUrl(`/api/backgrounds/${id}`), payload);
+  }
+
+  deleteBackgroundImage(id: string): Observable<void> {
+    return this.http.delete<void>(this.buildUrl(`/api/backgrounds/${id}`));
   }
 
   listAssets(): Observable<CatalogueOption[]> {
