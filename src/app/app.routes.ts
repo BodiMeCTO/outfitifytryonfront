@@ -51,6 +51,13 @@ export const routes: Routes = [
         title: 'Upload User Image'
       },
       {
+        path: 'background-image-upload',
+        loadComponent: () =>
+          import('./components/background-image-upload/background-image-upload.component')
+            .then((m) => m.BackgroundImageUploadComponent),
+        title: 'Choose Background'
+      },
+      {
         path: 'garment-library',
         loadComponent: () =>
           import('./components/garment-library/garment-library.component')

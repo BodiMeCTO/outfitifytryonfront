@@ -93,6 +93,8 @@ export class OutfitService {
   private readonly modelIdSubject = new BehaviorSubject<string | null>(null);
   private readonly poseIdSubject = new BehaviorSubject<string | null>(null);
   private readonly backgroundIdSubject = new BehaviorSubject<string | null>(null);
+  private readonly backgroundOptionsSubject = new BehaviorSubject<CatalogueOption[]>([]);
+  private backgroundOptionsLoaded = false;
 
   // --- Gallery state ---
 
@@ -190,16 +192,9 @@ export class OutfitService {
       });
 
     // Background
-    this.outfitifyApi
-      .listBackgrounds()
+    this.ensureBackgroundOptionsLoaded()
       .pipe(take(1))
       .subscribe({
-        next: (backgrounds: CatalogueOption[]) => {
-          const first = backgrounds[0];
-          if (first?.id) {
-            this.backgroundIdSubject.next(first.id);
-          }
-        },
         error: (err) => {
           console.error('Failed to load default background', err);
         }
@@ -230,6 +225,17 @@ export class OutfitService {
   readonly selectedModelId$ = this.modelIdSubject.asObservable();
   readonly selectedPoseId$ = this.poseIdSubject.asObservable();
   readonly selectedBackgroundId$ = this.backgroundIdSubject.asObservable();
+  readonly backgroundOptions$ = this.backgroundOptionsSubject.asObservable();
+
+  readonly selectedBackground$ = combineLatest([
+    this.selectedBackgroundId$,
+    this.backgroundOptions$
+  ]).pipe(
+    map(
+      ([selectedId, options]) =>
+        options.find((option) => option.id === selectedId) ?? null
+    )
+  );
 
   readonly selectedGarments$ = combineLatest([
     this.selectedTop$,
@@ -511,6 +517,97 @@ uploadAndSetInspiration(
 
   setSelectedBackground(option: { id: string } | null): void {
     this.backgroundIdSubject.next(option?.id ?? null);
+  }
+
+  ensureBackgroundOptionsLoaded(): Observable<CatalogueOption[]> {
+    if (this.backgroundOptionsLoaded) {
+      return of(this.backgroundOptionsSubject.value);
+    }
+
+    return this.loadBackgroundOptions();
+  }
+
+  private loadBackgroundOptions(): Observable<CatalogueOption[]> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Unable to load background options from OutfitifyAPI', error);
+      this.backgroundOptionsSubject.next([]);
+      return throwError(() => error);
+    }
+
+    return this.outfitifyApi.listBackgrounds().pipe(
+      tap((backgrounds: CatalogueOption[]) => {
+        this.backgroundOptionsSubject.next(backgrounds);
+        this.backgroundOptionsLoaded = true;
+
+        if (!this.backgroundIdSubject.value && backgrounds[0]?.id) {
+          this.setSelectedBackground(backgrounds[0]);
+        }
+      }),
+      catchError((error: unknown) => {
+        console.error(
+          'Unable to load background options from OutfitifyAPI',
+          this.createApiUnavailableError('loading background options', error)
+        );
+        this.backgroundOptionsSubject.next([]);
+        return throwError(() =>
+          this.createApiUnavailableError('loading background options', error)
+        );
+      })
+    );
+  }
+
+  uploadBackgroundOption(file: File, previewUrl: string): Observable<CatalogueOption> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Failed to upload background image', error);
+
+      const fallbackOption: CatalogueOption = {
+        id: `local-background-${Date.now()}`,
+        name: file.name,
+        thumbnailUrl: previewUrl
+      };
+
+      this.setSelectedBackground(fallbackOption);
+      this.backgroundOptionsSubject.next([...this.backgroundOptionsSubject.value, fallbackOption]);
+
+      return of(fallbackOption);
+    }
+
+    const formData = new FormData();
+    formData.append('fileData', file, file.name);
+    formData.append('Name', file.name);
+
+    return this.outfitifyApi.uploadBackground(formData).pipe(
+      map((option: CatalogueOption) => ({
+        ...option,
+        thumbnailUrl: option.thumbnailUrl ?? previewUrl
+      })),
+      tap((option) => {
+        this.setSelectedBackground(option);
+
+        const current = this.backgroundOptionsSubject.value;
+        const exists = current.some((item) => item.id === option.id);
+        if (!exists) {
+          this.backgroundOptionsSubject.next([...current, option]);
+        }
+      }),
+      catchError((error: unknown) => {
+        console.error('Failed to upload background image', error);
+
+        const fallbackOption: CatalogueOption = {
+          id: `local-background-${Date.now()}`,
+          name: file.name,
+          thumbnailUrl: previewUrl
+        };
+
+        this.setSelectedBackground(fallbackOption);
+        this.backgroundOptionsSubject.next([...this.backgroundOptionsSubject.value, fallbackOption]);
+        return of(fallbackOption);
+      })
+    );
   }
 
   // -----------------------------
