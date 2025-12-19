@@ -31,7 +31,7 @@
         >
           <mat-icon>menu</mat-icon>
         </button>
-        <span class="brand">Uniform Try On</span>
+        <span class="brand">Outfitify</span>
         <span class="spacer"></span>
         <nav class="desktop-links" *ngIf="(isHandset$ | async) === false && (isLoggedIn$ | async)">
           <a mat-button *ngFor="let link of links" [routerLink]="link.path" routerLinkActive="active-link">

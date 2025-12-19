@@ -76,7 +76,7 @@ export class UserImageUploadComponent implements OnInit {
         .subscribe({
           next: (selection: SelectedInspiration) => {
             this.isUploading.set(false);
-            this.snackBar.open('User image uploaded successfully.', 'Great!', {
+            this.snackBar.open('Image of the person uploaded successfully.', 'Great!', {
               duration: 2500
             });
             if (!selection.remoteUrl) {

@@ -87,7 +87,7 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Uniform Try On outfit',
+          title: 'Outfitify Generated Outfit',
           text: 'Check out this generated outfit I created!',
           url: image.imageUrl
         });
