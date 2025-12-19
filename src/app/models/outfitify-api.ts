@@ -25,6 +25,26 @@ export interface CatalogueOption {
   description?: string;
 }
 
+export interface BackgroundImageDto {
+  backgroundImageId: string;
+  name: string;
+  imageUrl?: string | null;
+  environmentType?: string | null;
+  isActive?: boolean | null;
+}
+
+export interface CreateBackgroundImageDto {
+  name: string;
+  environmentType?: string | null;
+  isActive?: boolean | null;
+}
+
+export interface UpdateBackgroundImageDto {
+  name?: string | null;
+  environmentType?: string | null;
+  isActive?: boolean | null;
+}
+
 export interface GarmentCategoryDto {
   garmentCategoryEntityId?: number;
   group?: string | null;
