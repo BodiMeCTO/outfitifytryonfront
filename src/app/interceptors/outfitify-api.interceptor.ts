@@ -21,8 +21,8 @@ export const outfitifyApiInterceptor: HttpInterceptorFn = (req, next) => {
   const headers: Record<string, string> = {};
 
   // Get runtime bearer token from AuthService
-  const auth = inject(AuthService);
-  const bearer = auth.getToken()?.trim();
+  const auth = inject(AuthService, { optional: true });
+  const bearer = auth?.getToken?.()?.trim();
 
   const functionsKey = apiFunctionsKey?.trim();
 
