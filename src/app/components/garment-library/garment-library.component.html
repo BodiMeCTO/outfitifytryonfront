@@ -7,69 +7,12 @@
     </p>
   </header>
 
-  <mat-card appearance="outlined" class="upload-card">
-    <mat-card-header>
-      <mat-card-title>Upload a garment image</mat-card-title>
-      <mat-card-subtitle>
-        Select a garment group and upload an image to add it to your library.
-      </mat-card-subtitle>
-    </mat-card-header>
-
-    <mat-card-content>
-      <div class="upload-grid">
-        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
-          <mat-label>Garment group</mat-label>
-          <mat-select
-            [value]="selectedGarmentCategoryId()"
-            (valueChange)="selectedGarmentCategoryId.set($event)"
-            [disabled]="isLoadingCategories()"
-          >
-            <mat-option
-              *ngFor="let category of garmentCategoryOptions()"
-              [value]="categoryId(category)"
-            >
-              {{ categoryLabel(category) }}
-            </mat-option>
-          </mat-select>
-          <mat-hint *ngIf="garmentCategoriesError()">{{ garmentCategoriesError() }}</mat-hint>
-          <mat-hint *ngIf="!garmentCategoriesError() && isLoadingCategories()">
-            Loading garment groups…
-          </mat-hint>
-        </mat-form-field>
-
-        <div class="upload-actions">
-          <input
-            #garmentFileInput
-            type="file"
-            accept="image/*"
-            (change)="handleGarmentUploadFile($event)"
-            hidden
-          />
-          <button
-            mat-raised-button
-            color="primary"
-            type="button"
-            (click)="garmentFileInput.click()"
-            [disabled]="isUploadingGarment() || !selectedGarmentCategoryId()"
-          >
-            <mat-icon>upload</mat-icon>
-            {{ isUploadingGarment() ? 'Uploading…' : 'Upload garment image' }}
-          </button>
-          <p class="hint">
-            Select a garment group, then upload an image to add it to the library below.
-          </p>
-          <mat-progress-bar *ngIf="isUploadingGarment()" mode="indeterminate"></mat-progress-bar>
-        </div>
-      </div>
-    </mat-card-content>
-  </mat-card>
-
   <div class="group-toggle">
     <mat-button-toggle-group
       name="group"
       [value]="group()"
       (change)="handleGroupChange($event)"
-      [attr.aria-label]="'Garment group'"
+      [attr.aria-label]="'Garment category'"
     >
       <mat-button-toggle value="tops">Tops</mat-button-toggle>
       <mat-button-toggle value="bottoms">Bottoms</mat-button-toggle>
@@ -90,7 +33,7 @@
       class="garment-grid__status"
       *ngIf="!isLoadingGarments() && !garmentsError() && garmentsForGroup().length === 0"
     >
-      No garments available for this group yet.
+      No garments available for this category yet.
     </div>
 
     <mat-card
@@ -154,6 +97,63 @@
       </mat-card-actions>
     </mat-card>
   </section>
+
+  <mat-card appearance="outlined" class="upload-card">
+    <mat-card-header>
+      <mat-card-title>Upload a garment image</mat-card-title>
+      <mat-card-subtitle>
+        Select a garment category and upload an image to add it to your library.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="upload-grid">
+        <div class="upload-actions">
+          <input
+            #garmentFileInput
+            type="file"
+            accept="image/*"
+            (change)="handleGarmentUploadFile($event)"
+            hidden
+          />
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            (click)="garmentFileInput.click()"
+            [disabled]="isUploadingGarment() || !selectedGarmentCategoryId()"
+          >
+            <mat-icon>upload</mat-icon>
+            {{ isUploadingGarment() ? 'Uploading…' : 'Upload garment image' }}
+          </button>
+          <p class="hint">
+            Select a garment category, then upload an image to add it to your library.
+          </p>
+          <mat-progress-bar *ngIf="isUploadingGarment()" mode="indeterminate"></mat-progress-bar>
+        </div>
+
+        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
+          <mat-label>Garment category</mat-label>
+          <mat-select
+            [value]="selectedGarmentCategoryId()"
+            (valueChange)="selectedGarmentCategoryId.set($event)"
+            [disabled]="isLoadingCategories()"
+          >
+            <mat-option
+              *ngFor="let category of garmentCategoryOptions()"
+              [value]="categoryId(category)"
+            >
+              {{ categoryLabel(category) }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="garmentCategoriesError()">{{ garmentCategoriesError() }}</mat-hint>
+          <mat-hint *ngIf="!garmentCategoriesError() && isLoadingCategories()">
+            Loading garment categories…
+          </mat-hint>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
   <footer class="library-actions">
     <div class="helper" [class.error]="!hasCompleteOutfitSelection()">
