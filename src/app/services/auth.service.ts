@@ -4,6 +4,7 @@ import { OutfitifyApiService } from './outfitify-api.service';
 import { ForgotPasswordRequest, SignupRequest } from '../models/auth';
 import { UserProfile } from '../models/user';
 import { ModelProfileDto } from '../models/outfitify-api';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -16,7 +17,7 @@ export class AuthService {
 
   constructor(private readonly api: OutfitifyApiService) {
     // On app start, restore token from localStorage if it exists
-    const saved = localStorage.getItem('access_token');
+    const saved = localStorage.getItem('access_token')?.trim();
     const savedEmail = localStorage.getItem('user_email');
     if (saved) {
       this.tokenSubject.next(saved);
@@ -87,6 +88,14 @@ export class AuthService {
     const email = this.emailSubject.value ?? localStorage.getItem('user_email');
 
     if (!bearer) {
+      this.userSubject.next(null);
+      return of(null);
+    }
+
+    if (!environment.apiBaseUrl?.trim()) {
+      console.warn(
+        'Skipping current user refresh because no OutfitifyAPI base URL is configured.'
+      );
       this.userSubject.next(null);
       return of(null);
     }

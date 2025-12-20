@@ -11,6 +11,7 @@ import {
 import {
   catchError,
   distinctUntilChanged,
+  filter,
   map,
   tap,
   switchMap,
@@ -114,7 +115,14 @@ export class OutfitService {
     private readonly outfitifyApi: OutfitifyApiService,
     private readonly auth: AuthService
   ) {
-    this.initialiseDefaultPoseAndBackground();
+    this.auth.token$
+      .pipe(
+        map((token) => token?.trim() ?? ''),
+        distinctUntilChanged(),
+        filter(Boolean),
+        take(1)
+      )
+      .subscribe(() => this.initialiseDefaultPoseAndBackground());
     this.auth.user$.subscribe((user) => this.applyUserContext(user));
   }
 
@@ -191,6 +199,17 @@ export class OutfitService {
   }
 
   private initialiseDefaultPoseAndBackground(): void {
+    if (!this.apiBaseUrl?.trim()) {
+      console.warn(
+        'Skipping default pose load because no OutfitifyAPI base URL is configured.'
+      );
+      return;
+    }
+
+    if (!this.auth.isLoggedIn()) {
+      return;
+    }
+
     // Pose
     this.outfitifyApi
       .listPoses()
@@ -203,7 +222,7 @@ export class OutfitService {
           }
         },
         error: (err) => {
-          console.error('Failed to load default pose', err);
+          console.error(this.createApiUnavailableError('loading default pose', err));
         }
       });
 
