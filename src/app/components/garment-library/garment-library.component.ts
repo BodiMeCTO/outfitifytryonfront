@@ -149,7 +149,7 @@ export class GarmentLibraryComponent implements OnInit {
           const message =
             err instanceof Error
               ? err.message
-              : 'Unable to load garment groups. Please check your API configuration.';
+              : 'Unable to load garment categories. Please check your API configuration.';
           this.isLoadingCategories.set(false);
           this.garmentCategoriesError.set(message);
           this.snackBar.open(message, 'Dismiss', {
@@ -174,7 +174,7 @@ export class GarmentLibraryComponent implements OnInit {
   }
 
   categoryLabel(category: GarmentCategoryDto): string {
-    const groupLabel = category.group || 'Group';
+    const groupLabel = category.group || 'Category';
     const specific = category.category;
 
     if (specific && specific !== category.group) {
@@ -201,8 +201,11 @@ export class GarmentLibraryComponent implements OnInit {
     }
 
     const selectedCategoryId = this.selectedGarmentCategoryId();
-    if (!selectedCategoryId) {
-      this.snackBar.open('Choose a garment group before uploading an image.', 'Got it', {
+    const selectedCategory = this.garmentCategories().find(
+      (item) => this.categoryId(item) === selectedCategoryId
+    );
+    if (!selectedCategoryId || !selectedCategory) {
+      this.snackBar.open('Choose a garment category before uploading an image.', 'Got it', {
         duration: 3500
       });
       return;
@@ -211,17 +214,17 @@ export class GarmentLibraryComponent implements OnInit {
     this.isUploadingGarment.set(true);
 
     this.outfitService
-      .uploadGarmentImage(file, selectedCategoryId)
+      .uploadGarmentImage(file, selectedCategory)
       .pipe(take(1))
       .subscribe({
         next: () => {
           this.isUploadingGarment.set(false);
-          const targetGroup = this.groupForCategoryId(selectedCategoryId);
+          const targetGroup = this.toGarmentGroup(selectedCategory.group);
           if (targetGroup) {
             this.group.set(targetGroup);
           }
           this.snackBar.open(
-            'Garment image uploaded. It’s now available in this group.',
+            'Garment image uploaded. It’s now available in this category.',
             'Great!',
             { duration: 3000 }
           );

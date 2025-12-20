@@ -691,7 +691,7 @@ uploadAndSetInspiration(
     try {
       this.getApiBaseUrlOrThrow();
     } catch (error) {
-      console.error('Unable to load garment groups from OutfitifyAPI', error);
+      console.error('Unable to load garment categories from OutfitifyAPI', error);
       this.garmentCategoriesSubject.next([]);
       return throwError(() => error);
     }
@@ -703,18 +703,18 @@ uploadAndSetInspiration(
       }),
       catchError((error: unknown) => {
         console.error(
-          'Unable to load garment groups from OutfitifyAPI',
-          this.createApiUnavailableError('loading garment groups', error)
+          'Unable to load garment categories from OutfitifyAPI',
+          this.createApiUnavailableError('loading garment categories', error)
         );
         this.garmentCategoriesSubject.next([]);
         return throwError(() =>
-          this.createApiUnavailableError('loading garment groups', error)
+          this.createApiUnavailableError('loading garment categories', error)
         );
       })
     );
   }
 
-  uploadGarmentImage(file: File, garmentCategoryEntityId: number): Observable<Garment[]> {
+  uploadGarmentImage(file: File, garmentCategory: GarmentCategoryDto): Observable<Garment[]> {
     try {
       this.getApiBaseUrlOrThrow();
     } catch (error) {
@@ -722,8 +722,13 @@ uploadAndSetInspiration(
       return throwError(() => error);
     }
 
+    const garmentCategoryEntityId =
+      garmentCategory.garmentCategoryEntityId ??
+      (garmentCategory as { garmentCategoryEntityID?: number }).garmentCategoryEntityID ??
+      null;
+
     if (!garmentCategoryEntityId) {
-      return throwError(() => new Error('Select a garment group before uploading the image.'));
+      return throwError(() => new Error('Select a garment category before uploading the image.'));
     }
 
     const formData = new FormData();
@@ -732,17 +737,16 @@ uploadAndSetInspiration(
     formData.append('GarmentCategoryEntityId', garmentCategoryEntityId.toString());
     formData.append('GarmentCategoryEntityID', garmentCategoryEntityId.toString());
 
-    const matchedCategory = this.garmentCategoriesSubject.value.find(
-      (category) =>
-        category.garmentCategoryEntityId === garmentCategoryEntityId ||
-        (category as { garmentCategoryEntityID?: number }).garmentCategoryEntityID ===
-          garmentCategoryEntityId
-    );
-    if (matchedCategory?.group) {
-      formData.append('Group', matchedCategory.group);
+    if (garmentCategory.group) {
+      formData.append('Group', garmentCategory.group);
     }
-    if (matchedCategory?.category) {
-      formData.append('Category', matchedCategory.category);
+    if (garmentCategory.category) {
+      formData.append('Category', garmentCategory.category);
+    }
+    try {
+      formData.append('GarmentCategory', JSON.stringify(garmentCategory));
+    } catch (error) {
+      console.error('Unable to serialize garment category for upload', error);
     }
 
     return this.outfitifyApi.uploadGarmentImage(formData).pipe(
