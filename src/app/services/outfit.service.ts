@@ -35,7 +35,8 @@ import {
   CatalogueOption,
   GarmentCategoryDto,
   GarmentImageDto,
-  BackgroundImageDto
+  BackgroundImageDto,
+  ImagePerspectiveDto
 } from '../models/outfitify-api';
 
 import { OutfitifyApiService } from './outfitify-api.service';
@@ -106,6 +107,8 @@ export class OutfitService {
   private garmentsLoaded = false;
   private readonly garmentCategoriesSubject = new BehaviorSubject<GarmentCategoryDto[]>([]);
   private garmentCategoriesLoaded = false;
+  private readonly imagePerspectivesSubject = new BehaviorSubject<ImagePerspectiveDto[]>([]);
+  private imagePerspectivesLoaded = false;
 
   private readonly generatedImagesSubject = new BehaviorSubject<GeneratedImage[]>([]);
   private readonly galleryIndexSubject = new BehaviorSubject<number>(0);
@@ -298,6 +301,7 @@ export class OutfitService {
 
   readonly garments$ = this.garmentsSubject.asObservable();
   readonly garmentCategories$ = this.garmentCategoriesSubject.asObservable();
+  readonly imagePerspectives$ = this.imagePerspectivesSubject.asObservable();
 
   // âœ… These two are what `garment-library.component.ts` expects
   readonly hasCompleteGarmentSelection$ = this.selectedGarments$.pipe(
@@ -658,6 +662,13 @@ uploadAndSetInspiration(
     return this.loadGarmentCategories();
   }
 
+  ensureImagePerspectivesLoaded(): Observable<ImagePerspectiveDto[]> {
+    if (this.imagePerspectivesLoaded) {
+      return of(this.imagePerspectivesSubject.value);
+    }
+    return this.loadImagePerspectives();
+  }
+
   loadGarments(): Observable<Garment[]> {
     try {
       this.getApiBaseUrlOrThrow();
@@ -714,7 +725,38 @@ uploadAndSetInspiration(
     );
   }
 
-  uploadGarmentImage(file: File, garmentCategory: GarmentCategoryDto): Observable<Garment[]> {
+  private loadImagePerspectives(): Observable<ImagePerspectiveDto[]> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Unable to load garment image perspectives from OutfitifyAPI', error);
+      this.imagePerspectivesSubject.next([]);
+      return throwError(() => error);
+    }
+
+    return this.outfitifyApi.listGarmentImagePerspectives().pipe(
+      tap((perspectives: ImagePerspectiveDto[]) => {
+        this.imagePerspectivesSubject.next(perspectives);
+        this.imagePerspectivesLoaded = true;
+      }),
+      catchError((error: unknown) => {
+        console.error(
+          'Unable to load garment image perspectives from OutfitifyAPI',
+          this.createApiUnavailableError('loading image perspectives', error)
+        );
+        this.imagePerspectivesSubject.next([]);
+        return throwError(() =>
+          this.createApiUnavailableError('loading image perspectives', error)
+        );
+      })
+    );
+  }
+
+  uploadGarmentImage(
+    file: File,
+    garmentCategory: GarmentCategoryDto,
+    imagePerspectiveId?: number | null
+  ): Observable<Garment[]> {
     try {
       this.getApiBaseUrlOrThrow();
     } catch (error) {
@@ -742,6 +784,9 @@ uploadAndSetInspiration(
     }
     if (garmentCategory.category) {
       formData.append('Category', garmentCategory.category);
+    }
+    if (imagePerspectiveId) {
+      formData.append('ImagePerspectiveId', imagePerspectiveId.toString());
     }
     try {
       formData.append('GarmentCategory', JSON.stringify(garmentCategory));

@@ -9,6 +9,7 @@ import {
   CreditsBalanceDto,
   CreditsLedgerEntryDto,
   BackgroundImageDto,
+  ImagePerspectiveDto,
   InventoryItemDto,
   GarmentSummaryDto,
   GarmentCategoryDto,
@@ -92,6 +93,10 @@ export class OutfitifyApiService {
   // --- Garments ---
   listGarments(): Observable<GarmentSummaryDto[]> {
     return this.http.get<GarmentSummaryDto[]>(this.buildUrl('/api/garments'));
+  }
+
+  listGarmentImagePerspectives(): Observable<ImagePerspectiveDto[]> {
+    return this.http.get<ImagePerspectiveDto[]>(this.buildUrl('/api/garments/image-perspectives'));
   }
 
   listGarmentCategories(): Observable<GarmentCategoryDto[]> {

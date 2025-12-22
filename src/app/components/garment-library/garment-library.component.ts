@@ -49,6 +49,9 @@ export class GarmentLibraryComponent implements OnInit {
   readonly garmentCategories = toSignal(this.outfitService.garmentCategories$, {
     initialValue: []
   });
+  readonly imagePerspectives = toSignal(this.outfitService.imagePerspectives$, {
+    initialValue: []
+  });
   readonly garmentCategoryOptions = computed(() => {
     const categories = [...this.garmentCategories()];
     return categories.sort((a, b) => {
@@ -66,8 +69,11 @@ export class GarmentLibraryComponent implements OnInit {
     });
   });
   readonly isLoadingCategories = signal(false);
+  readonly isLoadingImagePerspectives = signal(false);
   readonly garmentCategoriesError = signal<string | null>(null);
+  readonly imagePerspectivesError = signal<string | null>(null);
   readonly selectedGarmentCategoryId = signal<number | null>(null);
+  readonly selectedImagePerspectiveId = signal<number | null>(null);
   readonly isUploadingGarment = signal(false);
 
   // Selected garments from the service
@@ -157,6 +163,32 @@ export class GarmentLibraryComponent implements OnInit {
           });
         }
       });
+
+    this.isLoadingImagePerspectives.set(true);
+    this.outfitService
+      .ensureImagePerspectivesLoaded()
+      .pipe(take(1))
+      .subscribe({
+        next: (perspectives) => {
+          this.isLoadingImagePerspectives.set(false);
+          this.imagePerspectivesError.set(null);
+          const firstId = this.perspectiveId(perspectives[0]);
+          if (firstId && !this.selectedImagePerspectiveId()) {
+            this.selectedImagePerspectiveId.set(firstId);
+          }
+        },
+        error: (err) => {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Unable to load image perspectives. Please check your API configuration.';
+          this.isLoadingImagePerspectives.set(false);
+          this.imagePerspectivesError.set(message);
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 3500
+          });
+        }
+      });
   }
 
   handleGroupChange(event: { value: GarmentGroup }): void {
@@ -171,6 +203,16 @@ export class GarmentLibraryComponent implements OnInit {
       (category as { garmentCategoryEntityID?: number }).garmentCategoryEntityID ??
       null
     );
+  }
+
+  perspectiveId(perspective: { id?: number; Id?: number } | undefined): number | null {
+    if (!perspective) return null;
+    return perspective.id ?? (perspective as { Id?: number }).Id ?? null;
+  }
+
+  perspectiveName(perspective: { name?: string | null; Name?: string | null } | undefined): string {
+    if (!perspective) return 'Unknown';
+    return perspective.name ?? (perspective as { Name?: string | null }).Name ?? 'Unknown';
   }
 
   categoryLabel(category: GarmentCategoryDto): string {
@@ -204,8 +246,18 @@ export class GarmentLibraryComponent implements OnInit {
     const selectedCategory = this.garmentCategories().find(
       (item) => this.categoryId(item) === selectedCategoryId
     );
+    const selectedPerspectiveId = this.selectedImagePerspectiveId();
+    const selectedPerspective = this.imagePerspectives().find(
+      (item) => this.perspectiveId(item) === selectedPerspectiveId
+    );
     if (!selectedCategoryId || !selectedCategory) {
       this.snackBar.open('Choose a garment category before uploading an image.', 'Got it', {
+        duration: 3500
+      });
+      return;
+    }
+    if (!selectedPerspectiveId || !selectedPerspective) {
+      this.snackBar.open('Choose an image perspective before uploading an image.', 'Got it', {
         duration: 3500
       });
       return;
@@ -214,7 +266,7 @@ export class GarmentLibraryComponent implements OnInit {
     this.isUploadingGarment.set(true);
 
     this.outfitService
-      .uploadGarmentImage(file, selectedCategory)
+      .uploadGarmentImage(file, selectedCategory, selectedPerspectiveId)
       .pipe(take(1))
       .subscribe({
         next: () => {

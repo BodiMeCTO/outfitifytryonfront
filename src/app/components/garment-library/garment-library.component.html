@@ -121,7 +121,7 @@
             color="primary"
             type="button"
             (click)="garmentFileInput.click()"
-            [disabled]="isUploadingGarment() || !selectedGarmentCategoryId()"
+            [disabled]="isUploadingGarment() || !selectedGarmentCategoryId() || !selectedImagePerspectiveId()"
           >
             <mat-icon>upload</mat-icon>
             {{ isUploadingGarment() ? 'Uploading…' : 'Upload garment image' }}
@@ -149,6 +149,26 @@
           <mat-hint *ngIf="garmentCategoriesError()">{{ garmentCategoriesError() }}</mat-hint>
           <mat-hint *ngIf="!garmentCategoriesError() && isLoadingCategories()">
             Loading garment categories…
+          </mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
+          <mat-label>Image perspective</mat-label>
+          <mat-select
+            [value]="selectedImagePerspectiveId()"
+            (valueChange)="selectedImagePerspectiveId.set($event)"
+            [disabled]="isLoadingImagePerspectives()"
+          >
+            <mat-option
+              *ngFor="let perspective of imagePerspectives()"
+              [value]="perspectiveId(perspective)"
+            >
+              {{ perspectiveName(perspective) }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="imagePerspectivesError()">{{ imagePerspectivesError() }}</mat-hint>
+          <mat-hint *ngIf="!imagePerspectivesError() && isLoadingImagePerspectives()">
+            Loading image perspectives…
           </mat-hint>
         </mat-form-field>
       </div>

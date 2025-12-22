@@ -53,6 +53,13 @@ export interface GarmentCategoryDto {
   displayOrder?: number | null;
 }
 
+export interface ImagePerspectiveDto {
+  id?: number;
+  name?: string | null;
+  Id?: number;
+  Name?: string | null;
+}
+
 export interface GarmentDto {
   id: string;
   name: string;
