@@ -773,25 +773,15 @@ uploadAndSetInspiration(
       return throwError(() => new Error('Select a garment category before uploading the image.'));
     }
 
+    // OutfitifyAPI expects a minimal multipart payload: file, name, category ID,
+    // and optionally the image perspective ID. Extra fields (like the full
+    // GarmentCategory object) are rejected by the backend model binder.
     const formData = new FormData();
     formData.append('fileData', file, file.name);
     formData.append('Name', file.name);
     formData.append('GarmentCategoryEntityId', garmentCategoryEntityId.toString());
-    formData.append('GarmentCategoryEntityID', garmentCategoryEntityId.toString());
-
-    if (garmentCategory.group) {
-      formData.append('Group', garmentCategory.group);
-    }
-    if (garmentCategory.category) {
-      formData.append('Category', garmentCategory.category);
-    }
-    if (imagePerspectiveId) {
+    if (imagePerspectiveId !== null && imagePerspectiveId !== undefined) {
       formData.append('ImagePerspectiveId', imagePerspectiveId.toString());
-    }
-    try {
-      formData.append('GarmentCategory', JSON.stringify(garmentCategory));
-    } catch (error) {
-      console.error('Unable to serialize garment category for upload', error);
     }
 
     return this.outfitifyApi.uploadGarmentImage(formData).pipe(
