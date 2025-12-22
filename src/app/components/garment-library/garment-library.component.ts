@@ -173,7 +173,7 @@ export class GarmentLibraryComponent implements OnInit {
           this.isLoadingImagePerspectives.set(false);
           this.imagePerspectivesError.set(null);
           const firstId = this.perspectiveId(perspectives[0]);
-          if (firstId && !this.selectedImagePerspectiveId()) {
+          if (firstId !== null && this.selectedImagePerspectiveId() === null) {
             this.selectedImagePerspectiveId.set(firstId);
           }
         },
@@ -250,13 +250,13 @@ export class GarmentLibraryComponent implements OnInit {
     const selectedPerspective = this.imagePerspectives().find(
       (item) => this.perspectiveId(item) === selectedPerspectiveId
     );
-    if (!selectedCategoryId || !selectedCategory) {
+    if (selectedCategoryId === null || !selectedCategory) {
       this.snackBar.open('Choose a garment category before uploading an image.', 'Got it', {
         duration: 3500
       });
       return;
     }
-    if (!selectedPerspectiveId || !selectedPerspective) {
+    if (selectedPerspectiveId === null || !selectedPerspective) {
       this.snackBar.open('Choose an image perspective before uploading an image.', 'Got it', {
         duration: 3500
       });

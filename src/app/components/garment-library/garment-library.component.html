@@ -121,7 +121,11 @@
             color="primary"
             type="button"
             (click)="garmentFileInput.click()"
-            [disabled]="isUploadingGarment() || !selectedGarmentCategoryId() || !selectedImagePerspectiveId()"
+            [disabled]="
+              isUploadingGarment() ||
+              selectedGarmentCategoryId() === null ||
+              selectedImagePerspectiveId() === null
+            "
           >
             <mat-icon>upload</mat-icon>
             {{ isUploadingGarment() ? 'Uploading…' : 'Upload garment image' }}
