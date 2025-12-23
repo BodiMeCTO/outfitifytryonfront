@@ -8,18 +8,14 @@
   </header>
 
   <div class="group-toggle">
-    <mat-button-toggle-group
-      name="group"
-      [value]="group()"
-      (change)="handleGroupChange($event)"
-      [attr.aria-label]="'Garment category'"
-    >
-      <mat-button-toggle value="tops">Tops</mat-button-toggle>
-      <mat-button-toggle value="bottoms">Bottoms</mat-button-toggle>
-      <mat-button-toggle value="full-body">Full body</mat-button-toggle>
-      <mat-button-toggle value="jackets">Jacket</mat-button-toggle>
-      <mat-button-toggle value="accessories">Accessories</mat-button-toggle>
-    </mat-button-toggle-group>
+    <mat-form-field appearance="outline">
+      <mat-label>Filter garments</mat-label>
+      <mat-select [value]="groupFilter()" (valueChange)="handleGroupChange($event)">
+        <mat-option *ngFor="let option of groupFilterOptions" [value]="option.value">
+          {{ option.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
 
   <section class="garment-grid">
@@ -41,6 +37,11 @@
       class="garment"
       *ngFor="let garment of garmentsForGroup()"
       [class.selected]="isSelected(garment)"
+      (click)="handleGarmentClick(garment)"
+      (keydown)="handleGarmentKeydown($event, garment)"
+      tabindex="0"
+      role="button"
+      [attr.aria-pressed]="isSelected(garment)"
     >
       <img
         class="garment__image"
@@ -54,36 +55,7 @@
         <mat-card-subtitle>{{ garment.description }}</mat-card-subtitle>
       </mat-card-header>
 
-      <mat-card-content>
-        <div class="size-inline" *ngIf="sizeOptionsForGarment(garment).length > 0">
-          <span class="size-inline__label">
-            {{
-              garment.group === 'tops'
-                ? 'Choose top size'
-                : garment.group === 'bottoms'
-                  ? 'Choose bottom size'
-                  : garment.group === 'full-body'
-                    ? 'Choose outfit size'
-                    : garment.group === 'jackets'
-                      ? 'Jacket size (optional)'
-                      : 'Accessories size (optional)'
-            }}
-          </span>
-
-          <mat-button-toggle-group
-            class="size-inline__group"
-            [value]="isSelected(garment) ? selectedSizeForGroup(garment.group) : null"
-            (change)="handleSizeClick(garment, $event.value)"
-          >
-            <mat-button-toggle
-              *ngFor="let size of sizeOptionsForGarment(garment)"
-              [value]="size"
-            >
-              {{ size }}
-            </mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
-      </mat-card-content>
+      <mat-card-content></mat-card-content>
 
       <mat-card-actions>
         <span class="selection-indicator" *ngIf="isSelected(garment)">
@@ -92,7 +64,7 @@
         </span>
         <span class="selection-indicator muted" *ngIf="!isSelected(garment)">
           <mat-icon>radio_button_unchecked</mat-icon>
-          Tap a size to select
+          Click to select
         </span>
       </mat-card-actions>
     </mat-card>
@@ -183,23 +155,12 @@
     <div class="helper" [class.error]="!hasCompleteOutfitSelection()">
       <mat-icon aria-hidden="true">info</mat-icon>
 
-      <ng-container *ngIf="selectedFullBody(); else separateHint">
-        <span *ngIf="!hasCompleteOutfitSelection()">
-          Pick a size on your full-body garment to continue.
-        </span>
-        <span *ngIf="hasCompleteOutfitSelection()">
-          Ready! You can create your outfit now.
-        </span>
-      </ng-container>
-
-      <ng-template #separateHint>
-        <span *ngIf="!hasCompleteOutfitSelection()">
-          Pick a size on one top and one bottom, or choose a full-body garment instead.
-        </span>
-        <span *ngIf="hasCompleteOutfitSelection()">
-          Ready! You can create your outfit now.
-        </span>
-      </ng-template>
+      <span *ngIf="!hasCompleteOutfitSelection()">
+        Select a full-body garment, or choose a top and a bottom, to continue.
+      </span>
+      <span *ngIf="hasCompleteOutfitSelection()">
+        Ready! You can create your outfit now.
+      </span>
     </div>
 
     <button

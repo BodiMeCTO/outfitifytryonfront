@@ -32,6 +32,10 @@
 .group-toggle {
   display: flex;
   justify-content: center;
+
+  mat-form-field {
+    width: min(320px, 100%);
+  }
 }
 
 .garment-grid {

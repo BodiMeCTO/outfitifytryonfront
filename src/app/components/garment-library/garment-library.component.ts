@@ -3,7 +3,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -16,6 +15,8 @@ import { Garment, GarmentGroup } from '../../models/outfit';
 import { OutfitService } from '../../services/outfit.service';
 import { GarmentCategoryDto } from '../../models/outfitify-api';
 
+type GarmentFilter = GarmentGroup | 'all';
+
 @Component({
   selector: 'app-garment-library',
   standalone: true,
@@ -23,7 +24,6 @@ import { GarmentCategoryDto } from '../../models/outfitify-api';
     CommonModule,
     MatCardModule,
     MatButtonModule,
-    MatButtonToggleModule,
     MatIconModule,
     MatSnackBarModule,
     MatFormFieldModule,
@@ -39,8 +39,16 @@ export class GarmentLibraryComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
 
-  // Active garment group tab
-  readonly group = signal<GarmentGroup>('tops');
+  // Active garment filter
+  readonly groupFilter = signal<GarmentFilter>('all');
+  readonly groupFilterOptions: ReadonlyArray<{ value: GarmentFilter; label: string }> = [
+    { value: 'all', label: 'All garments' },
+    { value: 'tops', label: 'Tops' },
+    { value: 'bottoms', label: 'Bottoms' },
+    { value: 'full-body', label: 'Full body' },
+    { value: 'jackets', label: 'Jackets' },
+    { value: 'accessories', label: 'Accessories' }
+  ];
 
   // Catalogue from API
   readonly garments = toSignal(this.outfitService.garments$, { initialValue: [] });
@@ -83,13 +91,6 @@ export class GarmentLibraryComponent implements OnInit {
   readonly selectedJacket = toSignal(this.outfitService.selectedJacket$, { initialValue: null });
   readonly selectedAccessories = toSignal(this.outfitService.selectedAccessories$, { initialValue: null });
 
-  // Selected sizes
-  readonly selectedTopSize = toSignal(this.outfitService.selectedTopSize$, { initialValue: null });
-  readonly selectedBottomSize = toSignal(this.outfitService.selectedBottomSize$, { initialValue: null });
-  readonly selectedFullBodySize = toSignal(this.outfitService.selectedFullBodySize$, { initialValue: null });
-  readonly selectedJacketSize = toSignal(this.outfitService.selectedJacketSize$, { initialValue: null });
-  readonly selectedAccessoriesSize = toSignal(this.outfitService.selectedAccessoriesSize$, { initialValue: null });
-
   // Validity flags from service
   readonly hasCompleteGarmentSelection = toSignal(this.outfitService.hasCompleteGarmentSelection$, {
     initialValue: false
@@ -112,7 +113,9 @@ export class GarmentLibraryComponent implements OnInit {
 
   // Garments visible for the active group tab
   readonly garmentsForGroup = computed(() =>
-    this.garments().filter((garment) => garment.group === this.group())
+    this.groupFilter() === 'all'
+      ? this.garments()
+      : this.garments().filter((garment) => garment.group === this.groupFilter())
   );
 
   ngOnInit(): void {
@@ -191,8 +194,8 @@ export class GarmentLibraryComponent implements OnInit {
       });
   }
 
-  handleGroupChange(event: { value: GarmentGroup }): void {
-    this.group.set(event.value);
+  handleGroupChange(value: GarmentFilter): void {
+    this.groupFilter.set(value);
   }
 
   categoryId(category: GarmentCategoryDto | undefined): number | null {
@@ -272,9 +275,7 @@ export class GarmentLibraryComponent implements OnInit {
         next: () => {
           this.isUploadingGarment.set(false);
           const targetGroup = this.toGarmentGroup(selectedCategory.group);
-          if (targetGroup) {
-            this.group.set(targetGroup);
-          }
+          this.groupFilter.set(targetGroup ?? 'all');
           this.snackBar.open(
             'Garment image uploaded. It’s now available in this category.',
             'Great!',
@@ -318,29 +319,14 @@ export class GarmentLibraryComponent implements OnInit {
     }
   }
 
-  selectedSizeForGroup(group: GarmentGroup): string | null {
-    switch (group) {
-      case 'tops':
-        return this.selectedTopSize();
-      case 'bottoms':
-        return this.selectedBottomSize();
-      case 'full-body':
-        return this.selectedFullBodySize();
-      case 'jackets':
-        return this.selectedJacketSize();
-      case 'accessories':
-        return this.selectedAccessoriesSize();
-      default:
-        return null;
-    }
+  private setDefaultSizeForGroup(group: GarmentGroup, garment: Garment | null): void {
+    const firstSize = garment ? this.sizeOptionsForGarment(garment)[0] ?? null : null;
+    this.outfitService.setSelectedSize(group, firstSize ?? null);
   }
 
-  /**
-   * ONE-CLICK selection: picking a size on a card selects
-   * both the garment and that size for its group.
-   */
-  handleSizeClick(garment: Garment, size: string): void {
+  handleGarmentClick(garment: Garment): void {
     const group = garment.group;
+    const alreadySelected = this.isSelected(garment);
 
     switch (group) {
       case 'full-body':
@@ -349,8 +335,8 @@ export class GarmentLibraryComponent implements OnInit {
         this.outfitService.setSelectedSize('tops', null);
         this.outfitService.setSelectedGarment('bottoms', null);
         this.outfitService.setSelectedSize('bottoms', null);
-        this.outfitService.setSelectedGarment('full-body', garment);
-        this.outfitService.setSelectedSize('full-body', size);
+        this.outfitService.setSelectedGarment('full-body', alreadySelected ? null : garment);
+        this.setDefaultSizeForGroup('full-body', alreadySelected ? null : garment);
         break;
 
       case 'tops':
@@ -358,16 +344,23 @@ export class GarmentLibraryComponent implements OnInit {
         // Selecting separates clears full-body
         this.outfitService.setSelectedGarment('full-body', null);
         this.outfitService.setSelectedSize('full-body', null);
-        this.outfitService.setSelectedGarment(group, garment);
-        this.outfitService.setSelectedSize(group, size);
+        this.outfitService.setSelectedGarment(group, alreadySelected ? null : garment);
+        this.setDefaultSizeForGroup(group, alreadySelected ? null : garment);
         break;
 
       case 'jackets':
       case 'accessories':
         // Optional layers, independent
-        this.outfitService.setSelectedGarment(group, garment);
-        this.outfitService.setSelectedSize(group, size);
+        this.outfitService.setSelectedGarment(group, alreadySelected ? null : garment);
+        this.setDefaultSizeForGroup(group, alreadySelected ? null : garment);
         break;
+    }
+  }
+
+  handleGarmentKeydown(event: KeyboardEvent, garment: Garment): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.handleGarmentClick(garment);
     }
   }
 
