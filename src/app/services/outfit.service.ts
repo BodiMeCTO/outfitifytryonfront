@@ -1020,15 +1020,19 @@ uploadAndSetInspiration(
 
   private mapGarmentSummaryToGarment(dto: GarmentSummaryDto): Garment {
     const fallbackGroup: GarmentGroup = 'full-body';
-    const candidateGroup =
+    const rawGroup =
       dto.category ??
       (dto as { group?: string | null }).group ??
       (dto as { garmentCategoryGroup?: string | null }).garmentCategoryGroup ??
       (dto as { garmentCategory?: string | null }).garmentCategory ??
       null;
+    const normalizedGroup =
+      typeof rawGroup === 'string'
+        ? rawGroup.trim().toLowerCase().replace(/\s+/g, '-')
+        : null;
     const allowedGroups: GarmentGroup[] = ['tops', 'bottoms', 'full-body', 'jackets', 'accessories'];
-    const group = allowedGroups.includes(candidateGroup as GarmentGroup)
-      ? (candidateGroup as GarmentGroup)
+    const group = allowedGroups.includes(normalizedGroup as GarmentGroup)
+      ? (normalizedGroup as GarmentGroup)
       : fallbackGroup;
 
     return {
