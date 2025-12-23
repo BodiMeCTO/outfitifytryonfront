@@ -75,6 +75,11 @@
   background: #fff;
   box-sizing: border-box;
   height: 100%;
+
+  &:focus-visible {
+    outline: 3px solid #43af66;
+    outline-offset: 2px;
+  }
 }
 
 .garment:hover {

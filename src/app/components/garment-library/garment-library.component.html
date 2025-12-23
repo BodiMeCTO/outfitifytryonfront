@@ -18,13 +18,8 @@
           <button
             mat-raised-button
             color="primary"
-            type="button"
             (click)="garmentFileInput.click()"
-            [disabled]="
-              isUploadingGarment() ||
-              selectedGarmentCategoryId() === null ||
-              selectedImagePerspectiveId() === null
-            "
+            [disabled]="isUploadingGarment() || selectedGarmentCategoryId() === null || selectedImagePerspectiveId() === null"
           >
             <mat-icon>upload</mat-icon>
             {{ isUploadingGarment() ? 'Uploading…' : 'Upload garment image' }}
@@ -35,7 +30,7 @@
           <mat-progress-bar *ngIf="isUploadingGarment()" mode="indeterminate"></mat-progress-bar>
         </div>
 
-        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
+        <mat-form-field appearance="outline" class="group-select">
           <mat-label>Garment category</mat-label>
           <mat-select
             [value]="selectedGarmentCategoryId()"
@@ -55,7 +50,7 @@
           </mat-hint>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
+        <mat-form-field appearance="outline" class="group-select">
           <mat-label>Image perspective</mat-label>
           <mat-select
             [value]="selectedImagePerspectiveId()"
@@ -81,15 +76,14 @@
   <header class="section-header">
     <h1>Select garments to build your outfit</h1>
     <p class="subtitle">
-      After uploading an image of the person, choose a full-body look or mix a top and bottom.
-      You can optionally add a jacket or accessories, then generate your outfit.
+      Choose a full-body garment OR a top + bottom. You can optionally add a jacket or accessories.
     </p>
   </header>
 
   <div class="group-toggle">
     <mat-form-field appearance="outline">
       <mat-label>Filter garments</mat-label>
-      <mat-select [value]="groupFilter()" (valueChange)="handleGroupChange($event)">
+      <mat-select [value]="groupFilter()" (valueChange)="groupFilter.set($event)">
         <mat-option *ngFor="let option of groupFilterOptions" [value]="option.value">
           {{ option.label }}
         </mat-option>
@@ -104,20 +98,18 @@
     <div class="garment-grid__status error" *ngIf="garmentsError()">
       {{ garmentsError() }}
     </div>
-    <div
-      class="garment-grid__status"
-      *ngIf="!isLoadingGarments() && !garmentsError() && garmentsForGroup().length === 0"
-    >
+    <div class="garment-grid__status" *ngIf="!isLoadingGarments() && !garmentsError() && filteredGarments().length === 0">
       No garments available for this category yet.
     </div>
 
     <mat-card
       appearance="outlined"
       class="garment"
-      *ngFor="let garment of garmentsForGroup()"
+      *ngFor="let garment of filteredGarments(); trackBy: trackGarmentById"
       [class.selected]="isSelected(garment)"
-      (click)="handleGarmentClick(garment)"
-      (keydown)="handleGarmentKeydown($event, garment)"
+      (click)="toggleGarment(garment)"
+      (keydown.enter)="toggleGarment(garment)"
+      (keydown.space)="$event.preventDefault(); toggleGarment(garment)"
       tabindex="0"
       role="button"
       [attr.aria-pressed]="isSelected(garment)"
@@ -125,10 +117,11 @@
       <img
         class="garment__image"
         [src]="garment.image"
-        [alt]="garment.name"
+        [alt]="garment.name || 'Garment image'"
         loading="lazy"
         (error)="handleImageError($event, garment)"
       />
+
       <mat-card-header>
         <mat-card-title>{{ garment.name }}</mat-card-title>
         <mat-card-subtitle>{{ garment.description }}</mat-card-subtitle>
@@ -138,35 +131,26 @@
 
       <mat-card-actions>
         <span class="selection-indicator" *ngIf="isSelected(garment)">
-          <mat-icon>check_circle</mat-icon>
-          Selected
+          <mat-icon>check_circle</mat-icon> Selected
         </span>
         <span class="selection-indicator muted" *ngIf="!isSelected(garment)">
-          <mat-icon>radio_button_unchecked</mat-icon>
-          Click to select
+          <mat-icon>radio_button_unchecked</mat-icon> Click to select
         </span>
       </mat-card-actions>
     </mat-card>
   </section>
 
   <footer class="library-actions">
-    <div class="helper" [class.error]="!hasCompleteOutfitSelection()">
+    <div class="helper">
       <mat-icon aria-hidden="true">info</mat-icon>
-
-      <span *ngIf="!hasCompleteOutfitSelection()">
-        Select a full-body garment, or choose a top and a bottom, to continue.
-      </span>
-      <span *ngIf="hasCompleteOutfitSelection()">
-        Ready! You can create your outfit now.
-      </span>
+      <span>Click any garment card to select or deselect it.</span>
     </div>
 
     <button
       mat-raised-button
       color="primary"
-      type="button"
       (click)="submitOutfit()"
-      [disabled]="isSubmitting() || !hasCompleteOutfitSelection()"
+      [disabled]="isSubmitting()"
     >
       {{ isSubmitting() ? 'Creating…' : 'Create outfit' }}
       <mat-icon>bolt</mat-icon>

@@ -41,194 +41,201 @@ export class GarmentLibraryComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
 
-  // Active garment filter
+  // Filter
   readonly groupFilter = signal<GarmentFilter>('all');
-  readonly groupFilterOptions: ReadonlyArray<{ value: GarmentFilter; label: string }> = [
-    { value: 'all', label: 'All garments' },
-    { value: 'tops', label: 'Tops' },
-    { value: 'bottoms', label: 'Bottoms' },
-    { value: 'full-body', label: 'Full body' },
-    { value: 'jackets', label: 'Jackets' },
-    { value: 'accessories', label: 'Accessories' }
+  readonly groupFilterOptions = [
+    { value: 'all' as const, label: 'All garments' },
+    { value: 'tops' as const, label: 'Tops' },
+    { value: 'bottoms' as const, label: 'Bottoms' },
+    { value: 'full-body' as const, label: 'Full body' },
+    { value: 'jackets' as const, label: 'Jackets' },
+    { value: 'accessories' as const, label: 'Accessories' }
   ];
 
-  // Catalogue from API
-  readonly garments = toSignal(this.outfitService.garments$, { initialValue: [] });
-  readonly isLoadingGarments = signal(false);
-  readonly garmentsError = signal<string | null>(null);
-  readonly garmentCategories = toSignal(this.outfitService.garmentCategories$, {
-    initialValue: []
-  });
-  readonly imagePerspectives = toSignal(this.outfitService.imagePerspectives$, {
-    initialValue: []
-  });
-  readonly garmentCategoryOptions = computed(() => {
-    const categories = [...this.garmentCategories()];
-    return categories.sort((a, b) => {
-      const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER;
-      const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER;
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
-      const groupCompare =
-        (a.group ?? '').toLowerCase().localeCompare((b.group ?? '').toLowerCase());
-      if (groupCompare !== 0) {
-        return groupCompare;
-      }
-      return (a.category ?? '').toLowerCase().localeCompare((b.category ?? '').toLowerCase());
-    });
-  });
-  readonly isLoadingCategories = signal(false);
-  readonly isLoadingImagePerspectives = signal(false);
-  readonly garmentCategoriesError = signal<string | null>(null);
-  readonly imagePerspectivesError = signal<string | null>(null);
-  readonly selectedGarmentCategoryId = signal<number | null>(null);
-  readonly selectedImagePerspectiveId = signal<number | null>(null);
-  readonly isUploadingGarment = signal(false);
+  // Data
+  readonly garments = toSignal(this.outfitService.garments$, { initialValue: [] as Garment[] });
+  readonly garmentCategories = toSignal(this.outfitService.garmentCategories$, { initialValue: [] as GarmentCategoryDto[] });
+  readonly imagePerspectives = toSignal(this.outfitService.imagePerspectives$, { initialValue: [] });
 
-  // Selected garments from the service
+  readonly filteredGarments = computed(() => {
+    const filter = this.groupFilter();
+    const all = this.garments();
+    return filter === 'all' ? all : all.filter(g => g.group === filter);
+  });
+
+  // Selected garments as signals (for reactivity)
   readonly selectedTop = toSignal(this.outfitService.selectedTop$, { initialValue: null });
   readonly selectedBottom = toSignal(this.outfitService.selectedBottom$, { initialValue: null });
   readonly selectedFullBody = toSignal(this.outfitService.selectedFullBody$, { initialValue: null });
   readonly selectedJacket = toSignal(this.outfitService.selectedJacket$, { initialValue: null });
   readonly selectedAccessories = toSignal(this.outfitService.selectedAccessories$, { initialValue: null });
 
-  // Validity flags from service
-  readonly hasCompleteGarmentSelection = toSignal(this.outfitService.hasCompleteGarmentSelection$, {
-    initialValue: false
-  });
-  readonly hasCompleteOutfitSelection = toSignal(this.outfitService.hasCompleteSelection$, {
-    initialValue: false
+  // Computed map of selected garment IDs by group
+  readonly selectedIdByGroup = computed(() => {
+    return {
+      tops: this.selectedTop()?.id ?? null,
+      bottoms: this.selectedBottom()?.id ?? null,
+      'full-body': this.selectedFullBody()?.id ?? null,
+      jackets: this.selectedJacket()?.id ?? null,
+      accessories: this.selectedAccessories()?.id ?? null
+    } as Record<GarmentGroup, string | number | null>;
   });
 
-  // For card highlighting
-  readonly selectedGarmentIds = computed(() => ({
-    tops: this.selectedTop()?.id ?? null,
-    bottoms: this.selectedBottom()?.id ?? null,
-    'full-body': this.selectedFullBody()?.id ?? null,
-    jackets: this.selectedJacket()?.id ?? null,
-    accessories: this.selectedAccessories()?.id ?? null
-  }));
+  // Loading & errors
+  readonly isLoadingGarments = signal(false);
+  readonly garmentsError = signal<string | null>(null);
+  readonly isLoadingCategories = signal(false);
+  readonly garmentCategoriesError = signal<string | null>(null);
+  readonly isLoadingImagePerspectives = signal(false);
+  readonly imagePerspectivesError = signal<string | null>(null);
 
+  // Upload
+  readonly selectedGarmentCategoryId = signal<number | null>(null);
+  readonly selectedImagePerspectiveId = signal<number | null>(null);
+  readonly isUploadingGarment = signal(false);
+
+  // Submission
   readonly isSubmitting = signal(false);
   private readonly attemptedImageFallbacks = signal<Record<string, number>>({});
 
-  // Garments visible for the active group tab
-  readonly garmentsForGroup = computed(() =>
-    this.groupFilter() === 'all'
-      ? this.garments()
-      : this.garments().filter((garment) => garment.group === this.groupFilter())
-  );
+  readonly garmentCategoryOptions = computed(() => {
+    const cats = [...this.garmentCategories()];
+    return cats.sort((a, b) => {
+      const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER;
+      if (orderA !== orderB) return orderA - orderB;
+      const groupA = (a.group ?? '').toLowerCase();
+      const groupB = (b.group ?? '').toLowerCase();
+      if (groupA !== groupB) return groupA.localeCompare(groupB);
+      return (a.category ?? '').toLowerCase().localeCompare(b.category ?? '');
+    });
+  });
 
   ngOnInit(): void {
-    this.isLoadingGarments.set(true);
-    this.outfitService
-      .ensureGarmentsLoaded()
-      .pipe(take(1))
-      .subscribe({
-        next: () => {
-          this.isLoadingGarments.set(false);
-          this.garmentsError.set(null);
-        },
-        error: (err) => {
-          const message =
-            err instanceof Error
-              ? err.message
-              : 'Unable to load garments. Please check your API configuration.';
-          this.isLoadingGarments.set(false);
-          this.garmentsError.set(message);
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 3500
-          });
-        }
-      });
-
-    this.isLoadingCategories.set(true);
-    this.outfitService
-      .ensureGarmentCategoriesLoaded()
-      .pipe(take(1))
-      .subscribe({
-        next: (categories) => {
-          this.isLoadingCategories.set(false);
-          this.garmentCategoriesError.set(null);
-          const firstId = this.categoryId(categories[0]);
-          if (firstId && !this.selectedGarmentCategoryId()) {
-            this.selectedGarmentCategoryId.set(firstId);
-          }
-        },
-        error: (err) => {
-          const message =
-            err instanceof Error
-              ? err.message
-              : 'Unable to load garment categories. Please check your API configuration.';
-          this.isLoadingCategories.set(false);
-          this.garmentCategoriesError.set(message);
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 3500
-          });
-        }
-      });
-
-    this.isLoadingImagePerspectives.set(true);
-    this.outfitService
-      .ensureImagePerspectivesLoaded()
-      .pipe(take(1))
-      .subscribe({
-        next: (perspectives) => {
-          this.isLoadingImagePerspectives.set(false);
-          this.imagePerspectivesError.set(null);
-          const firstId = this.perspectiveId(perspectives[0]);
-          if (firstId !== null && this.selectedImagePerspectiveId() === null) {
-            this.selectedImagePerspectiveId.set(firstId);
-          }
-        },
-        error: (err) => {
-          const message =
-            err instanceof Error
-              ? err.message
-              : 'Unable to load image perspectives. Please check your API configuration.';
-          this.isLoadingImagePerspectives.set(false);
-          this.imagePerspectivesError.set(message);
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 3500
-          });
-        }
-      });
+    this.loadGarments();
+    this.loadGarmentCategories();
+    this.loadImagePerspectives();
   }
 
-  handleGroupChange(value: GarmentFilter): void {
-    this.groupFilter.set(value);
+  private loadGarments(): void {
+    this.isLoadingGarments.set(true);
+    this.outfitService.ensureGarmentsLoaded().pipe(take(1)).subscribe({
+      next: () => {
+        this.isLoadingGarments.set(false);
+        this.garmentsError.set(null);
+      },
+      error: (err) => {
+        const msg = err instanceof Error ? err.message : 'Failed to load garments.';
+        this.isLoadingGarments.set(false);
+        this.garmentsError.set(msg);
+        this.snackBar.open(msg, 'Dismiss', { duration: 3500 });
+      }
+    });
+  }
+
+  private loadGarmentCategories(): void {
+    this.isLoadingCategories.set(true);
+    this.outfitService.ensureGarmentCategoriesLoaded().pipe(take(1)).subscribe({
+      next: (cats) => {
+        this.isLoadingCategories.set(false);
+        this.garmentCategoriesError.set(null);
+        const firstId = this.categoryId(cats[0]);
+        if (firstId && this.selectedGarmentCategoryId() === null) {
+          this.selectedGarmentCategoryId.set(firstId);
+        }
+      },
+      error: (err) => {
+        const msg = err instanceof Error ? err.message : 'Failed to load categories.';
+        this.isLoadingCategories.set(false);
+        this.garmentCategoriesError.set(msg);
+        this.snackBar.open(msg, 'Dismiss', { duration: 3500 });
+      }
+    });
+  }
+
+  private loadImagePerspectives(): void {
+    this.isLoadingImagePerspectives.set(true);
+    this.outfitService.ensureImagePerspectivesLoaded().pipe(take(1)).subscribe({
+      next: (pers) => {
+        this.isLoadingImagePerspectives.set(false);
+        this.imagePerspectivesError.set(null);
+        const firstId = this.perspectiveId(pers[0]);
+        if (firstId !== null && this.selectedImagePerspectiveId() === null) {
+          this.selectedImagePerspectiveId.set(firstId);
+        }
+      },
+      error: (err) => {
+        const msg = err instanceof Error ? err.message : 'Failed to load perspectives.';
+        this.isLoadingImagePerspectives.set(false);
+        this.imagePerspectivesError.set(msg);
+        this.snackBar.open(msg, 'Dismiss', { duration: 3500 });
+      }
+    });
+  }
+
+  isSelected(garment: Garment): boolean {
+    const selectedId = this.selectedIdByGroup()[garment.group];
+    return selectedId === garment.id;
+  }
+
+  trackGarmentById(index: number, garment: Garment): string | number {
+    return garment.id;
+  }
+
+  toggleGarment(garment: Garment): void {
+    const group = garment.group;
+    const selectedId = this.selectedIdByGroup()[group];
+    const isCurrentlySelected = selectedId === garment.id;
+
+    if (isCurrentlySelected) {
+      // Deselect
+      this.outfitService.setSelectedGarment(group, null);
+      this.outfitService.setSelectedSize(group, null);
+    } else {
+      // Select
+      this.outfitService.setSelectedGarment(group, garment);
+      
+      // Set default size
+      const sizes = garment.sizes ?? [];
+      const defaultSize = sizes.length > 0
+        ? sizes[0]
+        : group === 'bottoms'
+          ? '32'
+          : 'M';
+      this.outfitService.setSelectedSize(group, defaultSize);
+
+      // Mutual exclusion
+      if (group === 'full-body') {
+        this.outfitService.setSelectedGarment('tops', null);
+        this.outfitService.setSelectedGarment('bottoms', null);
+        this.outfitService.setSelectedSize('tops', null);
+        this.outfitService.setSelectedSize('bottoms', null);
+      } else if (group === 'tops' || group === 'bottoms') {
+        this.outfitService.setSelectedGarment('full-body', null);
+        this.outfitService.setSelectedSize('full-body', null);
+      }
+    }
   }
 
   categoryId(category: GarmentCategoryDto | undefined): number | null {
     if (!category) return null;
-
-    return (
-      category.garmentCategoryEntityId ??
-      (category as { garmentCategoryEntityID?: number }).garmentCategoryEntityID ??
-      null
-    );
+    return category.garmentCategoryEntityId ?? (category as any).garmentCategoryEntityID ?? null;
   }
 
-  perspectiveId(perspective: { id?: number; Id?: number } | undefined): number | null {
+  perspectiveId(perspective: any): number | null {
     if (!perspective) return null;
-    return perspective.id ?? (perspective as { Id?: number }).Id ?? null;
+    return perspective.id ?? perspective.Id ?? null;
   }
 
-  perspectiveName(perspective: { name?: string | null; Name?: string | null } | undefined): string {
+  perspectiveName(perspective: any): string {
     if (!perspective) return 'Unknown';
-    return perspective.name ?? (perspective as { Name?: string | null }).Name ?? 'Unknown';
+    return perspective.name ?? perspective.Name ?? 'Unknown';
   }
 
   categoryLabel(category: GarmentCategoryDto): string {
-    const groupLabel = category.group || 'Category';
+    const group = category.group || 'Category';
     const specific = category.category;
-
-    if (specific && specific !== category.group) {
-      return `${specific} • ${groupLabel}`;
-    }
-
-    return groupLabel;
+    return specific && specific !== group ? `${specific} • ${group}` : group;
   }
 
   handleGarmentUploadFile(event: Event): void {
@@ -236,227 +243,70 @@ export class GarmentLibraryComponent implements OnInit {
     const file = input.files?.[0];
     input.value = '';
 
-    if (!file) {
+    if (!file || !file.type.startsWith('image/')) {
+      this.snackBar.open('Please select an image file.', 'Dismiss', { duration: 4000 });
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
-      this.snackBar.open('Please select an image file to upload.', 'Dismiss', {
-        duration: 4000
-      });
-      return;
-    }
+    const catId = this.selectedGarmentCategoryId();
+    const category = this.garmentCategories().find(c => this.categoryId(c) === catId);
+    const persId = this.selectedImagePerspectiveId();
 
-    const selectedCategoryId = this.selectedGarmentCategoryId();
-    const selectedCategory = this.garmentCategories().find(
-      (item) => this.categoryId(item) === selectedCategoryId
-    );
-    const selectedPerspectiveId = this.selectedImagePerspectiveId();
-    const selectedPerspective = this.imagePerspectives().find(
-      (item) => this.perspectiveId(item) === selectedPerspectiveId
-    );
-    if (selectedCategoryId === null || !selectedCategory) {
-      this.snackBar.open('Choose a garment category before uploading an image.', 'Got it', {
-        duration: 3500
-      });
-      return;
-    }
-    if (selectedPerspectiveId === null || !selectedPerspective) {
-      this.snackBar.open('Choose an image perspective before uploading an image.', 'Got it', {
-        duration: 3500
-      });
+    if (!category || persId === null) {
+      this.snackBar.open('Select category and perspective first.', 'Got it', { duration: 3500 });
       return;
     }
 
     this.isUploadingGarment.set(true);
-
-    this.outfitService
-      .uploadGarmentImage(file, selectedCategory, selectedPerspectiveId)
-      .pipe(take(1))
-      .subscribe({
-        next: () => {
-          this.isUploadingGarment.set(false);
-          const targetGroup = this.toGarmentGroup(selectedCategory.group);
-          this.groupFilter.set(targetGroup ?? 'all');
-          this.snackBar.open(
-            'Garment image uploaded. It’s now available in this category.',
-            'Great!',
-            { duration: 3000 }
-          );
-        },
-        error: (err) => {
-          this.isUploadingGarment.set(false);
-          const message =
-            err instanceof Error
-              ? err.message
-              : 'Unable to upload your garment image right now.';
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 4000
-          });
-        }
-      });
-  }
-
-  // --- Card & size helpers ---
-
-  isSelected(garment: Garment): boolean {
-    const ids = this.selectedGarmentIds();
-    return ids[garment.group] === garment.id;
-  }
-
-  sizeOptionsForGarment(garment: Garment): readonly string[] {
-    if (garment.sizes && garment.sizes.length > 0) {
-      return garment.sizes;
-    }
-    switch (garment.group) {
-      case 'tops':
-      case 'full-body':
-      case 'jackets':
-      case 'accessories':
-        return DEFAULT_TOP_SIZES;
-      case 'bottoms':
-        return DEFAULT_BOTTOM_SIZES;
-      default:
-        return [];
-    }
-  }
-
-  private setDefaultSizeForGroup(group: GarmentGroup, garment: Garment | null): void {
-    const firstSize = garment ? this.sizeOptionsForGarment(garment)[0] ?? null : null;
-    this.outfitService.setSelectedSize(group, firstSize ?? null);
-  }
-
-  handleGarmentClick(garment: Garment): void {
-    const group = garment.group;
-    const alreadySelected = this.isSelected(garment);
-
-    switch (group) {
-      case 'full-body':
-        // Full-body is mutually exclusive with separate top/bottom
-        this.outfitService.setSelectedGarment('tops', null);
-        this.outfitService.setSelectedSize('tops', null);
-        this.outfitService.setSelectedGarment('bottoms', null);
-        this.outfitService.setSelectedSize('bottoms', null);
-        this.outfitService.setSelectedGarment('full-body', alreadySelected ? null : garment);
-        this.setDefaultSizeForGroup('full-body', alreadySelected ? null : garment);
-        break;
-
-      case 'tops':
-      case 'bottoms':
-        // Selecting separates clears full-body
-        this.outfitService.setSelectedGarment('full-body', null);
-        this.outfitService.setSelectedSize('full-body', null);
-        this.outfitService.setSelectedGarment(group, alreadySelected ? null : garment);
-        this.setDefaultSizeForGroup(group, alreadySelected ? null : garment);
-        break;
-
-      case 'jackets':
-      case 'accessories':
-        // Optional layers, independent
-        this.outfitService.setSelectedGarment(group, alreadySelected ? null : garment);
-        this.setDefaultSizeForGroup(group, alreadySelected ? null : garment);
-        break;
-    }
-  }
-
-  handleGarmentKeydown(event: KeyboardEvent, garment: Garment): void {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      this.handleGarmentClick(garment);
-    }
-  }
-
-  submitOutfit(): void {
-    if (this.isSubmitting()) {
-      return;
-    }
-
-    const hasFullBody = !!this.selectedFullBody();
-    const hasTop = !!this.selectedTop();
-    const hasBottom = !!this.selectedBottom();
-    const invalidMix = hasFullBody && (hasTop || hasBottom);
-
-    if (!this.hasCompleteGarmentSelection()) {
-      if (invalidMix) {
-        this.snackBar.open(
-          'You can’t combine a full-body garment with a separate top or bottom. Choose one approach.',
-          'Got it',
-          { duration: 4000 }
-        );
-      } else {
-        this.snackBar.open(
-          'Select either a full-body garment, or a top and a bottom, before continuing.',
-          'Got it',
-          { duration: 4000 }
-        );
+    this.outfitService.uploadGarmentImage(file, category, persId).pipe(take(1)).subscribe({
+      next: () => {
+        this.isUploadingGarment.set(false);
+        const targetGroup = this.toGarmentGroup(category.group);
+        this.groupFilter.set(targetGroup ?? 'all');
+        this.snackBar.open('Garment uploaded!', 'Great!', { duration: 3000 });
+      },
+      error: (err) => {
+        this.isUploadingGarment.set(false);
+        const msg = err instanceof Error ? err.message : 'Upload failed.';
+        this.snackBar.open(msg, 'Dismiss', { duration: 4000 });
       }
-      return;
-    }
-
-    if (!this.hasCompleteOutfitSelection()) {
-      if (hasFullBody) {
-        this.snackBar.open('Pick a size for your full-body garment.', 'OK', {
-          duration: 3000
-        });
-      } else {
-        this.snackBar.open('Pick a size for your top and bottom.', 'OK', {
-          duration: 3000
-        });
-      }
-      return;
-    }
-
-    this.isSubmitting.set(true);
-    this.outfitService
-      .createOutfit()
-      .pipe(take(1))
-      .subscribe({
-        next: () => {
-          this.isSubmitting.set(false);
-          this.snackBar.open(
-            'Outfit creation started. Check the gallery for updates.',
-            'Nice!',
-            { duration: 3500 }
-          );
-          this.router.navigate(['/generated-gallery']);
-        },
-        error: (err) => {
-          const message =
-            err instanceof Error
-              ? err.message
-              : 'Unable to create your outfit right now. Please check your API configuration.';
-          this.isSubmitting.set(false);
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 4000
-          });
-        }
-      });
+    });
   }
 
   handleImageError(event: Event, garment: Garment): void {
     const img = event.target as HTMLImageElement;
-    const currentFallbacks = { ...this.attemptedImageFallbacks() };
-    const attemptIndex = currentFallbacks[garment.id] ?? 0;
-    const basePath = garment.image.replace(/\.[^/.]+$/, '');
-    if (attemptIndex >= IMAGE_FALLBACK_EXTENSIONS.length) {
-      img.src = PLACEHOLDER_IMAGE;
+    if (img.dataset['failed'] === 'true') return;
+
+    const attempts = this.attemptedImageFallbacks();
+    const attempt = attempts[garment.id] ?? 0;
+    const base = garment.image.replace(/\.[^/.]+$/, '');
+
+    if (attempt >= IMAGE_FALLBACK_EXTENSIONS.length) {
+      img.dataset['failed'] = 'true';
+      img.src = '/assets/images/placeholder-garment.png';
       return;
     }
 
-    const nextSrc = `${basePath}.${IMAGE_FALLBACK_EXTENSIONS[attemptIndex]}`;
-    currentFallbacks[garment.id] = attemptIndex + 1;
-    this.attemptedImageFallbacks.set(currentFallbacks);
-    img.src = nextSrc;
+    this.attemptedImageFallbacks.update(a => ({ ...a, [garment.id]: attempt + 1 }));
+    img.src = `${base}.${IMAGE_FALLBACK_EXTENSIONS[attempt]}`;
   }
 
-  private groupForCategoryId(categoryId: number | null): GarmentGroup | null {
-    if (!categoryId) {
-      return null;
-    }
-    const category = this.garmentCategories().find(
-      (item) => this.categoryId(item) === categoryId
-    );
-    return this.toGarmentGroup(category?.group);
+  submitOutfit(): void {
+    if (this.isSubmitting()) return;
+
+    this.isSubmitting.set(true);
+    this.outfitService.createOutfit().pipe(take(1)).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.snackBar.open('Outfit creation started!', 'Nice!', { duration: 3500 });
+        this.router.navigate(['/generated-gallery']);
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        const msg = err instanceof Error ? err.message : 'Failed to create outfit.';
+        this.snackBar.open(msg, 'Dismiss', { duration: 4000 });
+      }
+    });
   }
 
   private toGarmentGroup(value: string | null | undefined): GarmentGroup | null {
@@ -465,7 +315,4 @@ export class GarmentLibraryComponent implements OnInit {
   }
 }
 
-const DEFAULT_TOP_SIZES = ['XS', 'S', 'M', 'L', 'XL'] as const;
-const DEFAULT_BOTTOM_SIZES = ['28', '30', '32', '34', '36'] as const;
-const IMAGE_FALLBACK_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
-const PLACEHOLDER_IMAGE = 'assets/generated/placeholder-ready-1.svg';
+const IMAGE_FALLBACK_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'] as const;

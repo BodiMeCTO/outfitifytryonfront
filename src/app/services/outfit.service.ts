@@ -780,6 +780,7 @@ uploadAndSetInspiration(
     formData.append('fileData', file, file.name);
     formData.append('Name', file.name);
     formData.append('GarmentCategoryEntityId', garmentCategoryEntityId.toString());
+    formData.append('GarmentCategory', garmentCategoryEntityId.toString());
     if (imagePerspectiveId !== null && imagePerspectiveId !== undefined) {
       formData.append('ImagePerspectiveId', imagePerspectiveId.toString());
     }
