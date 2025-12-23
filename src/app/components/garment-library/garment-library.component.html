@@ -1,4 +1,83 @@
 <section class="section-card garment-library">
+  <mat-accordion class="upload-accordion" multi="false">
+    <mat-expansion-panel hideToggle>
+      <mat-expansion-panel-header>
+        <mat-panel-title>Upload a garment image</mat-panel-title>
+        <mat-panel-description>Select a garment category and image perspective</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="upload-grid">
+        <div class="upload-actions">
+          <input
+            #garmentFileInput
+            type="file"
+            accept="image/*"
+            (change)="handleGarmentUploadFile($event)"
+            hidden
+          />
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            (click)="garmentFileInput.click()"
+            [disabled]="
+              isUploadingGarment() ||
+              selectedGarmentCategoryId() === null ||
+              selectedImagePerspectiveId() === null
+            "
+          >
+            <mat-icon>upload</mat-icon>
+            {{ isUploadingGarment() ? 'Uploading…' : 'Upload garment image' }}
+          </button>
+          <p class="hint">
+            Select a garment category, then upload an image to add it to your library.
+          </p>
+          <mat-progress-bar *ngIf="isUploadingGarment()" mode="indeterminate"></mat-progress-bar>
+        </div>
+
+        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
+          <mat-label>Garment category</mat-label>
+          <mat-select
+            [value]="selectedGarmentCategoryId()"
+            (valueChange)="selectedGarmentCategoryId.set($event)"
+            [disabled]="isLoadingCategories()"
+          >
+            <mat-option
+              *ngFor="let category of garmentCategoryOptions()"
+              [value]="categoryId(category)"
+            >
+              {{ categoryLabel(category) }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="garmentCategoriesError()">{{ garmentCategoriesError() }}</mat-hint>
+          <mat-hint *ngIf="!garmentCategoriesError() && isLoadingCategories()">
+            Loading garment categories…
+          </mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
+          <mat-label>Image perspective</mat-label>
+          <mat-select
+            [value]="selectedImagePerspectiveId()"
+            (valueChange)="selectedImagePerspectiveId.set($event)"
+            [disabled]="isLoadingImagePerspectives()"
+          >
+            <mat-option
+              *ngFor="let perspective of imagePerspectives()"
+              [value]="perspectiveId(perspective)"
+            >
+              {{ perspectiveName(perspective) }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="imagePerspectivesError()">{{ imagePerspectivesError() }}</mat-hint>
+          <mat-hint *ngIf="!imagePerspectivesError() && isLoadingImagePerspectives()">
+            Loading image perspectives…
+          </mat-hint>
+        </mat-form-field>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+
   <header class="section-header">
     <h1>Select garments to build your outfit</h1>
     <p class="subtitle">
@@ -69,87 +148,6 @@
       </mat-card-actions>
     </mat-card>
   </section>
-
-  <mat-card appearance="outlined" class="upload-card">
-    <mat-card-header>
-      <mat-card-title>Upload a garment image</mat-card-title>
-      <mat-card-subtitle>
-        Select a garment category and upload an image to add it to your library.
-      </mat-card-subtitle>
-    </mat-card-header>
-
-    <mat-card-content>
-      <div class="upload-grid">
-        <div class="upload-actions">
-          <input
-            #garmentFileInput
-            type="file"
-            accept="image/*"
-            (change)="handleGarmentUploadFile($event)"
-            hidden
-          />
-          <button
-            mat-raised-button
-            color="primary"
-            type="button"
-            (click)="garmentFileInput.click()"
-            [disabled]="
-              isUploadingGarment() ||
-              selectedGarmentCategoryId() === null ||
-              selectedImagePerspectiveId() === null
-            "
-          >
-            <mat-icon>upload</mat-icon>
-            {{ isUploadingGarment() ? 'Uploading…' : 'Upload garment image' }}
-          </button>
-          <p class="hint">
-            Select a garment category, then upload an image to add it to your library.
-          </p>
-          <mat-progress-bar *ngIf="isUploadingGarment()" mode="indeterminate"></mat-progress-bar>
-        </div>
-
-        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
-          <mat-label>Garment category</mat-label>
-          <mat-select
-            [value]="selectedGarmentCategoryId()"
-            (valueChange)="selectedGarmentCategoryId.set($event)"
-            [disabled]="isLoadingCategories()"
-          >
-            <mat-option
-              *ngFor="let category of garmentCategoryOptions()"
-              [value]="categoryId(category)"
-            >
-              {{ categoryLabel(category) }}
-            </mat-option>
-          </mat-select>
-          <mat-hint *ngIf="garmentCategoriesError()">{{ garmentCategoriesError() }}</mat-hint>
-          <mat-hint *ngIf="!garmentCategoriesError() && isLoadingCategories()">
-            Loading garment categories…
-          </mat-hint>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="group-select" style="width: 100%;">
-          <mat-label>Image perspective</mat-label>
-          <mat-select
-            [value]="selectedImagePerspectiveId()"
-            (valueChange)="selectedImagePerspectiveId.set($event)"
-            [disabled]="isLoadingImagePerspectives()"
-          >
-            <mat-option
-              *ngFor="let perspective of imagePerspectives()"
-              [value]="perspectiveId(perspective)"
-            >
-              {{ perspectiveName(perspective) }}
-            </mat-option>
-          </mat-select>
-          <mat-hint *ngIf="imagePerspectivesError()">{{ imagePerspectivesError() }}</mat-hint>
-          <mat-hint *ngIf="!imagePerspectivesError() && isLoadingImagePerspectives()">
-            Loading image perspectives…
-          </mat-hint>
-        </mat-form-field>
-      </div>
-    </mat-card-content>
-  </mat-card>
 
   <footer class="library-actions">
     <div class="helper" [class.error]="!hasCompleteOutfitSelection()">
