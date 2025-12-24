@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, throwError } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 import {
@@ -92,7 +92,14 @@ export class OutfitifyApiService {
 
   // --- Garments ---
   listGarments(): Observable<GarmentSummaryDto[]> {
-    return this.http.get<GarmentSummaryDto[]>(this.buildUrl('/api/garments'));
+    return this.http.get<GarmentSummaryDto[]>(this.buildUrl('/api/garments')).pipe(
+      catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 404) {
+          return this.http.get<GarmentSummaryDto[]>(this.buildUrl('/api/products'));
+        }
+        return throwError(() => error);
+      })
+    );
   }
 
   listGarmentImagePerspectives(): Observable<ImagePerspectiveDto[]> {

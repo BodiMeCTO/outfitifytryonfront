@@ -688,6 +688,19 @@ uploadAndSetInspiration(
         this.garmentCategoriesLoaded = true;
       }),
       catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 404) {
+          console.warn(
+            'Garment categories endpoint not found. Falling back to garment-derived categories.'
+          );
+          return this.ensureGarmentsLoaded().pipe(
+            map((garments) => {
+              const fallback = this.buildFallbackCategoriesFromGarments(garments);
+              this.garmentCategoriesSubject.next(fallback);
+              this.garmentCategoriesLoaded = true;
+              return fallback;
+            })
+          );
+        }
         console.error(
           'Unable to load garment categories from OutfitifyAPI',
           this.createApiUnavailableError('loading garment categories', error)
@@ -1049,6 +1062,42 @@ uploadAndSetInspiration(
     }
 
     return garment;
+  }
+
+  private buildFallbackCategoriesFromGarments(
+    garments: Garment[]
+  ): GarmentCategoryDto[] {
+    const labelMap: Record<string, string> = {
+      'full-body': 'Full body',
+      tops: 'Tops',
+      bottoms: 'Bottoms'
+    };
+    const orderMap: Record<string, number> = {
+      'full-body': 1,
+      tops: 2,
+      bottoms: 3
+    };
+
+    const uniqueGroups = Array.from(
+      new Set(
+        garments
+          .map((garment) => garment.group)
+          .filter((group): group is GarmentGroup => !!group)
+      )
+    );
+
+    return uniqueGroups
+      .sort((a, b) => (orderMap[a] ?? 99) - (orderMap[b] ?? 99))
+      .map((group, index) => {
+        const localId = index + 1;
+        return {
+          garmentCategoryEntityId: null,
+          group,
+          category: labelMap[group] ?? group,
+          displayOrder: orderMap[group] ?? localId,
+          localId
+        } as GarmentCategoryDto & { localId: number };
+      });
   }
 
   private mapOutfitDto(response: OutfitDto): GeneratedImage {
