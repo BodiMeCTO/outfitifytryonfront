@@ -1091,12 +1091,12 @@ uploadAndSetInspiration(
       .map((group, index) => {
         const localId = index + 1;
         return {
-          garmentCategoryEntityId: null,
+          garmentCategoryEntityId: undefined,
           group,
           category: labelMap[group] ?? group,
           displayOrder: orderMap[group] ?? localId,
           localId
-        } as GarmentCategoryDto & { localId: number };
+        };
       });
   }
 
