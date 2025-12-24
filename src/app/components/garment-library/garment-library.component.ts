@@ -251,7 +251,12 @@ export class GarmentLibraryComponent implements OnInit {
 
   categoryId(category: GarmentCategoryDto | undefined): number | null {
     if (!category) return null;
-    return category.garmentCategoryEntityId ?? (category as any).garmentCategoryEntityID ?? null;
+    return (
+      category.garmentCategoryEntityId ??
+      (category as any).garmentCategoryEntityID ??
+      (category as any).localId ??
+      null
+    );
   }
 
   perspectiveId(perspective: any): number | null {
