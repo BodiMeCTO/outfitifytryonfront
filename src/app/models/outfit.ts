@@ -7,9 +7,7 @@
 export type GarmentGroup =
   | 'tops'
   | 'bottoms'
-  | 'full-body'
-  | 'jackets'
-  | 'accessories';
+  | 'full-body';
 
 export interface Garment {
   id: string;
@@ -71,15 +69,11 @@ export interface OutfitRequest {
     top: Garment | null;
     bottom: Garment | null;
     fullBody: Garment | null;
-    jacket: Garment | null;
-    accessories: Garment | null;
   };
   sizes: {
     top: string | null;
     bottom: string | null;
     fullBody: string | null;
-    jacket: string | null;
-    accessories: string | null;
   };
 }
 

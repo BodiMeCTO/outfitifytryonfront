@@ -120,6 +120,7 @@
         [alt]="garment.name || 'Garment image'"
         loading="lazy"
         (error)="handleImageError($event, garment)"
+        (load)="onImageLoad(garment)"
       />
 
       <mat-card-header>

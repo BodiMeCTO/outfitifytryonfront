@@ -47,9 +47,7 @@ export class GarmentLibraryComponent implements OnInit {
     { value: 'all' as const, label: 'All garments' },
     { value: 'tops' as const, label: 'Tops' },
     { value: 'bottoms' as const, label: 'Bottoms' },
-    { value: 'full-body' as const, label: 'Full body' },
-    { value: 'jackets' as const, label: 'Jackets' },
-    { value: 'accessories' as const, label: 'Accessories' }
+    { value: 'full-body' as const, label: 'Full body' }
   ];
 
   // Data
@@ -67,17 +65,13 @@ export class GarmentLibraryComponent implements OnInit {
   readonly selectedTop = toSignal(this.outfitService.selectedTop$, { initialValue: null });
   readonly selectedBottom = toSignal(this.outfitService.selectedBottom$, { initialValue: null });
   readonly selectedFullBody = toSignal(this.outfitService.selectedFullBody$, { initialValue: null });
-  readonly selectedJacket = toSignal(this.outfitService.selectedJacket$, { initialValue: null });
-  readonly selectedAccessories = toSignal(this.outfitService.selectedAccessories$, { initialValue: null });
 
   // Computed map of selected garment IDs by group
   readonly selectedIdByGroup = computed(() => {
     return {
       tops: this.selectedTop()?.id ?? null,
       bottoms: this.selectedBottom()?.id ?? null,
-      'full-body': this.selectedFullBody()?.id ?? null,
-      jackets: this.selectedJacket()?.id ?? null,
-      accessories: this.selectedAccessories()?.id ?? null
+      'full-body': this.selectedFullBody()?.id ?? null
     } as Record<GarmentGroup, string | number | null>;
   });
 
@@ -91,6 +85,7 @@ export class GarmentLibraryComponent implements OnInit {
 
   // Upload
   readonly selectedGarmentCategoryId = signal<number | null>(null);
+  readonly selectedFilterCategoryId = signal<number | null>(null);
   readonly selectedImagePerspectiveId = signal<number | null>(null);
   readonly isUploadingGarment = signal(false);
 
@@ -142,6 +137,9 @@ export class GarmentLibraryComponent implements OnInit {
         const firstId = this.categoryId(cats[0]);
         if (firstId && this.selectedGarmentCategoryId() === null) {
           this.selectedGarmentCategoryId.set(firstId);
+          // Set the group filter to match the first category so the grid shows matching garments
+          const firstGroup = this.normalizeCategoryGroup(cats[0]?.group);
+          this.groupFilter.set(firstGroup ?? 'all');
         }
       },
       error: (err) => {
@@ -151,6 +149,40 @@ export class GarmentLibraryComponent implements OnInit {
         this.snackBar.open(msg, 'Dismiss', { duration: 3500 });
       }
     });
+  }
+
+  onCategoryChange(id: number | null): void {
+    this.selectedGarmentCategoryId.set(id);
+
+    if (id === null) {
+      this.groupFilter.set('all');
+      return;
+    }
+
+    const category = this.garmentCategories().find((c) => this.categoryId(c) === id);
+    const group = this.normalizeCategoryGroup(category?.group);
+    this.groupFilter.set(group ?? 'all');
+  }
+
+  onFilterCategoryChange(id: number | null): void {
+    this.selectedFilterCategoryId.set(id);
+
+    if (id === null) {
+      this.groupFilter.set('all');
+      return;
+    }
+
+    const category = this.garmentCategories().find((c) => this.categoryId(c) === id);
+    const group = this.normalizeCategoryGroup(category?.group);
+    this.groupFilter.set(group ?? 'all');
+  }
+
+  onImageLoad(garment: Garment): void {
+    try {
+      console.log('[GarmentLibrary] image loaded for garment:', garment?.id, garment?.name, garment);
+    } catch (e) {
+      // ignore
+    }
   }
 
   private loadImagePerspectives(): void {
@@ -238,6 +270,19 @@ export class GarmentLibraryComponent implements OnInit {
     return specific && specific !== group ? `${specific} • ${group}` : group;
   }
 
+  private normalizeCategoryGroup(value: string | null | undefined): GarmentGroup | null {
+    if (!value) return null;
+    const v = value.toString().trim().toLowerCase();
+
+    if (v.includes('full') && v.includes('body')) return 'full-body';
+    if (v === 'tops' || v === 'top') return 'tops';
+    if (v === 'bottoms' || v === 'bottom') return 'bottoms';
+    // Map jackets and accessories to tops
+    if (v === 'jackets' || v === 'jacket' || v === 'accessories' || v === 'accessory') return 'tops';
+
+    return null;
+  }
+
   handleGarmentUploadFile(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -310,7 +355,7 @@ export class GarmentLibraryComponent implements OnInit {
   }
 
   private toGarmentGroup(value: string | null | undefined): GarmentGroup | null {
-    const allowed: GarmentGroup[] = ['tops', 'bottoms', 'full-body', 'jackets', 'accessories'];
+    const allowed: GarmentGroup[] = ['tops', 'bottoms', 'full-body'];
     return allowed.includes(value as GarmentGroup) ? (value as GarmentGroup) : null;
   }
 }

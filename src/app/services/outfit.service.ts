@@ -82,16 +82,10 @@ export class OutfitService {
   private readonly topGarmentSubject = new BehaviorSubject<Garment | null>(null);
   private readonly bottomGarmentSubject = new BehaviorSubject<Garment | null>(null);
   private readonly fullBodyGarmentSubject = new BehaviorSubject<Garment | null>(null);
-  private readonly jacketGarmentSubject = new BehaviorSubject<Garment | null>(null);
-  private readonly accessoriesGarmentSubject = new BehaviorSubject<Garment | null>(
-    null
-  );
 
   private readonly topSizeSubject = new BehaviorSubject<string | null>(null);
   private readonly bottomSizeSubject = new BehaviorSubject<string | null>(null);
   private readonly fullBodySizeSubject = new BehaviorSubject<string | null>(null);
-  private readonly jacketSizeSubject = new BehaviorSubject<string | null>(null);
-  private readonly accessoriesSizeSubject = new BehaviorSubject<string | null>(null);
 
   // Model image / pose / background
   // modelIdSubject now holds the ModelImageId (user upload)
@@ -243,14 +237,10 @@ export class OutfitService {
   readonly selectedTop$ = this.topGarmentSubject.asObservable();
   readonly selectedBottom$ = this.bottomGarmentSubject.asObservable();
   readonly selectedFullBody$ = this.fullBodyGarmentSubject.asObservable();
-  readonly selectedJacket$ = this.jacketGarmentSubject.asObservable();
-  readonly selectedAccessories$ = this.accessoriesGarmentSubject.asObservable();
 
   readonly selectedTopSize$ = this.topSizeSubject.asObservable();
   readonly selectedBottomSize$ = this.bottomSizeSubject.asObservable();
   readonly selectedFullBodySize$ = this.fullBodySizeSubject.asObservable();
-  readonly selectedJacketSize$ = this.jacketSizeSubject.asObservable();
-  readonly selectedAccessoriesSize$ = this.accessoriesSizeSubject.asObservable();
 
   readonly selectedModelId$ = this.modelIdSubject.asObservable();
   readonly selectedPoseId$ = this.poseIdSubject.asObservable();
@@ -270,32 +260,24 @@ export class OutfitService {
   readonly selectedGarments$ = combineLatest([
     this.selectedTop$,
     this.selectedBottom$,
-    this.selectedFullBody$,
-    this.selectedJacket$,
-    this.selectedAccessories$
+    this.selectedFullBody$
   ]).pipe(
-    map(([top, bottom, fullBody, jacket, accessories]) => ({
+    map(([top, bottom, fullBody]) => ({
       top,
       bottom,
-      fullBody,
-      jacket,
-      accessories
+      fullBody
     }))
   );
 
   readonly selectedSizes$ = combineLatest([
     this.selectedTopSize$,
     this.selectedBottomSize$,
-    this.selectedFullBodySize$,
-    this.selectedJacketSize$,
-    this.selectedAccessoriesSize$
+    this.selectedFullBodySize$
   ]).pipe(
-    map(([top, bottom, fullBody, jacket, accessories]) => ({
+    map(([top, bottom, fullBody]) => ({
       top,
       bottom,
-      fullBody,
-      jacket,
-      accessories
+      fullBody
     }))
   );
 
@@ -498,14 +480,6 @@ uploadAndSetInspiration(
         garmentSubject = this.fullBodyGarmentSubject;
         sizeSubject = this.fullBodySizeSubject;
         break;
-      case 'jackets':
-        garmentSubject = this.jacketGarmentSubject;
-        sizeSubject = this.jacketSizeSubject;
-        break;
-      case 'accessories':
-        garmentSubject = this.accessoriesGarmentSubject;
-        sizeSubject = this.accessoriesSizeSubject;
-        break;
       default:
         return;
     }
@@ -528,12 +502,6 @@ uploadAndSetInspiration(
         break;
       case 'full-body':
         this.fullBodySizeSubject.next(size);
-        break;
-      case 'jackets':
-        this.jacketSizeSubject.next(size);
-        break;
-      case 'accessories':
-        this.accessoriesSizeSubject.next(size);
         break;
     }
   }
@@ -709,6 +677,13 @@ uploadAndSetInspiration(
 
     return this.outfitifyApi.listGarmentCategories().pipe(
       tap((categories: GarmentCategoryDto[]) => {
+        // Debug log to help diagnose mismatches between backend DB and frontend
+        // (leave this in temporarily while troubleshooting).
+        try {
+          console.debug('[OutfitService] loadGarmentCategories: received', categories?.length ?? 0, 'categories', categories);
+        } catch (e) {
+          // ignore logging errors
+        }
         this.garmentCategoriesSubject.next(categories);
         this.garmentCategoriesLoaded = true;
       }),
@@ -838,15 +813,11 @@ uploadAndSetInspiration(
       top: Garment | null;
       bottom: Garment | null;
       fullBody: Garment | null;
-      jacket: Garment | null;
-      accessories: Garment | null;
     },
     sizes: {
       top: string | null;
       bottom: string | null;
       fullBody: string | null;
-      jacket: string | null;
-      accessories: string | null;
     }
   ): Observable<string[]> {
     const requests: Observable<string>[] = [];
@@ -869,8 +840,6 @@ uploadAndSetInspiration(
     add(garments.fullBody, sizes.fullBody);
     add(garments.top, sizes.top);
     add(garments.bottom, sizes.bottom);
-    add(garments.jacket, sizes.jacket);
-    add(garments.accessories, sizes.accessories);
 
     if (requests.length === 0) {
       return of([]);
@@ -901,17 +870,13 @@ uploadAndSetInspiration(
     const garments = {
       top: this.topGarmentSubject.value,
       bottom: this.bottomGarmentSubject.value,
-      fullBody: this.fullBodyGarmentSubject.value,
-      jacket: this.jacketGarmentSubject.value,
-      accessories: this.accessoriesGarmentSubject.value
+      fullBody: this.fullBodyGarmentSubject.value
     };
 
     const sizes = {
       top: this.topSizeSubject.value,
       bottom: this.bottomSizeSubject.value,
-      fullBody: this.fullBodySizeSubject.value,
-      jacket: this.jacketSizeSubject.value,
-      accessories: this.accessoriesSizeSubject.value
+      fullBody: this.fullBodySizeSubject.value
     };
 
     const hasFullBody = !!(garments.fullBody && sizes.fullBody);
@@ -1021,29 +986,69 @@ uploadAndSetInspiration(
 
   private mapGarmentSummaryToGarment(dto: GarmentSummaryDto): Garment {
     const fallbackGroup: GarmentGroup = 'full-body';
-    const rawGroup =
-      dto.category ??
-      (dto as { group?: string | null }).group ??
-      (dto as { garmentCategoryGroup?: string | null }).garmentCategoryGroup ??
-      (dto as { garmentCategory?: string | null }).garmentCategory ??
+    // Resolve id from several possible field names (some backends use different keys)
+    const resolvedId =
+      (dto as any).id ?? (dto as any).garmentEntityId ?? (dto as any).garmentId ?? undefined;
+
+    // Determine rawGroup from DTO string fields if present
+    let rawGroup =
+      (dto as any).category ??
+      (dto as any).group ??
+      (dto as any).garmentCategoryGroup ??
+      (dto as any).garmentCategory ??
       null;
-    const normalizedGroup =
+    let normalizedGroup =
       typeof rawGroup === 'string'
         ? rawGroup.trim().toLowerCase().replace(/\s+/g, '-')
         : null;
-    const allowedGroups: GarmentGroup[] = ['tops', 'bottoms', 'full-body', 'jackets', 'accessories'];
-    const group = allowedGroups.includes(normalizedGroup as GarmentGroup)
+    // If the DTO did not include a textual group, try to resolve it by the
+    // numeric garment category entity id (foreign key) using cached categories.
+    if (!normalizedGroup) {
+      const catEntityId = (dto as any).garmentCategoryEntityId ?? (dto as any).garmentCategoryEntityID ?? null;
+      if (catEntityId != null) {
+        const cats = this.garmentCategoriesSubject.value || [];
+        const match = cats.find(
+          (c) => (c.garmentCategoryEntityId ?? (c as any).garmentCategoryEntityID) === catEntityId
+        );
+        if (match) {
+          rawGroup = match.group ?? match.category ?? rawGroup;
+          // recompute normalizedGroup from matched category
+          normalizedGroup = typeof rawGroup === 'string' ? rawGroup.trim().toLowerCase().replace(/\s+/g, '-') : null;
+        }
+      }
+    }
+
+    const allowedGroups: GarmentGroup[] = ['tops', 'bottoms', 'full-body'];
+    let group = allowedGroups.includes(normalizedGroup as GarmentGroup)
       ? (normalizedGroup as GarmentGroup)
       : fallbackGroup;
 
-    return {
-      id: dto.id,
+    const garment: Garment = {
+      id: resolvedId ?? dto.id ?? String(Date.now()),
       name: dto.name,
       description: dto.description ?? '',
       group,
       image: dto.imageUrl ?? 'assets/generated/placeholder-ready-1.svg',
       sizes: dto.sizes ?? []
     };
+
+    try {
+      console.log('[OutfitService] mapped garment DTO -> front model', {
+        dto: {
+          id: resolvedId ?? dto.id,
+          category: (dto as any).category ?? (dto as any).garmentCategory ?? null,
+          group: (dto as any).group ?? (dto as any).garmentCategoryGroup ?? null,
+          garmentCategoryEntityId: (dto as any).garmentCategoryEntityId ?? (dto as any).garmentCategoryEntityID ?? null
+        },
+        normalizedGroup,
+        resolvedGroup: group,
+        garment
+      });
+    } catch (e) {
+      // ignore logging errors
+    }
+
+    return garment;
   }
 
   private mapOutfitDto(response: OutfitDto): GeneratedImage {
