@@ -48,7 +48,6 @@ export class GarmentLibraryComponent implements OnInit {
     { value: 'tops' as const, label: 'Tops' },
     { value: 'bottoms' as const, label: 'Bottoms' },
     { value: 'full-body' as const, label: 'Full body' },
-    { value: 'jackets' as const, label: 'Jackets' },
     { value: 'accessories' as const, label: 'Accessories' }
   ];
 
@@ -64,21 +63,21 @@ export class GarmentLibraryComponent implements OnInit {
   });
 
   // Selected garments as signals (for reactivity)
-  readonly selectedTop = toSignal(this.outfitService.selectedTop$, { initialValue: null });
-  readonly selectedBottom = toSignal(this.outfitService.selectedBottom$, { initialValue: null });
-  readonly selectedFullBody = toSignal(this.outfitService.selectedFullBody$, { initialValue: null });
-  readonly selectedJacket = toSignal(this.outfitService.selectedJacket$, { initialValue: null });
-  readonly selectedAccessories = toSignal(this.outfitService.selectedAccessories$, { initialValue: null });
+  readonly selectedTop = toSignal(this.outfitService.selectedTop$, { initialValue: [] });
+  readonly selectedBottom = toSignal(this.outfitService.selectedBottom$, { initialValue: [] });
+  readonly selectedFullBody = toSignal(this.outfitService.selectedFullBody$, { initialValue: [] });
+  readonly selectedJacket = toSignal(this.outfitService.selectedJacket$, { initialValue: [] });
+  readonly selectedAccessories = toSignal(this.outfitService.selectedAccessories$, { initialValue: [] });
 
   // Computed map of selected garment IDs by group
-  readonly selectedIdByGroup = computed(() => {
+  readonly selectedIdsByGroup = computed(() => {
     return {
-      tops: this.selectedTop()?.id ?? null,
-      bottoms: this.selectedBottom()?.id ?? null,
-      'full-body': this.selectedFullBody()?.id ?? null,
-      jackets: this.selectedJacket()?.id ?? null,
-      accessories: this.selectedAccessories()?.id ?? null
-    } as Record<GarmentGroup, string | number | null>;
+      tops: this.selectedTop().map(g => g.id),
+      bottoms: this.selectedBottom().map(g => g.id),
+      'full-body': this.selectedFullBody().map(g => g.id),
+      jackets: this.selectedJacket().map(g => g.id),
+      accessories: this.selectedAccessories().map(g => g.id)
+    } as Record<GarmentGroup, string[]>;
   });
 
   // Loading & errors
@@ -123,6 +122,17 @@ export class GarmentLibraryComponent implements OnInit {
       next: () => {
         this.isLoadingGarments.set(false);
         this.garmentsError.set(null);
+        // Debug logging: inspect incoming garment objects for category ID fields
+        try {
+          const items = this.garments() ?? [];
+          console.log('[GarmentLibrary] garments loaded:', { count: items.length, sample: items.slice(0, 10) });
+          const hasCategoryField = items.some(it => (it as any).garmentCategoryEntityId !== undefined || (it as any).garmentCategoryEntityID !== undefined);
+          console.log('[GarmentLibrary] garmentCategoryEntityId present on any garment?:', hasCategoryField);
+          const categoryIds = items.map(it => (it as any).garmentCategoryEntityId ?? (it as any).garmentCategoryEntityID ?? null).slice(0, 20);
+          console.log('[GarmentLibrary] garmentCategoryEntityId values (first 20):', categoryIds);
+        } catch (e) {
+          console.error('[GarmentLibrary] error while logging garments', e);
+        }
       },
       error: (err) => {
         const msg = err instanceof Error ? err.message : 'Failed to load garments.';
@@ -174,8 +184,8 @@ export class GarmentLibraryComponent implements OnInit {
   }
 
   isSelected(garment: Garment): boolean {
-    const selectedId = this.selectedIdByGroup()[garment.group];
-    return selectedId === garment.id;
+    const selectedIds = this.selectedIdsByGroup()[garment.group];
+    return selectedIds.includes(garment.id);
   }
 
   trackGarmentById(index: number, garment: Garment): string | number {
@@ -183,38 +193,7 @@ export class GarmentLibraryComponent implements OnInit {
   }
 
   toggleGarment(garment: Garment): void {
-    const group = garment.group;
-    const selectedId = this.selectedIdByGroup()[group];
-    const isCurrentlySelected = selectedId === garment.id;
-
-    if (isCurrentlySelected) {
-      // Deselect
-      this.outfitService.setSelectedGarment(group, null);
-      this.outfitService.setSelectedSize(group, null);
-    } else {
-      // Select
-      this.outfitService.setSelectedGarment(group, garment);
-      
-      // Set default size
-      const sizes = garment.sizes ?? [];
-      const defaultSize = sizes.length > 0
-        ? sizes[0]
-        : group === 'bottoms'
-          ? '32'
-          : 'M';
-      this.outfitService.setSelectedSize(group, defaultSize);
-
-      // Mutual exclusion
-      if (group === 'full-body') {
-        this.outfitService.setSelectedGarment('tops', null);
-        this.outfitService.setSelectedGarment('bottoms', null);
-        this.outfitService.setSelectedSize('tops', null);
-        this.outfitService.setSelectedSize('bottoms', null);
-      } else if (group === 'tops' || group === 'bottoms') {
-        this.outfitService.setSelectedGarment('full-body', null);
-        this.outfitService.setSelectedSize('full-body', null);
-      }
-    }
+    this.outfitService.toggleSelectedGarment(garment.group, garment);
   }
 
   categoryId(category: GarmentCategoryDto | undefined): number | null {

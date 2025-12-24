@@ -79,19 +79,17 @@ export class OutfitService {
   );
   private userModelImagesLoaded = false;
 
-  private readonly topGarmentSubject = new BehaviorSubject<Garment | null>(null);
-  private readonly bottomGarmentSubject = new BehaviorSubject<Garment | null>(null);
-  private readonly fullBodyGarmentSubject = new BehaviorSubject<Garment | null>(null);
-  private readonly jacketGarmentSubject = new BehaviorSubject<Garment | null>(null);
-  private readonly accessoriesGarmentSubject = new BehaviorSubject<Garment | null>(
-    null
-  );
+  private readonly topGarmentsSubject = new BehaviorSubject<Garment[]>([]);
+  private readonly bottomGarmentsSubject = new BehaviorSubject<Garment[]>([]);
+  private readonly fullBodyGarmentsSubject = new BehaviorSubject<Garment[]>([]);
+  private readonly jacketGarmentsSubject = new BehaviorSubject<Garment[]>([]);
+  private readonly accessoriesGarmentsSubject = new BehaviorSubject<Garment[]>([]);
 
-  private readonly topSizeSubject = new BehaviorSubject<string | null>(null);
-  private readonly bottomSizeSubject = new BehaviorSubject<string | null>(null);
-  private readonly fullBodySizeSubject = new BehaviorSubject<string | null>(null);
-  private readonly jacketSizeSubject = new BehaviorSubject<string | null>(null);
-  private readonly accessoriesSizeSubject = new BehaviorSubject<string | null>(null);
+  private readonly topSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
+  private readonly bottomSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
+  private readonly fullBodySizesSubject = new BehaviorSubject<Record<string, string | null>>({});
+  private readonly jacketSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
+  private readonly accessoriesSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
 
   // Model image / pose / background
   // modelIdSubject now holds the ModelImageId (user upload)
@@ -240,17 +238,17 @@ export class OutfitService {
   // Saved model images for current user
   readonly userModelImages$ = this.userModelImagesSubject.asObservable();
 
-  readonly selectedTop$ = this.topGarmentSubject.asObservable();
-  readonly selectedBottom$ = this.bottomGarmentSubject.asObservable();
-  readonly selectedFullBody$ = this.fullBodyGarmentSubject.asObservable();
-  readonly selectedJacket$ = this.jacketGarmentSubject.asObservable();
-  readonly selectedAccessories$ = this.accessoriesGarmentSubject.asObservable();
+  readonly selectedTop$ = this.topGarmentsSubject.asObservable();
+  readonly selectedBottom$ = this.bottomGarmentsSubject.asObservable();
+  readonly selectedFullBody$ = this.fullBodyGarmentsSubject.asObservable();
+  readonly selectedJacket$ = this.jacketGarmentsSubject.asObservable();
+  readonly selectedAccessories$ = this.accessoriesGarmentsSubject.asObservable();
 
-  readonly selectedTopSize$ = this.topSizeSubject.asObservable();
-  readonly selectedBottomSize$ = this.bottomSizeSubject.asObservable();
-  readonly selectedFullBodySize$ = this.fullBodySizeSubject.asObservable();
-  readonly selectedJacketSize$ = this.jacketSizeSubject.asObservable();
-  readonly selectedAccessoriesSize$ = this.accessoriesSizeSubject.asObservable();
+  readonly selectedTopSize$ = this.topSizesSubject.asObservable();
+  readonly selectedBottomSize$ = this.bottomSizesSubject.asObservable();
+  readonly selectedFullBodySize$ = this.fullBodySizesSubject.asObservable();
+  readonly selectedJacketSize$ = this.jacketSizesSubject.asObservable();
+  readonly selectedAccessoriesSize$ = this.accessoriesSizesSubject.asObservable();
 
   readonly selectedModelId$ = this.modelIdSubject.asObservable();
   readonly selectedPoseId$ = this.poseIdSubject.asObservable();
@@ -303,12 +301,12 @@ export class OutfitService {
   readonly garmentCategories$ = this.garmentCategoriesSubject.asObservable();
   readonly imagePerspectives$ = this.imagePerspectivesSubject.asObservable();
 
-  // âœ… These two are what `garment-library.component.ts` expects
+  // These two are what `garment-library.component.ts` expects
   readonly hasCompleteGarmentSelection$ = this.selectedGarments$.pipe(
     map((garments) => {
-      const hasFullBody = !!garments.fullBody;
-      const hasTopBottom = !!(garments.top && garments.bottom);
-      const invalidMix = !!(garments.fullBody && (garments.top || garments.bottom));
+      const hasFullBody = garments.fullBody.length > 0;
+      const hasTopBottom = garments.top.length > 0 && garments.bottom.length > 0;
+      const invalidMix = garments.fullBody.length > 0 && (garments.top.length > 0 || garments.bottom.length > 0);
 
       return !invalidMix && (hasFullBody || hasTopBottom);
     }),
@@ -320,10 +318,11 @@ export class OutfitService {
     this.selectedSizes$
   ]).pipe(
     map(([garments, sizes]) => {
-      const hasFullBody = !!(garments.fullBody && sizes.fullBody);
+      const hasFullBody = garments.fullBody.length > 0 && Object.values(sizes.fullBody).some(s => s);
       const hasTopBottom =
-        !!garments.top && !!garments.bottom && !!sizes.top && !!sizes.bottom;
-      const invalidMix = !!(garments.fullBody && (garments.top || garments.bottom));
+        garments.top.length > 0 && garments.bottom.length > 0 && 
+        Object.values(sizes.top).some(s => s) && Object.values(sizes.bottom).some(s => s);
+      const invalidMix = garments.fullBody.length > 0 && (garments.top.length > 0 || garments.bottom.length > 0);
 
       return !invalidMix && (hasFullBody || hasTopBottom);
     }),
@@ -481,60 +480,166 @@ uploadAndSetInspiration(
   // Garment selection
   // -----------------------------
 
-  setSelectedGarment(group: GarmentGroup, garment: Garment | null): void {
-    let garmentSubject: BehaviorSubject<Garment | null>;
-    let sizeSubject: BehaviorSubject<string | null>;
+  toggleSelectedGarment(group: GarmentGroup, garment: Garment): void {
+    let garmentsSubject: BehaviorSubject<Garment[]>;
+    let sizesSubject: BehaviorSubject<Record<string, string | null>>;
 
     switch (group) {
       case 'tops':
-        garmentSubject = this.topGarmentSubject;
-        sizeSubject = this.topSizeSubject;
+        garmentsSubject = this.topGarmentsSubject;
+        sizesSubject = this.topSizesSubject;
         break;
       case 'bottoms':
-        garmentSubject = this.bottomGarmentSubject;
-        sizeSubject = this.bottomSizeSubject;
+        garmentsSubject = this.bottomGarmentsSubject;
+        sizesSubject = this.bottomSizesSubject;
         break;
       case 'full-body':
-        garmentSubject = this.fullBodyGarmentSubject;
-        sizeSubject = this.fullBodySizeSubject;
+        garmentsSubject = this.fullBodyGarmentsSubject;
+        sizesSubject = this.fullBodySizesSubject;
         break;
       case 'jackets':
-        garmentSubject = this.jacketGarmentSubject;
-        sizeSubject = this.jacketSizeSubject;
+        garmentsSubject = this.jacketGarmentsSubject;
+        sizesSubject = this.jacketSizesSubject;
         break;
       case 'accessories':
-        garmentSubject = this.accessoriesGarmentSubject;
-        sizeSubject = this.accessoriesSizeSubject;
+        garmentsSubject = this.accessoriesGarmentsSubject;
+        sizesSubject = this.accessoriesSizesSubject;
         break;
       default:
         return;
     }
 
-    const previous = garmentSubject.value;
-    garmentSubject.next(garment);
+    const currentGarments = garmentsSubject.value;
+    const isSelected = currentGarments.some(g => g.id === garment.id);
 
-    if (!garment || !previous || garment.id !== previous.id) {
-      sizeSubject.next(null);
+    if (isSelected) {
+      // Remove from selection
+      const updated = currentGarments.filter(g => g.id !== garment.id);
+      garmentsSubject.next(updated);
+      
+      // Remove size entry for this garment
+      const sizes = sizesSubject.value;
+      const updatedSizes = { ...sizes };
+      delete updatedSizes[garment.id];
+      sizesSubject.next(updatedSizes);
+    } else {
+      // Add to selection
+      const updated = [...currentGarments, garment];
+      garmentsSubject.next(updated);
+      
+      // Set default size
+      const sizes = garment.sizes ?? [];
+      const defaultSize = sizes.length > 0
+        ? sizes[0]
+        : group === 'bottoms'
+          ? '32'
+          : 'M';
+      
+      const updatedSizes = { ...sizesSubject.value, [garment.id]: defaultSize };
+      sizesSubject.next(updatedSizes);
     }
   }
 
-  setSelectedSize(group: GarmentGroup, size: string | null): void {
+  setSelectedSize(group: GarmentGroup, garmentId: string, size: string | null): void {
+    let sizesSubject: BehaviorSubject<Record<string, string | null>>;
+
     switch (group) {
       case 'tops':
-        this.topSizeSubject.next(size);
+        sizesSubject = this.topSizesSubject;
         break;
       case 'bottoms':
-        this.bottomSizeSubject.next(size);
+        sizesSubject = this.bottomSizesSubject;
         break;
       case 'full-body':
-        this.fullBodySizeSubject.next(size);
+        sizesSubject = this.fullBodySizesSubject;
         break;
       case 'jackets':
-        this.jacketSizeSubject.next(size);
+        sizesSubject = this.jacketSizesSubject;
         break;
       case 'accessories':
-        this.accessoriesSizeSubject.next(size);
+        sizesSubject = this.accessoriesSizesSubject;
         break;
+      default:
+        return;
+    }
+
+    const updatedSizes = { ...sizesSubject.value };
+    if (size === null) {
+      delete updatedSizes[garmentId];
+    } else {
+      updatedSizes[garmentId] = size;
+    }
+    sizesSubject.next(updatedSizes);
+  }
+
+  isGarmentSelected(group: GarmentGroup, garmentId: string): boolean {
+    let garmentsSubject: BehaviorSubject<Garment[]>;
+
+    switch (group) {
+      case 'tops':
+        garmentsSubject = this.topGarmentsSubject;
+        break;
+      case 'bottoms':
+        garmentsSubject = this.bottomGarmentsSubject;
+        break;
+      case 'full-body':
+        garmentsSubject = this.fullBodyGarmentsSubject;
+        break;
+      case 'jackets':
+        garmentsSubject = this.jacketGarmentsSubject;
+        break;
+      case 'accessories':
+        garmentsSubject = this.accessoriesGarmentsSubject;
+        break;
+      default:
+        return false;
+    }
+
+    return garmentsSubject.value.some(g => g.id === garmentId);
+  }
+
+  // Legacy method for backward compatibility
+  setSelectedGarment(group: GarmentGroup, garment: Garment | null): void {
+    let garmentsSubject: BehaviorSubject<Garment[]>;
+    let sizesSubject: BehaviorSubject<Record<string, string | null>>;
+
+    switch (group) {
+      case 'tops':
+        garmentsSubject = this.topGarmentsSubject;
+        sizesSubject = this.topSizesSubject;
+        break;
+      case 'bottoms':
+        garmentsSubject = this.bottomGarmentsSubject;
+        sizesSubject = this.bottomSizesSubject;
+        break;
+      case 'full-body':
+        garmentsSubject = this.fullBodyGarmentsSubject;
+        sizesSubject = this.fullBodySizesSubject;
+        break;
+      case 'jackets':
+        garmentsSubject = this.jacketGarmentsSubject;
+        sizesSubject = this.jacketSizesSubject;
+        break;
+      case 'accessories':
+        garmentsSubject = this.accessoriesGarmentsSubject;
+        sizesSubject = this.accessoriesSizesSubject;
+        break;
+      default:
+        return;
+    }
+
+    if (garment === null) {
+      garmentsSubject.next([]);
+      sizesSubject.next({});
+    } else {
+      garmentsSubject.next([garment]);
+      const sizes = garment.sizes ?? [];
+      const defaultSize = sizes.length > 0
+        ? sizes[0]
+        : group === 'bottoms'
+          ? '32'
+          : 'M';
+      sizesSubject.next({ [garment.id]: defaultSize });
     }
   }
 
@@ -681,6 +786,16 @@ uploadAndSetInspiration(
     return this.outfitifyApi
       .listGarments()
       .pipe(
+        // Debug: log raw DTOs coming from the API so we can inspect field names
+        tap((items: GarmentSummaryDto[]) => {
+          try {
+            console.log('[OutfitService] raw garments DTOs:', { count: items?.length ?? 0, sample: (items ?? []).slice(0, 10) });
+            const keys = (items ?? []).map(i => Object.keys(i));
+            console.log('[OutfitService] garment DTO keys (first 10):', keys.slice(0, 10));
+          } catch (e) {
+            console.error('[OutfitService] error logging raw garments DTOs', e);
+          }
+        }),
         map((items: GarmentSummaryDto[]) =>
           items.map((dto) => this.mapGarmentSummaryToGarment(dto))
         ),
@@ -835,42 +950,45 @@ uploadAndSetInspiration(
 
   private ensureGarmentInstancesForSelection(
     garments: {
-      top: Garment | null;
-      bottom: Garment | null;
-      fullBody: Garment | null;
-      jacket: Garment | null;
-      accessories: Garment | null;
+      top: Garment[];
+      bottom: Garment[];
+      fullBody: Garment[];
+      jacket: Garment[];
+      accessories: Garment[];
     },
     sizes: {
-      top: string | null;
-      bottom: string | null;
-      fullBody: string | null;
-      jacket: string | null;
-      accessories: string | null;
+      top: Record<string, string | null>;
+      bottom: Record<string, string | null>;
+      fullBody: Record<string, string | null>;
+      jacket: Record<string, string | null>;
+      accessories: Record<string, string | null>;
     }
   ): Observable<string[]> {
     const requests: Observable<string>[] = [];
 
-    const add = (garment: Garment | null, size: string | null) => {
-      if (!garment || !size) return;
+    const addFromGroup = (garmentsInGroup: Garment[], sizesInGroup: Record<string, string | null>) => {
+      for (const garment of garmentsInGroup) {
+        const size = sizesInGroup[garment.id];
+        if (!size) continue;
 
-      const payload: CreateGarmentInstanceRequest = {
-        garmentEntityId: garment.id,
-        sizeName: size
-      };
+        const payload: CreateGarmentInstanceRequest = {
+          garmentEntityId: garment.id,
+          sizeName: size
+        };
 
-      const req$ = this.outfitifyApi
-        .createGarmentInstance(payload)
-        .pipe(map((dto) => dto.id));
+        const req$ = this.outfitifyApi
+          .createGarmentInstance(payload)
+          .pipe(map((dto) => dto.id));
 
-      requests.push(req$);
+        requests.push(req$);
+      }
     };
 
-    add(garments.fullBody, sizes.fullBody);
-    add(garments.top, sizes.top);
-    add(garments.bottom, sizes.bottom);
-    add(garments.jacket, sizes.jacket);
-    add(garments.accessories, sizes.accessories);
+    addFromGroup(garments.fullBody, sizes.fullBody);
+    addFromGroup(garments.top, sizes.top);
+    addFromGroup(garments.bottom, sizes.bottom);
+    addFromGroup(garments.jacket, sizes.jacket);
+    addFromGroup(garments.accessories, sizes.accessories);
 
     if (requests.length === 0) {
       return of([]);
@@ -899,26 +1017,27 @@ uploadAndSetInspiration(
 
   createOutfit(): Observable<GeneratedImage> {
     const garments = {
-      top: this.topGarmentSubject.value,
-      bottom: this.bottomGarmentSubject.value,
-      fullBody: this.fullBodyGarmentSubject.value,
-      jacket: this.jacketGarmentSubject.value,
-      accessories: this.accessoriesGarmentSubject.value
+      top: this.topGarmentsSubject.value,
+      bottom: this.bottomGarmentsSubject.value,
+      fullBody: this.fullBodyGarmentsSubject.value,
+      jacket: this.jacketGarmentsSubject.value,
+      accessories: this.accessoriesGarmentsSubject.value
     };
 
     const sizes = {
-      top: this.topSizeSubject.value,
-      bottom: this.bottomSizeSubject.value,
-      fullBody: this.fullBodySizeSubject.value,
-      jacket: this.jacketSizeSubject.value,
-      accessories: this.accessoriesSizeSubject.value
+      top: this.topSizesSubject.value,
+      bottom: this.bottomSizesSubject.value,
+      fullBody: this.fullBodySizesSubject.value,
+      jacket: this.jacketSizesSubject.value,
+      accessories: this.accessoriesSizesSubject.value
     };
 
-    const hasFullBody = !!(garments.fullBody && sizes.fullBody);
+    const hasFullBody = garments.fullBody.length > 0 && Object.values(sizes.fullBody).some(s => s);
     const hasTopBottom =
-      !!(garments.top && garments.bottom && sizes.top && sizes.bottom);
+      garments.top.length > 0 && garments.bottom.length > 0 && 
+      Object.values(sizes.top).some(s => s) && Object.values(sizes.bottom).some(s => s);
     const invalidMix =
-      !!(garments.fullBody && (garments.top || garments.bottom));
+      garments.fullBody.length > 0 && (garments.top.length > 0 || garments.bottom.length > 0);
 
     if (invalidMix) {
       throw new Error(
@@ -928,7 +1047,7 @@ uploadAndSetInspiration(
 
     if (!hasFullBody && !hasTopBottom) {
       throw new Error(
-        'Select either a full-body garment and size, or a top and bottom with sizes, before creating an outfit.'
+        'Select either full-body garments with sizes, or tops and bottoms with sizes, before creating an outfit.'
       );
     }
 
@@ -1036,14 +1155,34 @@ uploadAndSetInspiration(
       ? (normalizedGroup as GarmentGroup)
       : fallbackGroup;
 
-    return {
-      id: dto.id,
+    // Preserve a few alternate/legacy field names for robustness and debugging
+    const idFallback =
+      (dto as any).id ??
+      (dto as any).garmentEntityId ??
+      (dto as any).garmentEntityID ??
+      (dto as any).GarmentEntityId ??
+      null;
+
+    const garmentCategoryEntityId =
+      (dto as any).garmentCategoryEntityId ??
+      (dto as any).garmentCategoryEntityID ??
+      null;
+
+    const garment: Garment & Record<string, any> = {
+      id: idFallback ?? (dto as any).id ?? '',
       name: dto.name,
       description: dto.description ?? '',
       group,
       image: dto.imageUrl ?? 'assets/generated/placeholder-ready-1.svg',
       sizes: dto.sizes ?? []
-    };
+    } as Garment & Record<string, any>;
+
+    // Attach any discovered category/entity id on the runtime object for debugging
+    if (garmentCategoryEntityId !== null) {
+      garment['garmentCategoryEntityId'] = garmentCategoryEntityId;
+    }
+
+    return garment;
   }
 
   private mapOutfitDto(response: OutfitDto): GeneratedImage {

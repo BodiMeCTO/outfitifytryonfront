@@ -68,18 +68,18 @@ export interface GeneratedImageResponse {
 export interface OutfitRequest {
   inspiration: SelectedInspiration | null;
   garments: {
-    top: Garment | null;
-    bottom: Garment | null;
-    fullBody: Garment | null;
-    jacket: Garment | null;
-    accessories: Garment | null;
+    top: Garment[];
+    bottom: Garment[];
+    fullBody: Garment[];
+    jacket: Garment[];
+    accessories: Garment[];
   };
   sizes: {
-    top: string | null;
-    bottom: string | null;
-    fullBody: string | null;
-    jacket: string | null;
-    accessories: string | null;
+    top: Record<string, string | null>; // garmentId -> size
+    bottom: Record<string, string | null>;
+    fullBody: Record<string, string | null>;
+    jacket: Record<string, string | null>;
+    accessories: Record<string, string | null>;
   };
 }
 

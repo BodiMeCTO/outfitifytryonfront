@@ -14,19 +14,19 @@ import { OutfitService } from '../../services/outfit.service';
 import { Garment, GarmentGroup } from '../../models/outfit';
 
 type GarmentSelectionState = {
-  top: Garment | null;
-  bottom: Garment | null;
-  fullBody: Garment | null;
-  jacket: Garment | null;
-  accessories: Garment | null;
+  top: Garment[];
+  bottom: Garment[];
+  fullBody: Garment[];
+  jacket: Garment[];
+  accessories: Garment[];
 };
 
 type SizeSelectionState = {
-  top: string | null;
-  bottom: string | null;
-  fullBody: string | null;
-  jacket: string | null;
-  accessories: string | null;
+  top: Record<string, string | null>;
+  bottom: Record<string, string | null>;
+  fullBody: Record<string, string | null>;
+  jacket: Record<string, string | null>;
+  accessories: Record<string, string | null>;
 };
 
 type ReviewEntry = {
@@ -35,19 +35,19 @@ type ReviewEntry = {
 };
 
 const EMPTY_SELECTION: GarmentSelectionState = {
-  top: null,
-  bottom: null,
-  fullBody: null,
-  jacket: null,
-  accessories: null
+  top: [],
+  bottom: [],
+  fullBody: [],
+  jacket: [],
+  accessories: []
 };
 
 const EMPTY_SIZE_SELECTION: SizeSelectionState = {
-  top: null,
-  bottom: null,
-  fullBody: null,
-  jacket: null,
-  accessories: null
+  top: {},
+  bottom: {},
+  fullBody: {},
+  jacket: {},
+  accessories: {}
 };
 
 const DEFAULT_TOP_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
@@ -95,21 +95,25 @@ export class SizeSelectionComponent {
     const g = this.garments();
     const entries: ReviewEntry[] = [];
 
-    if (g.top) {
-      entries.push({ garment: g.top, group: 'tops' });
+    if (g.top && g.top.length > 0) {
+      g.top.forEach(garment => {
+        entries.push({ garment, group: 'tops' });
+      });
     }
-    if (g.bottom) {
-      entries.push({ garment: g.bottom, group: 'bottoms' });
+    if (g.bottom && g.bottom.length > 0) {
+      g.bottom.forEach(garment => {
+        entries.push({ garment, group: 'bottoms' });
+      });
     }
 
     return entries;
   });
 
   readonly topSizeOptions = computed(
-    () => this.garments().top?.sizes ?? DEFAULT_TOP_SIZES
+    () => this.garments().top?.[0]?.sizes ?? DEFAULT_TOP_SIZES
   );
   readonly bottomSizeOptions = computed(
-    () => this.garments().bottom?.sizes ?? DEFAULT_BOTTOM_SIZES
+    () => this.garments().bottom?.[0]?.sizes ?? DEFAULT_BOTTOM_SIZES
   );
 
   readonly isSubmitting = signal(false);
@@ -127,11 +131,19 @@ export class SizeSelectionComponent {
 
   selectedSize(group: GarmentGroup): string | null {
     const sizes = this.sizes();
+    if (!sizes) return null;
+    
     switch (group) {
       case 'tops':
-        return sizes.top;
+        const topGarments = this.garments().top;
+        return topGarments && topGarments.length > 0 
+          ? (sizes.top[topGarments[0].id] ?? null)
+          : null;
       case 'bottoms':
-        return sizes.bottom;
+        const bottomGarments = this.garments().bottom;
+        return bottomGarments && bottomGarments.length > 0 
+          ? (sizes.bottom[bottomGarments[0].id] ?? null)
+          : null;
       default:
         return null;
     }
@@ -139,7 +151,10 @@ export class SizeSelectionComponent {
 
   handleSizeChange(group: GarmentGroup, event: MatButtonToggleChange): void {
     // We only expect 'tops' or 'bottoms' here
-    this.outfitService.setSelectedSize(group, event.value ?? null);
+    const garments = group === 'tops' ? this.garments().top : this.garments().bottom;
+    if (garments && garments.length > 0) {
+      this.outfitService.setSelectedSize(group, garments[0].id, event.value ?? null);
+    }
   }
 
   createOutfit(): void {

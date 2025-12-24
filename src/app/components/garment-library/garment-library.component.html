@@ -76,7 +76,7 @@
   <header class="section-header">
     <h1>Select garments to build your outfit</h1>
     <p class="subtitle">
-      Choose a full-body garment OR a top + bottom. You can optionally add a jacket or accessories.
+      Choose a full-body garment OR tops + bottoms. You can select multiple items from each category. Optionally add jackets or accessories.
     </p>
   </header>
 
@@ -131,10 +131,10 @@
 
       <mat-card-actions>
         <span class="selection-indicator" *ngIf="isSelected(garment)">
-          <mat-icon>check_circle</mat-icon> Selected
+          <mat-icon>check_box</mat-icon> Selected
         </span>
         <span class="selection-indicator muted" *ngIf="!isSelected(garment)">
-          <mat-icon>radio_button_unchecked</mat-icon> Click to select
+          <mat-icon>check_box_outline_blank</mat-icon> Click to select
         </span>
       </mat-card-actions>
     </mat-card>
