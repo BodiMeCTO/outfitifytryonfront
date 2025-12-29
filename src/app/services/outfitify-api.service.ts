@@ -17,8 +17,6 @@ import {
   ShopifyUsageRequest,
   SubscriptionPlanDto,
   TokenResponse,
-  CreateGarmentInstanceRequest,
-  GarmentInstanceDto,
   ModelProfileDto,
   GarmentImageDto,
   UpdateBackgroundImageDto
@@ -105,11 +103,6 @@ export class OutfitifyApiService {
 
   uploadGarmentImage(formData: FormData): Observable<GarmentImageDto> {
     return this.http.post<GarmentImageDto>(this.buildUrl('/api/garment-images/upload'), formData);
-  }
-
-  // --- Garment Instances ---
-  createGarmentInstance(payload: CreateGarmentInstanceRequest): Observable<GarmentInstanceDto> {
-    return this.http.post<GarmentInstanceDto>(this.buildUrl('/api/product-instances'), payload);
   }
 
   // --- Outfits ---

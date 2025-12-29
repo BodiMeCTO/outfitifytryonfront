@@ -5,8 +5,7 @@ import {
   Observable,
   combineLatest,
   of,
-  throwError,
-  forkJoin
+  throwError
 } from 'rxjs';
 import {
   catchError,
@@ -26,12 +25,12 @@ import {
   OutfitRequestSnapshot,
   SelectedInspiration,
   CreateOutfitDto,
-  OutfitDto
+  OutfitDto,
+  OutfitGarment
 } from '../models/outfit';
 
 import {
   GarmentSummaryDto,
-  CreateGarmentInstanceRequest,
   CatalogueOption,
   GarmentCategoryDto,
   GarmentImageDto,
@@ -48,7 +47,7 @@ import { UserProfile } from '../models/user';
 // DTO for /api/model-images endpoints
 // -------------------------------------
 export interface ModelImageDto {
-  id: string;
+  modelImageId: string;
   name: string;
   imageUrl: string;
   poseOptionId: string;
@@ -306,9 +305,8 @@ export class OutfitService {
     map((garments) => {
       const hasFullBody = garments.fullBody.length > 0;
       const hasTopBottom = garments.top.length > 0 && garments.bottom.length > 0;
-      const invalidMix = garments.fullBody.length > 0 && (garments.top.length > 0 || garments.bottom.length > 0);
 
-      return !invalidMix && (hasFullBody || hasTopBottom);
+      return hasFullBody || hasTopBottom;
     }),
     distinctUntilChanged()
   );
@@ -320,11 +318,10 @@ export class OutfitService {
     map(([garments, sizes]) => {
       const hasFullBody = garments.fullBody.length > 0 && Object.values(sizes.fullBody).some(s => s);
       const hasTopBottom =
-        garments.top.length > 0 && garments.bottom.length > 0 && 
+        garments.top.length > 0 && garments.bottom.length > 0 &&
         Object.values(sizes.top).some(s => s) && Object.values(sizes.bottom).some(s => s);
-      const invalidMix = garments.fullBody.length > 0 && (garments.top.length > 0 || garments.bottom.length > 0);
 
-      return !invalidMix && (hasFullBody || hasTopBottom);
+      return hasFullBody || hasTopBottom;
     }),
     distinctUntilChanged()
   );
@@ -444,10 +441,10 @@ uploadAndSetInspiration(
           previewUrl,
           source: 'upload',
           remoteUrl: response.imageUrl,
-          id: response.id
+          id: response.modelImageId
         };
 
-        this.modelIdSubject.next(response.id);
+        this.modelIdSubject.next(response.modelImageId);
         return selection;
       }),
       tap((selection) => {
@@ -945,59 +942,6 @@ uploadAndSetInspiration(
   }
 
   // -----------------------------
-  // Garment instance helper
-  // -----------------------------
-
-  private ensureGarmentInstancesForSelection(
-    garments: {
-      top: Garment[];
-      bottom: Garment[];
-      fullBody: Garment[];
-      jacket: Garment[];
-      accessories: Garment[];
-    },
-    sizes: {
-      top: Record<string, string | null>;
-      bottom: Record<string, string | null>;
-      fullBody: Record<string, string | null>;
-      jacket: Record<string, string | null>;
-      accessories: Record<string, string | null>;
-    }
-  ): Observable<string[]> {
-    const requests: Observable<string>[] = [];
-
-    const addFromGroup = (garmentsInGroup: Garment[], sizesInGroup: Record<string, string | null>) => {
-      for (const garment of garmentsInGroup) {
-        const size = sizesInGroup[garment.id];
-        if (!size) continue;
-
-        const payload: CreateGarmentInstanceRequest = {
-          garmentEntityId: garment.id,
-          sizeName: size
-        };
-
-        const req$ = this.outfitifyApi
-          .createGarmentInstance(payload)
-          .pipe(map((dto) => dto.id));
-
-        requests.push(req$);
-      }
-    };
-
-    addFromGroup(garments.fullBody, sizes.fullBody);
-    addFromGroup(garments.top, sizes.top);
-    addFromGroup(garments.bottom, sizes.bottom);
-    addFromGroup(garments.jacket, sizes.jacket);
-    addFromGroup(garments.accessories, sizes.accessories);
-
-    if (requests.length === 0) {
-      return of([]);
-    }
-
-    return forkJoin(requests);
-  }
-
-  // -----------------------------
   // Outfit creation
   // -----------------------------
 
@@ -1016,39 +960,16 @@ uploadAndSetInspiration(
   }
 
   createOutfit(): Observable<GeneratedImage> {
-    const garments = {
-      top: this.topGarmentsSubject.value,
-      bottom: this.bottomGarmentsSubject.value,
-      fullBody: this.fullBodyGarmentsSubject.value,
-      jacket: this.jacketGarmentsSubject.value,
-      accessories: this.accessoriesGarmentsSubject.value
-    };
+    const allGarments = [
+      ...this.topGarmentsSubject.value,
+      ...this.bottomGarmentsSubject.value,
+      ...this.fullBodyGarmentsSubject.value,
+      ...this.jacketGarmentsSubject.value,
+      ...this.accessoriesGarmentsSubject.value
+    ];
 
-    const sizes = {
-      top: this.topSizesSubject.value,
-      bottom: this.bottomSizesSubject.value,
-      fullBody: this.fullBodySizesSubject.value,
-      jacket: this.jacketSizesSubject.value,
-      accessories: this.accessoriesSizesSubject.value
-    };
-
-    const hasFullBody = garments.fullBody.length > 0 && Object.values(sizes.fullBody).some(s => s);
-    const hasTopBottom =
-      garments.top.length > 0 && garments.bottom.length > 0 && 
-      Object.values(sizes.top).some(s => s) && Object.values(sizes.bottom).some(s => s);
-    const invalidMix =
-      garments.fullBody.length > 0 && (garments.top.length > 0 || garments.bottom.length > 0);
-
-    if (invalidMix) {
-      throw new Error(
-        'You cannot combine a full-body garment with a separate top or bottom.'
-      );
-    }
-
-    if (!hasFullBody && !hasTopBottom) {
-      throw new Error(
-        'Select either full-body garments with sizes, or tops and bottoms with sizes, before creating an outfit.'
-      );
+    if (allGarments.length === 0) {
+      throw new Error('Please select at least one garment before creating an outfit.');
     }
 
     const modelId = this.getActiveModelImageId();
@@ -1061,9 +982,9 @@ uploadAndSetInspiration(
       );
     }
 
-    if (!poseId || !backgroundId) {
+    if (!poseId) {
       throw new Error(
-        'Pose or background is not available yet. Please try again in a moment.'
+        'Pose is not available yet. Please try again in a moment.'
       );
     }
 
@@ -1073,30 +994,32 @@ uploadAndSetInspiration(
       return throwError(() => error);
     }
 
-    return this.ensureGarmentInstancesForSelection(garments, sizes).pipe(
-      switchMap((garmentInstanceIds) => {
-        const payload: CreateOutfitDto = {
-          garmentInstanceIds,
-          modelImageId: modelId,
-          poseOptionId: poseId,
-          backgroundOptionId: backgroundId,
-          garmentInstances: null
-        };
+    const outfitGarments: OutfitGarment[] = allGarments.map((garment) => ({
+      garmentEntityId: garment.id,
+      garmentSizeEntityId: null
+    }));
 
-        return this.outfitifyApi
-          .createOutfitRequest(payload)
-          .pipe(map((response: OutfitDto) => this.mapOutfitDto(response)));
-      }),
-      tap((generatedImage: GeneratedImage) => {
-        const images = this.generatedImagesSubject.value.filter(
-          (image) => image.id !== generatedImage.id
-        );
-        this.generatedImagesSubject.next([generatedImage, ...images]);
-      }),
-      catchError((error: unknown) =>
-        throwError(() => this.createApiUnavailableError('creating an outfit', error))
-      )
-    );
+    const payload: CreateOutfitDto = {
+      modelImageId: modelId,
+      poseOptionId: poseId,
+      backgroundOptionId: backgroundId,
+      outfitGarments
+    };
+
+    return this.outfitifyApi
+      .createOutfitRequest(payload)
+      .pipe(
+        map((response: OutfitDto) => this.mapOutfitDto(response)),
+        tap((generatedImage: GeneratedImage) => {
+          const images = this.generatedImagesSubject.value.filter(
+            (image) => image.id !== generatedImage.id
+          );
+          this.generatedImagesSubject.next([generatedImage, ...images]);
+        }),
+        catchError((error: unknown) =>
+          throwError(() => this.createApiUnavailableError('creating an outfit', error))
+        )
+      );
   }
 
   refreshGeneratedImages(): Observable<GeneratedImage[]> {
@@ -1209,7 +1132,7 @@ uploadAndSetInspiration(
       previewUrl: dto.imageUrl,
       source: 'upload',
       remoteUrl: dto.imageUrl,
-      id: dto.id
+      id: dto.modelImageId
     };
   }
 

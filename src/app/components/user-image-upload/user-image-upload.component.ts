@@ -16,6 +16,7 @@ import { take } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
 import { SelectedInspiration } from '../../models/outfit';
+import { CatalogueOption } from '../../models/outfitify-api';
 
 @Component({
   standalone: true,
@@ -39,16 +40,35 @@ export class UserImageUploadComponent implements OnInit {
   private readonly outfitService = inject(OutfitService);
   private readonly snackBar = inject(MatSnackBar);
 
+  // Model image state
   readonly inspiration$ = this.outfitService.selectedInspiration$;
   readonly userImages$ = this.outfitService.userModelImages$;
   readonly isUploading = signal(false);
 
+  // Background image state
+  readonly backgroundOptions$ = this.outfitService.backgroundOptions$;
+  readonly selectedBackground$ = this.outfitService.selectedBackground$;
+  readonly isUploadingBackground = signal(false);
+
   ngOnInit(): void {
+    // Load model images
     this.outfitService
       .ensureUserModelImagesLoaded()
       .pipe(take(1))
       .subscribe({
         error: (err) => console.error('Failed to load user model images', err)
+      });
+
+    // Load background options
+    this.outfitService
+      .ensureBackgroundOptionsLoaded()
+      .pipe(take(1))
+      .subscribe({
+        error: () => {
+          this.snackBar.open('Unable to load background options right now.', 'Dismiss', {
+            duration: 3500
+          });
+        }
       });
   }
 
@@ -113,5 +133,67 @@ export class UserImageUploadComponent implements OnInit {
 
   clearSelection(): void {
     this.outfitService.setInspiration(null);
+  }
+
+  // Background methods
+  handleBackgroundFileSelection(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.snackBar.open('Please select an image file to upload.', 'Dismiss', {
+        duration: 4000
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const previewUrl = reader.result as string;
+      this.isUploadingBackground.set(true);
+
+      this.outfitService
+        .uploadBackgroundOption(file, previewUrl)
+        .pipe(take(1))
+        .subscribe({
+          next: (option: CatalogueOption) => {
+            this.isUploadingBackground.set(false);
+            this.snackBar.open('Background uploaded successfully.', 'Great!', {
+              duration: 2500
+            });
+
+            if (!option.thumbnailUrl) {
+              this.snackBar.open(
+                'Background uploaded without a preview URL; using your local image.',
+                'OK',
+                { duration: 4000 }
+              );
+            }
+          },
+          error: () => {
+            this.isUploadingBackground.set(false);
+            this.snackBar.open(
+              'Unable to upload your background right now.',
+              'Dismiss',
+              { duration: 4000 }
+            );
+          }
+        });
+    };
+
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  selectExistingBackground(option: CatalogueOption): void {
+    this.outfitService.setSelectedBackground(option);
+    this.snackBar.open('Using this background.', undefined, { duration: 1500 });
+  }
+
+  clearBackgroundSelection(): void {
+    this.outfitService.setSelectedBackground(null);
   }
 }

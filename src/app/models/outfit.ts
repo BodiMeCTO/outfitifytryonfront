@@ -99,9 +99,9 @@ export interface GarmentResponse {
 // Backend DTOs (match C#)
 // -----------------------
 
-export interface OutfitGarmentInstance {
-  garmentInstanceEntityId: string;
-  outfitRequestId?: string;
+export interface OutfitGarment {
+  garmentEntityId: string;
+  garmentSizeEntityId?: number | null;
 }
 
 export interface OutfitImage {
@@ -112,9 +112,8 @@ export interface OutfitImage {
 
 export interface OutfitDto {
   id: string;
-  garmentInstanceIds: string[];
   modelImageId: string;
-  backgroundOptionId: string;
+  backgroundOptionId: string | null;
   creditCost?: number | null;
   status?: string | null;
   createdAtUtc?: string | null;
@@ -123,11 +122,10 @@ export interface OutfitDto {
 }
 
 export interface CreateOutfitDto {
-  garmentInstanceIds: string[];
   modelImageId: string;
   poseOptionId: string;
-  backgroundOptionId: string;
-  garmentInstances?: OutfitGarmentInstance[] | null;
+  backgroundOptionId: string | null;
+  outfitGarments: OutfitGarment[];
 }
 
 export type CreateOutfitResponse = OutfitDto;
