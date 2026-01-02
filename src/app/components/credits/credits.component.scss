@@ -1,0 +1,105 @@
+.credits-page {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Page navigation */
+.page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* Balance Card */
+.balance-card {
+  text-align: center;
+}
+
+.balance-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem 0;
+}
+
+.balance-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #673ab7;
+}
+
+.balance-value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #673ab7;
+  line-height: 1;
+}
+
+.balance-label {
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.balance-card mat-card-actions {
+  justify-content: center;
+  padding-bottom: 1.5rem;
+}
+
+/* History Card */
+.history-card mat-card-content {
+  padding: 0;
+}
+
+.loading,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.empty mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}
+
+.empty p {
+  margin: 0;
+}
+
+/* Transactions Table */
+.transactions-table {
+  width: 100%;
+}
+
+.transactions-table th {
+  font-weight: 600;
+}
+
+.transactions-table td.credit {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.transactions-table td.debit {
+  color: #c62828;
+  font-weight: 600;
+}

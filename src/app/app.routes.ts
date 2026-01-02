@@ -84,6 +84,13 @@ export const routes: Routes = [
           import('./components/image-review/image-review.component')
             .then((m) => m.ImageReviewComponent),
         title: 'Review Generated Image'
+      },
+      {
+        path: 'credits',
+        loadComponent: () =>
+          import('./components/credits/credits.component')
+            .then((m) => m.CreditsComponent),
+        title: 'Credits'
       }
     ]
   },

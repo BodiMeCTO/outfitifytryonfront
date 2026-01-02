@@ -1,3 +1,30 @@
+.size-selection {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* Page navigation */
+.page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.step-indicator {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 500;
+}
+
 .size-selection mat-card {
   display: grid;
   gap: 1.5rem;

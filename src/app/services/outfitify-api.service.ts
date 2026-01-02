@@ -69,10 +69,6 @@ export class OutfitifyApiService {
     return this.http.get<BackgroundImageDto>(this.buildUrl(`/api/backgrounds/${id}`));
   }
 
-  uploadBackgroundImage(formData: FormData): Observable<BackgroundImageDto> {
-    return this.http.post<BackgroundImageDto>(this.buildUrl('/api/background-images/upload'), formData);
-  }
-
   updateBackgroundImage(
     id: string,
     payload: UpdateBackgroundImageDto
@@ -147,6 +143,10 @@ export class OutfitifyApiService {
 
   getCreditsLedger(): Observable<CreditsLedgerEntryDto[]> {
     return this.http.get<CreditsLedgerEntryDto[]>(this.buildUrl('/api/credits/ledger'));
+  }
+
+  grantCredits(amount: number, description?: string): Observable<CreditsBalanceDto> {
+    return this.http.post<CreditsBalanceDto>(this.buildUrl('/api/credits/grant'), { amount, description });
   }
 
   // --- Subscriptions ---

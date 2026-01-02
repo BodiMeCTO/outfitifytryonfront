@@ -125,6 +125,7 @@ export interface CreateOutfitDto {
   modelImageId: string;
   poseOptionId: string;
   backgroundOptionId: string | null;
+  customBackgroundPrompt?: string | null;
   outfitGarments: OutfitGarment[];
 }
 

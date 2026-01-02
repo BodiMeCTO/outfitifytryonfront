@@ -1,73 +1,99 @@
 <section class="section-card background-upload">
   <mat-card appearance="outlined">
     <mat-card-header>
-      <mat-card-title>Choose or upload a background image</mat-card-title>
+      <mat-card-title>Choose a background scene</mat-card-title>
       <mat-card-subtitle>
-        Optional: pick or upload a background to place behind your outfits.
+        Select a preset background or describe your own custom scene.
       </mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
-      <!-- EXISTING BACKGROUNDS -->
-      <div class="existing-images" *ngIf="backgroundOptions$ | async as options">
-        <h3 class="section-title">Use a saved background</h3>
+      <!-- TEMPLATE BACKGROUNDS -->
+      <div class="template-backgrounds" *ngIf="templateBackgrounds$ | async as templates">
+        <h3 class="section-title">AI-Generated Backgrounds</h3>
 
-        <div *ngIf="options.length; else noOptions" class="image-grid">
+        <div *ngIf="templates.length" class="template-grid">
           <button
             mat-stroked-button
             type="button"
-            class="image-tile"
-            *ngFor="let option of options"
-            (click)="selectExisting(option)"
-            [class.is-selected]="(selectedBackground$ | async)?.id === option.id"
+            class="template-tile"
+            *ngFor="let template of templates"
+            (click)="selectExisting(template)"
+            [class.is-selected]="(selectedBackground$ | async)?.id === template.id && !isCustomMode()"
           >
-            <ng-container *ngIf="option.thumbnailUrl; else nameOnly">
-              <img [src]="option.thumbnailUrl" [alt]="option.name || 'Background option'" />
-            </ng-container>
-            <ng-template #nameOnly>
-              <span class="placeholder">{{ option.name || 'Background' }}</span>
-            </ng-template>
+            <mat-icon class="template-icon">{{ getTemplateIcon(template.name) }}</mat-icon>
+            <span class="template-name">{{ template.name }}</span>
+          </button>
+
+          <!-- Custom option -->
+          <button
+            mat-stroked-button
+            type="button"
+            class="template-tile custom-tile"
+            (click)="selectCustomMode()"
+            [class.is-selected]="isCustomMode()"
+          >
+            <mat-icon class="template-icon">edit</mat-icon>
+            <span class="template-name">Custom</span>
           </button>
         </div>
-
-        <ng-template #noOptions>
-          <p class="hint">No saved backgrounds yet. Upload one to customise your scene.</p>
-        </ng-template>
       </div>
 
-      <!-- UPLOAD NEW IMAGE -->
-      <div class="upload-zone">
-        <input
-          #fileInput
-          type="file"
-          accept="image/*"
-          (change)="handleFileSelection($event)"
-          hidden
-        />
-        <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="isUploading()">
-          <mat-icon>photo_library</mat-icon>
-          {{ isUploading() ? 'Uploading…' : 'Upload a new background' }}
+      <!-- CUSTOM PROMPT INPUT -->
+      <div class="custom-prompt-section" *ngIf="isCustomMode()">
+        <mat-form-field appearance="outline" class="custom-prompt-field">
+          <mat-label>Describe your background</mat-label>
+          <textarea
+            matInput
+            [(ngModel)]="customPromptValue"
+            placeholder="e.g., 'tropical beach at sunset with palm trees' or 'modern minimalist living room'"
+            rows="3"
+          ></textarea>
+          <mat-hint>Be descriptive for best results</mat-hint>
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="applyCustomPrompt()"
+          [disabled]="!customPromptValue.trim()"
+          class="apply-button"
+        >
+          <mat-icon>check</mat-icon>
+          Apply Custom Background
         </button>
-        <p class="hint">
-          Backgrounds are optional. You can upload a new one or keep the default selection.
-        </p>
-        <mat-progress-bar *ngIf="isUploading()" mode="indeterminate"></mat-progress-bar>
       </div>
 
       <!-- CURRENT SELECTION PREVIEW -->
-      <div class="preview" *ngIf="selectedBackground$ | async as selected">
-        <ng-container *ngIf="selected.thumbnailUrl; else previewNameOnly">
-          <img [src]="selected.thumbnailUrl" [alt]="selected.name || 'Selected background'" />
-        </ng-container>
-        <ng-template #previewNameOnly>
-          <div class="name-preview">
-            <mat-icon>image</mat-icon>
-            <div>
-              <p class="label">Selected background</p>
-              <p class="name">{{ selected.name || 'Background' }}</p>
-            </div>
+      <div class="preview" *ngIf="(selectedBackground$ | async) as selected">
+        <div class="selection-preview">
+          <mat-icon class="preview-icon">{{ getTemplateIcon(selected.name) }}</mat-icon>
+          <div class="preview-info">
+            <p class="label">Selected background</p>
+            <p class="name">{{ selected.name || 'Background' }}</p>
+            <p class="prompt-hint" *ngIf="selected.prompt">{{ selected.prompt }}</p>
           </div>
-        </ng-template>
+        </div>
+
+        <div class="actions">
+          <button mat-stroked-button color="primary" routerLink="/garment-library">
+            Continue to garments
+          </button>
+          <button mat-button routerLink="/user-image-upload" type="button">
+            Back to model upload
+          </button>
+          <button mat-button type="button" (click)="clearSelection()">Remove</button>
+        </div>
+      </div>
+
+      <!-- Custom prompt selection preview -->
+      <div class="preview" *ngIf="isCustomMode() && (customPrompt$ | async) as prompt">
+        <div class="selection-preview">
+          <mat-icon class="preview-icon">edit</mat-icon>
+          <div class="preview-info">
+            <p class="label">Custom background</p>
+            <p class="prompt-hint">{{ prompt }}</p>
+          </div>
+        </div>
 
         <div class="actions">
           <button mat-stroked-button color="primary" routerLink="/garment-library">

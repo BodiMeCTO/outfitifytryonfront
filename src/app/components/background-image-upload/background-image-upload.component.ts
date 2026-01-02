@@ -1,15 +1,27 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { AsyncPipe, CommonModule, NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
-import { take } from 'rxjs/operators';
+import { take, map } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
 import { CatalogueOption } from '../../models/outfitify-api';
+
+// Icon mapping for template backgrounds
+const TEMPLATE_ICONS: Record<string, string> = {
+  'White Studio': 'photo_camera',
+  'Urban Street': 'location_city',
+  'Beach Sunset': 'beach_access',
+  'Modern Office': 'business',
+  'Nature Park': 'park',
+  'Luxury Interior': 'hotel'
+};
 
 @Component({
   standalone: true,
@@ -18,11 +30,13 @@ import { CatalogueOption } from '../../models/outfitify-api';
     CommonModule,
     NgIf,
     AsyncPipe,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    MatProgressBarModule,
+    MatFormFieldModule,
+    MatInputModule,
     RouterLink
   ],
   templateUrl: './background-image-upload.component.html',
@@ -35,7 +49,16 @@ export class BackgroundImageUploadComponent implements OnInit {
 
   readonly backgroundOptions$ = this.outfitService.backgroundOptions$;
   readonly selectedBackground$ = this.outfitService.selectedBackground$;
-  readonly isUploading = signal(false);
+  readonly customPrompt$ = this.outfitService.customBackgroundPrompt$;
+
+  // Only show template backgrounds
+  readonly templateBackgrounds$ = this.backgroundOptions$.pipe(
+    map(options => options.filter(o => o.isTemplate))
+  );
+
+  // Track if custom prompt mode is active
+  readonly isCustomMode = signal(false);
+  customPromptValue = '';
 
   ngOnInit(): void {
     this.outfitService
@@ -50,64 +73,33 @@ export class BackgroundImageUploadComponent implements OnInit {
       });
   }
 
-  handleFileSelection(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      this.snackBar.open('Please select an image file to upload.', 'Dismiss', {
-        duration: 4000
-      });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const previewUrl = reader.result as string;
-      this.isUploading.set(true);
-
-      this.outfitService
-        .uploadBackgroundOption(file, previewUrl)
-        .pipe(take(1))
-        .subscribe({
-          next: (option: CatalogueOption) => {
-            this.isUploading.set(false);
-            this.snackBar.open('Background uploaded successfully.', 'Great!', {
-              duration: 2500
-            });
-
-            if (!option.thumbnailUrl) {
-              this.snackBar.open(
-                'Background uploaded without a preview URL; using your local image.',
-                'OK',
-                { duration: 4000 }
-              );
-            }
-          },
-          error: () => {
-            this.isUploading.set(false);
-            this.snackBar.open(
-              'Unable to upload your background right now.',
-              'Dismiss',
-              { duration: 4000 }
-            );
-          }
-        });
-    };
-
-    reader.readAsDataURL(file);
-    input.value = '';
-  }
-
   selectExisting(option: CatalogueOption): void {
+    this.isCustomMode.set(false);
+    this.customPromptValue = '';
     this.outfitService.setSelectedBackground(option);
     this.snackBar.open('Using this background.', undefined, { duration: 1500 });
   }
 
-  clearSelection(): void {
+  selectCustomMode(): void {
+    this.isCustomMode.set(true);
     this.outfitService.setSelectedBackground(null);
+  }
+
+  applyCustomPrompt(): void {
+    if (this.customPromptValue.trim()) {
+      this.outfitService.setCustomBackgroundPrompt(this.customPromptValue.trim());
+      this.snackBar.open('Custom background prompt set.', undefined, { duration: 1500 });
+    }
+  }
+
+  clearSelection(): void {
+    this.isCustomMode.set(false);
+    this.customPromptValue = '';
+    this.outfitService.setSelectedBackground(null);
+    this.outfitService.setCustomBackgroundPrompt(null);
+  }
+
+  getTemplateIcon(name: string): string {
+    return TEMPLATE_ICONS[name] || 'image';
   }
 }

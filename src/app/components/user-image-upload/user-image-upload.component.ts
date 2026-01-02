@@ -6,17 +6,30 @@ import {
   signal
 } from '@angular/core';
 import { AsyncPipe, CommonModule, NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { take } from 'rxjs/operators';
+import { take, map } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
 import { SelectedInspiration } from '../../models/outfit';
 import { CatalogueOption } from '../../models/outfitify-api';
+
+// Icon mapping for template backgrounds
+const TEMPLATE_ICONS: Record<string, string> = {
+  'White Studio': 'photo_camera',
+  'Urban Street': 'location_city',
+  'Beach Sunset': 'beach_access',
+  'Modern Office': 'business',
+  'Nature Park': 'park',
+  'Luxury Interior': 'hotel'
+};
 
 @Component({
   standalone: true,
@@ -25,10 +38,13 @@ import { CatalogueOption } from '../../models/outfitify-api';
     CommonModule,
     NgIf,
     AsyncPipe,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
     MatProgressBarModule,
     RouterLink
   ],
@@ -48,7 +64,19 @@ export class UserImageUploadComponent implements OnInit {
   // Background image state
   readonly backgroundOptions$ = this.outfitService.backgroundOptions$;
   readonly selectedBackground$ = this.outfitService.selectedBackground$;
-  readonly isUploadingBackground = signal(false);
+  readonly customPrompt$ = this.outfitService.customBackgroundPrompt$;
+
+  // Only show template backgrounds
+  readonly templateBackgrounds$ = this.backgroundOptions$.pipe(
+    map(options => options.filter(o => o.isTemplate))
+  );
+
+  // Track if custom prompt mode is active
+  readonly isCustomMode = signal(false);
+  customPromptValue = '';
+
+  // Track if "Keep Original" is selected (default)
+  readonly isKeepOriginal = signal(true);
 
   ngOnInit(): void {
     // Load model images
@@ -136,64 +164,46 @@ export class UserImageUploadComponent implements OnInit {
   }
 
   // Background methods
-  handleBackgroundFileSelection(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      this.snackBar.open('Please select an image file to upload.', 'Dismiss', {
-        duration: 4000
-      });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const previewUrl = reader.result as string;
-      this.isUploadingBackground.set(true);
-
-      this.outfitService
-        .uploadBackgroundOption(file, previewUrl)
-        .pipe(take(1))
-        .subscribe({
-          next: (option: CatalogueOption) => {
-            this.isUploadingBackground.set(false);
-            this.snackBar.open('Background uploaded successfully.', 'Great!', {
-              duration: 2500
-            });
-
-            if (!option.thumbnailUrl) {
-              this.snackBar.open(
-                'Background uploaded without a preview URL; using your local image.',
-                'OK',
-                { duration: 4000 }
-              );
-            }
-          },
-          error: () => {
-            this.isUploadingBackground.set(false);
-            this.snackBar.open(
-              'Unable to upload your background right now.',
-              'Dismiss',
-              { duration: 4000 }
-            );
-          }
-        });
-    };
-
-    reader.readAsDataURL(file);
-    input.value = '';
+  selectKeepOriginal(): void {
+    this.isKeepOriginal.set(true);
+    this.isCustomMode.set(false);
+    this.customPromptValue = '';
+    this.outfitService.setSelectedBackground(null);
+    this.outfitService.setCustomBackgroundPrompt(null);
+    this.snackBar.open('Using original background from your photo.', undefined, { duration: 1500 });
   }
 
   selectExistingBackground(option: CatalogueOption): void {
+    this.isKeepOriginal.set(false);
+    this.isCustomMode.set(false);
+    this.customPromptValue = '';
     this.outfitService.setSelectedBackground(option);
     this.snackBar.open('Using this background.', undefined, { duration: 1500 });
   }
 
-  clearBackgroundSelection(): void {
+  selectCustomMode(): void {
+    this.isKeepOriginal.set(false);
+    this.isCustomMode.set(true);
     this.outfitService.setSelectedBackground(null);
+  }
+
+  applyCustomPrompt(): void {
+    if (this.customPromptValue.trim()) {
+      this.outfitService.setCustomBackgroundPrompt(this.customPromptValue.trim());
+      this.snackBar.open('Custom background prompt set.', undefined, { duration: 1500 });
+    }
+  }
+
+  clearBackgroundSelection(): void {
+    // Reset to default "Keep Original"
+    this.isKeepOriginal.set(true);
+    this.isCustomMode.set(false);
+    this.customPromptValue = '';
+    this.outfitService.setSelectedBackground(null);
+    this.outfitService.setCustomBackgroundPrompt(null);
+  }
+
+  getTemplateIcon(name: string): string {
+    return TEMPLATE_ICONS[name] || 'image';
   }
 }

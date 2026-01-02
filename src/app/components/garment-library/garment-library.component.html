@@ -1,4 +1,13 @@
 <section class="section-card garment-library">
+  <!-- PAGE NAVIGATION -->
+  <div class="page-nav">
+    <button mat-button routerLink="/user-image-upload" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+      Back to Model Photo
+    </button>
+    <span class="step-indicator">Step 2 of 3</span>
+  </div>
+
   <mat-accordion class="upload-accordion" multi="false">
     <mat-expansion-panel hideToggle>
       <mat-expansion-panel-header>
@@ -146,14 +155,21 @@
       <span>Click any garment card to select or deselect it.</span>
     </div>
 
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="submitOutfit()"
-      [disabled]="isSubmitting()"
-    >
-      {{ isSubmitting() ? 'Creating…' : 'Create outfit' }}
-      <mat-icon>bolt</mat-icon>
-    </button>
+    <div class="create-section">
+      <div class="cost-display">
+        <mat-icon>toll</mat-icon>
+        <span class="cost-value">{{ estimatedCost() }}</span>
+        <span class="cost-label">credits</span>
+      </div>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="submitOutfit()"
+        [disabled]="isSubmitting()"
+      >
+        {{ isSubmitting() ? 'Creating…' : 'Create outfit' }}
+        <mat-icon>bolt</mat-icon>
+      </button>
+    </div>
   </footer>
 </section>

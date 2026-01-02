@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { take } from 'rxjs/operators';
 
@@ -23,6 +23,7 @@ type GarmentFilter = GarmentGroup | 'all';
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -96,6 +97,9 @@ export class GarmentLibraryComponent implements OnInit {
   // Submission
   readonly isSubmitting = signal(false);
   private readonly attemptedImageFallbacks = signal<Record<string, number>>({});
+
+  // Credits cost estimation
+  readonly estimatedCost = toSignal(this.outfitService.estimatedCreditsCost$, { initialValue: 1 });
 
   readonly garmentCategoryOptions = computed(() => {
     const cats = [...this.garmentCategories()];

@@ -23,14 +23,18 @@ export interface CatalogueOption {
   name: string;
   thumbnailUrl?: string;
   description?: string;
+  prompt?: string | null;
+  isTemplate?: boolean;
 }
 
 export interface BackgroundImageDto {
   backgroundImageId: string;
   name: string;
   imageUrl?: string | null;
+  prompt?: string | null;
   environmentType?: string | null;
   isActive?: boolean | null;
+  isTemplate?: boolean | null;
 }
 
 export interface CreateBackgroundImageDto {
@@ -124,7 +128,9 @@ export interface CreditsBalanceDto {
 
 export interface CreditsLedgerEntryDto {
   id: string;
+  type: string;
   amount: number;
+  balanceAfter: number;
   description?: string;
   createdAt?: string;
 }

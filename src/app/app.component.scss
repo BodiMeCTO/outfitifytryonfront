@@ -24,6 +24,37 @@
   margin-right: 0.25rem;
 }
 
+.home-button {
+  margin-left: 0.5rem;
+  opacity: 0.9;
+}
+
+.credits-button {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+
+  .credits-value {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .credits-label {
+    font-size: 0.75rem;
+    opacity: 0.85;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
 .auth-content {
   min-height: 100vh;
   display: flex;

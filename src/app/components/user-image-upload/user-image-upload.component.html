@@ -1,4 +1,13 @@
 <section class="section-card user-image-upload">
+  <!-- PAGE NAVIGATION -->
+  <div class="page-nav">
+    <button mat-button routerLink="/generated-gallery" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+      Back to Gallery
+    </button>
+    <span class="step-indicator">Step 1 of 3</span>
+  </div>
+
   <div class="cards-container">
     <!-- MODEL IMAGE CARD -->
     <mat-card appearance="outlined" class="model-card">
@@ -77,78 +86,116 @@
     <!-- BACKGROUND IMAGE CARD -->
     <mat-card appearance="outlined" class="background-card">
       <mat-card-header>
-        <mat-card-title>Choose or upload a background image</mat-card-title>
+        <mat-card-title>Choose a background scene</mat-card-title>
         <mat-card-subtitle>
-          Optional: pick or upload a background to place behind your outfits.
+          Select a preset background or describe your own custom scene.
         </mat-card-subtitle>
       </mat-card-header>
 
       <mat-card-content>
-        <!-- EXISTING BACKGROUNDS -->
-        <div class="existing-images" *ngIf="backgroundOptions$ | async as options">
-          <h3 class="section-title">Use a saved background</h3>
+        <!-- TEMPLATE BACKGROUNDS -->
+        <div class="existing-images" *ngIf="templateBackgrounds$ | async as templates">
+          <h3 class="section-title">Background Options</h3>
 
-          <div *ngIf="options.length; else noOptions" class="image-grid">
+          <div class="image-grid">
+            <!-- Keep Original option (default) -->
             <button
               mat-stroked-button
               type="button"
-              class="image-tile"
-              *ngFor="let option of options"
-              (click)="selectExistingBackground(option)"
-              [class.is-selected]="(selectedBackground$ | async)?.id === option.id"
+              class="image-tile template-tile"
+              (click)="selectKeepOriginal()"
+              [class.is-selected]="isKeepOriginal()"
             >
-              <ng-container *ngIf="option.thumbnailUrl; else nameOnly">
-                <img [src]="option.thumbnailUrl" [alt]="option.name || 'Background option'" />
-              </ng-container>
-              <ng-template #nameOnly>
-                <span class="placeholder">{{ option.name || 'Background' }}</span>
-              </ng-template>
+              <mat-icon class="template-icon">person</mat-icon>
+              <span class="template-name">Keep Original</span>
+            </button>
+
+            <button
+              mat-stroked-button
+              type="button"
+              class="image-tile template-tile"
+              *ngFor="let template of templates"
+              (click)="selectExistingBackground(template)"
+              [class.is-selected]="(selectedBackground$ | async)?.id === template.id && !isCustomMode() && !isKeepOriginal()"
+            >
+              <mat-icon class="template-icon">{{ getTemplateIcon(template.name) }}</mat-icon>
+              <span class="template-name">{{ template.name }}</span>
+            </button>
+
+            <!-- Custom option -->
+            <button
+              mat-stroked-button
+              type="button"
+              class="image-tile template-tile custom-tile"
+              (click)="selectCustomMode()"
+              [class.is-selected]="isCustomMode()"
+            >
+              <mat-icon class="template-icon">edit</mat-icon>
+              <span class="template-name">Custom</span>
             </button>
           </div>
-
-          <ng-template #noOptions>
-            <p class="hint">No saved backgrounds yet. Upload one to customise your scene.</p>
-          </ng-template>
         </div>
 
-        <!-- UPLOAD NEW BACKGROUND -->
-        <div class="upload-zone">
-          <input
-            #bgFileInput
-            type="file"
-            accept="image/*"
-            (change)="handleBackgroundFileSelection($event)"
-            hidden
-          />
+        <!-- CUSTOM PROMPT INPUT -->
+        <div class="custom-prompt-section" *ngIf="isCustomMode()">
+          <mat-form-field appearance="outline" class="custom-prompt-field">
+            <mat-label>Describe your background</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="customPromptValue"
+              placeholder="e.g., 'tropical beach at sunset with palm trees' or 'modern minimalist living room'"
+              rows="3"
+            ></textarea>
+            <mat-hint>Be descriptive for best results</mat-hint>
+          </mat-form-field>
           <button
             mat-raised-button
             color="primary"
-            (click)="bgFileInput.click()"
-            [disabled]="isUploadingBackground()"
+            (click)="applyCustomPrompt()"
+            [disabled]="!customPromptValue.trim()"
+            class="apply-button"
           >
-            <mat-icon>photo_library</mat-icon>
-            {{ isUploadingBackground() ? 'Uploading…' : 'Upload a new background' }}
+            <mat-icon>check</mat-icon>
+            Apply Custom Background
           </button>
-          <p class="hint">
-            Backgrounds are optional. You can upload a new one or skip this step.
-          </p>
-          <mat-progress-bar *ngIf="isUploadingBackground()" mode="indeterminate"></mat-progress-bar>
         </div>
 
-        <!-- CURRENT BACKGROUND PREVIEW -->
-        <div class="preview" *ngIf="selectedBackground$ | async as selected">
-          <ng-container *ngIf="selected.thumbnailUrl; else previewNameOnly">
-            <img [src]="selected.thumbnailUrl" [alt]="selected.name || 'Selected background'" />
-          </ng-container>
-          <ng-template #previewNameOnly>
-            <div class="name-preview">
-              <mat-icon>image</mat-icon>
-              <div>
-                <p class="label">Selected background</p>
-                <p class="name">{{ selected.name || 'Background' }}</p>
-              </div>
+        <!-- Keep Original preview -->
+        <div class="preview" *ngIf="isKeepOriginal()">
+          <div class="name-preview">
+            <mat-icon>person</mat-icon>
+            <div>
+              <p class="label">Selected background</p>
+              <p class="name">Keep Original</p>
+              <p class="prompt-hint">Uses the background from your uploaded photo</p>
             </div>
-          </ng-template>
+          </div>
+        </div>
+
+        <!-- CURRENT SELECTION PREVIEW -->
+        <div class="preview" *ngIf="!isKeepOriginal() && !isCustomMode() && (selectedBackground$ | async) as selected">
+          <div class="name-preview">
+            <mat-icon>{{ getTemplateIcon(selected.name) }}</mat-icon>
+            <div>
+              <p class="label">Selected background</p>
+              <p class="name">{{ selected.name || 'Background' }}</p>
+              <p class="prompt-hint" *ngIf="selected.prompt">{{ selected.prompt }}</p>
+            </div>
+          </div>
+          <div class="actions">
+            <button mat-button type="button" (click)="clearBackgroundSelection()">Remove</button>
+          </div>
+        </div>
+
+        <!-- Custom prompt selection preview -->
+        <div class="preview" *ngIf="isCustomMode() && (customPrompt$ | async) as prompt">
+          <div class="name-preview">
+            <mat-icon>edit</mat-icon>
+            <div>
+              <p class="label">Custom background</p>
+              <p class="prompt-hint">{{ prompt }}</p>
+            </div>
+          </div>
           <div class="actions">
             <button mat-button type="button" (click)="clearBackgroundSelection()">Remove</button>
           </div>

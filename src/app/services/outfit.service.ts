@@ -95,6 +95,7 @@ export class OutfitService {
   private readonly modelIdSubject = new BehaviorSubject<string | null>(null);
   private readonly poseIdSubject = new BehaviorSubject<string | null>(null);
   private readonly backgroundIdSubject = new BehaviorSubject<string | null>(null);
+  private readonly customBackgroundPromptSubject = new BehaviorSubject<string | null>(null);
   private readonly backgroundOptionsSubject = new BehaviorSubject<CatalogueOption[]>([]);
   private backgroundOptionsLoaded = false;
 
@@ -252,6 +253,7 @@ export class OutfitService {
   readonly selectedModelId$ = this.modelIdSubject.asObservable();
   readonly selectedPoseId$ = this.poseIdSubject.asObservable();
   readonly selectedBackgroundId$ = this.backgroundIdSubject.asObservable();
+  readonly customBackgroundPrompt$ = this.customBackgroundPromptSubject.asObservable();
   readonly backgroundOptions$ = this.backgroundOptionsSubject.asObservable();
 
   readonly selectedBackground$ = combineLatest([
@@ -307,6 +309,36 @@ export class OutfitService {
       const hasTopBottom = garments.top.length > 0 && garments.bottom.length > 0;
 
       return hasFullBody || hasTopBottom;
+    }),
+    distinctUntilChanged()
+  );
+
+  // Credits cost calculation: 1 (base) + 1 (if background changed) + number of garments
+  readonly estimatedCreditsCost$ = combineLatest([
+    this.selectedGarments$,
+    this.selectedBackgroundId$,
+    this.customBackgroundPrompt$
+  ]).pipe(
+    map(([garments, backgroundId, customPrompt]) => {
+      // Base cost
+      let cost = 1;
+
+      // +1 if background is changed (either preset or custom prompt)
+      const hasBackgroundChange = !!backgroundId || !!customPrompt;
+      if (hasBackgroundChange) {
+        cost += 1;
+      }
+
+      // + number of garments selected
+      const garmentCount =
+        garments.top.length +
+        garments.bottom.length +
+        garments.fullBody.length +
+        garments.jacket.length +
+        garments.accessories.length;
+      cost += garmentCount;
+
+      return cost;
     }),
     distinctUntilChanged()
   );
@@ -651,6 +683,18 @@ uploadAndSetInspiration(
 
   setSelectedBackground(option: { id: string } | null): void {
     this.backgroundIdSubject.next(option?.id ?? null);
+    // Clear custom prompt when selecting a predefined background
+    if (option?.id) {
+      this.customBackgroundPromptSubject.next(null);
+    }
+  }
+
+  setCustomBackgroundPrompt(prompt: string | null): void {
+    this.customBackgroundPromptSubject.next(prompt);
+    // Clear background selection when setting a custom prompt
+    if (prompt) {
+      this.backgroundIdSubject.next(null);
+    }
   }
 
   ensureBackgroundOptionsLoaded(): Observable<CatalogueOption[]> {
@@ -691,57 +735,6 @@ uploadAndSetInspiration(
         return throwError(() =>
           this.createApiUnavailableError('loading background options', error)
         );
-      })
-    );
-  }
-
-  uploadBackgroundOption(file: File, previewUrl: string): Observable<CatalogueOption> {
-    try {
-      this.getApiBaseUrlOrThrow();
-    } catch (error) {
-      console.error('Failed to upload background image', error);
-
-      const fallbackOption: CatalogueOption = {
-        id: `local-background-${Date.now()}`,
-        name: file.name,
-        thumbnailUrl: previewUrl
-      };
-
-      this.setSelectedBackground(fallbackOption);
-      this.backgroundOptionsSubject.next([...this.backgroundOptionsSubject.value, fallbackOption]);
-
-      return of(fallbackOption);
-    }
-
-    const formData = new FormData();
-    formData.append('fileData', file, file.name);
-    formData.append('Name', file.name);
-    formData.append('EnvironmentType', 'Custom');
-    formData.append('IsActive', 'true');
-
-    return this.outfitifyApi.uploadBackgroundImage(formData).pipe(
-      map((dto: BackgroundImageDto) => this.mapBackgroundImageDtoToCatalogueOption(dto, previewUrl)),
-      tap((option) => {
-        this.setSelectedBackground(option);
-
-        const current = this.backgroundOptionsSubject.value;
-        const exists = current.some((item) => item.id === option.id);
-        if (!exists) {
-          this.backgroundOptionsSubject.next([...current, option]);
-        }
-      }),
-      catchError((error: unknown) => {
-        console.error('Failed to upload background image', error);
-
-        const fallbackOption: CatalogueOption = {
-          id: `local-background-${Date.now()}`,
-          name: file.name,
-          thumbnailUrl: previewUrl
-        };
-
-        this.setSelectedBackground(fallbackOption);
-        this.backgroundOptionsSubject.next([...this.backgroundOptionsSubject.value, fallbackOption]);
-        return of(fallbackOption);
       })
     );
   }
@@ -973,18 +966,11 @@ uploadAndSetInspiration(
     }
 
     const modelId = this.getActiveModelImageId();
-    const poseId = this.getActivePoseOptionId();
     const backgroundId = this.getActiveBackgroundOptionId();
 
     if (!modelId) {
       throw new Error(
         'No model image is set. Upload a photo (consumer app) or select a model (Shopify app) before creating an outfit.'
-      );
-    }
-
-    if (!poseId) {
-      throw new Error(
-        'Pose is not available yet. Please try again in a moment.'
       );
     }
 
@@ -994,15 +980,44 @@ uploadAndSetInspiration(
       return throwError(() => error);
     }
 
+    // Fetch pose if not already loaded, then create outfit
+    const poseId = this.getActivePoseOptionId();
+    if (poseId) {
+      return this.doCreateOutfit(modelId, poseId, backgroundId, allGarments);
+    }
+
+    // Pose not loaded yet - fetch it first
+    return this.outfitifyApi.listPoses().pipe(
+      take(1),
+      switchMap((poses: CatalogueOption[]) => {
+        const firstPose = poses[0];
+        if (!firstPose?.id) {
+          return throwError(() => new Error('No poses available. Please contact support.'));
+        }
+        this.poseIdSubject.next(firstPose.id);
+        return this.doCreateOutfit(modelId, firstPose.id, backgroundId, allGarments);
+      })
+    );
+  }
+
+  private doCreateOutfit(
+    modelId: string,
+    poseId: string,
+    backgroundId: string | null,
+    allGarments: Garment[]
+  ): Observable<GeneratedImage> {
     const outfitGarments: OutfitGarment[] = allGarments.map((garment) => ({
       garmentEntityId: garment.id,
       garmentSizeEntityId: null
     }));
 
+    const customPrompt = this.customBackgroundPromptSubject.value;
+
     const payload: CreateOutfitDto = {
       modelImageId: modelId,
       poseOptionId: poseId,
       backgroundOptionId: backgroundId,
+      customBackgroundPrompt: customPrompt || null,
       outfitGarments
     };
 
@@ -1114,10 +1129,17 @@ uploadAndSetInspiration(
       ? 'assets/generated/placeholder-ready-1.svg'
       : 'assets/generated/placeholder-processing.svg';
 
-    const primaryImageUrl =
-      response.outfitImages && response.outfitImages.length > 0
-        ? response.outfitImages[0].assetUrl
-        : defaultImage;
+    let primaryImageUrl = defaultImage;
+    if (response.outfitImages && response.outfitImages.length > 0) {
+      const assetUrl = response.outfitImages[0].assetUrl;
+      // Prepend API base URL for relative paths (starting with /)
+      if (assetUrl && assetUrl.startsWith('/')) {
+        const baseUrl = (this.apiBaseUrl?.trim() || '').replace(/\/$/, ''); // Remove trailing slash
+        primaryImageUrl = baseUrl + assetUrl;
+      } else {
+        primaryImageUrl = assetUrl || defaultImage;
+      }
+    }
 
     return {
       id: response.id,
@@ -1143,7 +1165,9 @@ uploadAndSetInspiration(
     return {
       id: dto.backgroundImageId,
       name: dto.name,
-      thumbnailUrl: dto.imageUrl ?? fallbackThumbnail
+      thumbnailUrl: dto.imageUrl ?? fallbackThumbnail,
+      prompt: dto.prompt,
+      isTemplate: dto.isTemplate ?? false
     };
   }
 }

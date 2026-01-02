@@ -32,12 +32,32 @@
           <mat-icon>menu</mat-icon>
         </button>
         <span class="brand">Outfitify</span>
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Go to gallery"
+          routerLink="/generated-gallery"
+          class="home-button"
+          *ngIf="(isLoggedIn$ | async)"
+        >
+          <mat-icon>home</mat-icon>
+        </button>
         <span class="spacer"></span>
         <nav class="desktop-links" *ngIf="(isHandset$ | async) === false && (isLoggedIn$ | async)">
           <a mat-button *ngFor="let link of links" [routerLink]="link.path" routerLinkActive="active-link">
             {{ link.label }}
           </a>
         </nav>
+        <button
+          mat-stroked-button
+          class="credits-button"
+          routerLink="/credits"
+          *ngIf="(isLoggedIn$ | async)"
+        >
+          <mat-icon>toll</mat-icon>
+          <span class="credits-value">{{ (credits$ | async) ?? '...' }}</span>
+          <span class="credits-label">credits</span>
+        </button>
         <button mat-stroked-button color="accent" type="button" (click)="onLogout()" *ngIf="(isLoggedIn$ | async)">
           Sign out
         </button>
