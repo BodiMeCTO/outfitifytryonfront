@@ -1,35 +1,57 @@
+@use '../../../styles/tokens' as *;
+
 .garment-library {
   display: grid;
   gap: 1.5rem;
 }
 
-/* Page navigation */
-.page-nav {
+/* Section header */
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: $space-3;
 }
 
-.back-button {
-  display: flex;
+.back-link {
+  display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  color: rgba(0, 0, 0, 0.7);
+  gap: $space-2;
+  min-height: $touch-target-min;
+  padding: $space-2 $space-3;
+  color: $color-text-secondary;
+  text-decoration: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    color: $color-accent-gold-dark;
+    background: $color-accent-gold-light;
+  }
+
+  @include focus-ring;
 }
 
-.step-indicator {
-  font-size: 0.875rem;
-  color: rgba(0, 0, 0, 0.6);
-  font-weight: 500;
-}
+.upload-btn {
+  min-height: $touch-target-min;
 
-.upload-accordion {
-  mat-expansion-panel {
-    border-radius: 16px;
-    box-shadow: none;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+  mat-icon {
+    margin-right: $space-2;
   }
 }
 
@@ -39,8 +61,8 @@
 }
 
 .section-header .subtitle {
-  margin: 0.5rem 0 0;
-  color: rgba(0, 0, 0, 0.62);
+  margin: 0;
+  color: $color-text-muted;
 }
 
 .upload-grid {
@@ -81,7 +103,7 @@
   color: rgba(0, 0, 0, 0.62);
 
   &.error {
-    color: #d35454;
+    color: $color-error;
   }
 }
 
@@ -93,13 +115,13 @@
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   border: 2px solid transparent;
   border-radius: 16px;
-  background: #fff;
+  background: $color-bg-primary;
   box-sizing: border-box;
   height: 100%;
   overflow: hidden;
 
   &:focus-visible {
-    outline: 3px solid #43af66;
+    outline: 3px solid $color-accent-gold;
     outline-offset: 2px;
   }
 }
@@ -111,8 +133,8 @@
 }
 
 .garment.selected {
-  border-color: rgba(67, 175, 102, 0.6);
-  box-shadow: 0 16px 26px rgba(67, 175, 102, 0.18);
+  border-color: $color-accent-gold;
+  box-shadow: 0 16px 26px rgba($color-accent-gold, 0.25);
   z-index: 2;
 }
 
@@ -120,8 +142,9 @@
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
-  background: rgba(67, 175, 102, 0.08);
+  background: $color-accent-gold-light;
   flex-shrink: 0;
+  max-height: 350px; // Prevent excessively tall images on large screens
 }
 
 .garment mat-card-header {
@@ -146,11 +169,11 @@
   align-items: center;
   gap: 0.35rem;
   font-weight: 600;
-  color: #43af66;
+  color: $color-accent-gold-dark; // Accessible gold for text
   font-size: 0.9rem;
 
   &.muted {
-    color: rgba(0, 0, 0, 0.45);
+    color: $color-text-muted;
     font-weight: 500;
   }
 
@@ -159,6 +182,7 @@
     width: 1rem;
     height: 1rem;
     display: flex;
+    color: $color-accent-gold; // Icons can use brighter gold
   }
 }
 
@@ -184,14 +208,15 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.5rem 1rem;
-  background: rgba(103, 58, 183, 0.08);
+  background: $color-accent-gold-light;
   border-radius: 24px;
-  color: #673ab7;
+  color: $color-accent-gold-dark; // Accessible gold for text
 
   mat-icon {
     font-size: 20px;
     width: 20px;
     height: 20px;
+    color: $color-accent-gold; // Icons can use brighter gold
   }
 
   .cost-value {
@@ -218,7 +243,7 @@
   }
 
   &.error {
-    color: #d35454;
+    color: $color-error;
   }
 }
 
@@ -229,7 +254,7 @@
 }
 
 .size-card {
-  background: rgba(67, 175, 102, 0.06);
+  background: $color-accent-gold-light;
   border-radius: 16px;
   padding: 1rem 1.25rem;
   display: grid;
@@ -285,5 +310,275 @@
 @media (min-width: 1200px) {
   .garment-grid {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+/* Image Source Toggle (Flat Lay vs From Person) */
+.image-source-toggle {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.source-toggle-group {
+  display: flex;
+  gap: 0.5rem;
+
+  mat-button-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    mat-icon {
+      font-size: 1.1rem;
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+  }
+}
+
+.toggle-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.from-person-upload {
+  .hint {
+    font-size: 0.85rem;
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0;
+  }
+}
+
+/* Segmentation Preview */
+.segmentation-preview {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  background: $color-accent-gold-light;
+  border-radius: 12px;
+  border: 1px solid rgba($color-accent-gold, 0.2);
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: $color-text-primary;
+  }
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: $color-bg-primary;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detected-regions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.region-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: $color-bg-primary;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+
+  &:hover {
+    background: $color-accent-gold-light;
+  }
+
+  &.selected {
+    border-color: $color-accent-gold;
+    background: $color-accent-gold-light;
+  }
+
+  mat-checkbox {
+    font-weight: 500;
+  }
+
+  .category-select {
+    margin-top: 0.25rem;
+
+    mat-form-field {
+      width: 100%;
+    }
+  }
+}
+
+.extract-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 600px) {
+  .detected-regions {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+/* Smart Upload Styles */
+.smart-upload-section {
+  grid-column: 1 / -1;
+}
+
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  border: 2px dashed rgba($color-accent-gold, 0.5);
+  border-radius: 16px;
+  background: rgba($color-accent-gold, 0.05);
+  transition: border-color 200ms ease, background 200ms ease;
+
+  &:hover {
+    border-color: $color-accent-gold;
+    background: $color-accent-gold-light;
+  }
+}
+
+.smart-upload-button {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+
+  mat-icon {
+    margin-right: 0.5rem;
+  }
+}
+
+.upload-hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.6);
+  text-align: center;
+  max-width: 400px;
+}
+
+/* Analysis Results */
+.analysis-results {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: $color-accent-gold-light;
+  border-radius: 16px;
+  border: 1px solid rgba($color-accent-gold, 0.2);
+}
+
+.analysis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    color: $color-text-primary;
+
+    mat-icon {
+      color: $color-accent-gold;
+    }
+  }
+}
+
+.confidence-badge {
+  padding: 0.35rem 0.75rem;
+  background: $color-accent-gold-light;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $color-accent-gold;
+}
+
+.flat-lay-confirmation {
+  display: grid;
+  gap: 1rem;
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+.alternative-classifications {
+  margin-top: 0.5rem;
+}
+
+.alternatives-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.alt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.alt-chip {
+  font-size: 0.85rem;
+}
+
+.person-confirmation {
+  display: grid;
+  gap: 1rem;
+
+  h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: $color-text-primary;
+  }
+}
+
+.type-override {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  .override-label {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  mat-button-toggle-group {
+    mat-icon {
+      margin-right: 0.25rem;
+    }
+  }
+}
+
+.analysis-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+
+  mat-icon {
+    margin-right: 0.35rem;
   }
 }

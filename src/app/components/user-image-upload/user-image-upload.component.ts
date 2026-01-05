@@ -18,7 +18,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { take, map } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
-import { SelectedInspiration } from '../../models/outfit';
+import { SelectedInspiration, ASPECT_RATIO_OPTIONS, AspectRatioOption } from '../../models/outfit';
 import { CatalogueOption } from '../../models/outfitify-api';
 
 // Icon mapping for template backgrounds
@@ -65,11 +65,15 @@ export class UserImageUploadComponent implements OnInit {
   readonly backgroundOptions$ = this.outfitService.backgroundOptions$;
   readonly selectedBackground$ = this.outfitService.selectedBackground$;
   readonly customPrompt$ = this.outfitService.customBackgroundPrompt$;
+  readonly selectedAspectRatio$ = this.outfitService.selectedAspectRatio$;
 
   // Only show template backgrounds
   readonly templateBackgrounds$ = this.backgroundOptions$.pipe(
     map(options => options.filter(o => o.isTemplate))
   );
+
+  // Aspect ratio options for UI
+  readonly aspectRatioOptions = ASPECT_RATIO_OPTIONS;
 
   // Track if custom prompt mode is active
   readonly isCustomMode = signal(false);
@@ -135,13 +139,10 @@ export class UserImageUploadComponent implements OnInit {
               );
             }
           },
-          error: () => {
+          error: (err: unknown) => {
             this.isUploading.set(false);
-            this.snackBar.open(
-              'Unable to upload your image to OutfitifyAPI right now.',
-              'Dismiss',
-              { duration: 4000 }
-            );
+            const message = err instanceof Error ? err.message : 'Unable to upload your image to OutfitifyAPI right now.';
+            this.snackBar.open(message, 'Dismiss', { duration: 4000 });
           }
         });
     };
@@ -205,5 +206,13 @@ export class UserImageUploadComponent implements OnInit {
 
   getTemplateIcon(name: string): string {
     return TEMPLATE_ICONS[name] || 'image';
+  }
+
+  selectAspectRatio(ratio: AspectRatioOption): void {
+    this.outfitService.setAspectRatio(ratio);
+  }
+
+  hasBackgroundSelected(): boolean {
+    return !this.isKeepOriginal();
   }
 }

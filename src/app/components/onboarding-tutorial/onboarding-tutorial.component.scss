@@ -1,0 +1,122 @@
+@use '../../../styles/tokens' as *;
+
+.tutorial-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-4;
+  min-height: 100%;
+}
+
+.tutorial-card {
+  width: 100%;
+  max-width: 420px;
+  background: $color-bg-primary;
+  border-radius: $radius-xl;
+  padding: $space-8;
+  box-shadow: $shadow-xl;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tutorial-header {
+  text-align: center;
+  margin-bottom: $space-6;
+}
+
+.tutorial-title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-light;
+  color: $color-text-primary;
+  margin: 0 0 $space-4;
+  letter-spacing: $letter-spacing-wide;
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: $space-2;
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: $radius-full;
+  background: $color-border-strong;
+  transition: all $transition-base;
+
+  &.active {
+    width: 24px;
+    background: $color-accent-gold;
+  }
+
+  &.completed {
+    background: $color-accent-gold;
+  }
+}
+
+.tutorial-content {
+  text-align: center;
+  padding: $space-6 0;
+}
+
+.step-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: $space-4;
+}
+
+.step-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: $color-accent-gold;
+}
+
+.step-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0 0 $space-3;
+}
+
+.step-description {
+  font-size: $font-size-base;
+  color: $color-text-secondary;
+  line-height: $line-height-relaxed;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.tutorial-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: $space-6;
+  border-top: 1px solid $color-border;
+}
+
+.skip-btn {
+  background: transparent;
+  border: none;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: color $transition-fast;
+  padding: $space-2;
+
+  &:hover {
+    color: $color-accent-gold;
+  }
+}

@@ -200,6 +200,26 @@
             <button mat-button type="button" (click)="clearBackgroundSelection()">Remove</button>
           </div>
         </div>
+
+        <!-- ASPECT RATIO SELECTION - only shown when a background is selected -->
+        <div class="aspect-ratio-section" *ngIf="!isKeepOriginal()">
+          <h3 class="section-title">Output Aspect Ratio</h3>
+          <p class="section-hint">Choose the aspect ratio for your final image</p>
+
+          <div class="aspect-ratio-grid">
+            <button
+              mat-stroked-button
+              type="button"
+              class="aspect-ratio-tile"
+              *ngFor="let option of aspectRatioOptions"
+              (click)="selectAspectRatio(option.value)"
+              [class.is-selected]="(selectedAspectRatio$ | async) === option.value"
+            >
+              <mat-icon class="ratio-icon">aspect_ratio</mat-icon>
+              <span class="ratio-label">{{ option.label }}</span>
+            </button>
+          </div>
+        </div>
       </mat-card-content>
     </mat-card>
   </div>

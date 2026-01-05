@@ -1,39 +1,29 @@
 <section class="section-card outfit-gallery">
   <header class="header">
     <h1>Generated outfits</h1>
-    <p>
-      This gallery refreshes automatically every 30 seconds. Ready images are shown first so you can review and share
-      them straight away.
-    </p>
   </header>
 
   <!-- Empty state (no outfits yet) -->
   <div class="empty" *ngIf="(generatedImages$ | async)?.length === 0">
     <mat-icon>hourglass_empty</mat-icon>
     <p>No generated outfits yet. Start by uploading a user image and choosing your garments.</p>
-    <!-- Button removed as requested: no more "Create your first outfit" -->
   </div>
 
-  <!-- Gallery with actions and items -->
+  <!-- Gallery grid -->
   <div class="grid" *ngIf="(generatedImages$ | async) as images">
-    <div class="gallery-actions">
-      <span>Ready to create a new outfit?</span>
-      <div class="actions">
-        <!-- Keep this button, it starts a new outfit flow -->
-        <button mat-raised-button color="accent" routerLink="/user-image-upload">
-          <mat-icon>add_circle</mat-icon>
-          Create new outfit
-        </button>
-      </div>
-    </div>
-
     <mat-card
       class="gallery-item"
       appearance="outlined"
       *ngFor="let image of images; index as i; trackBy: trackById"
     >
       <figure (click)="viewImage(image, i)" tabindex="0" role="button" aria-label="View generated outfit">
-        <img [src]="image.imageUrl" alt="Generated outfit" />
+        <img *ngIf="image.status === 'ready'" [src]="image.imageUrl" alt="Generated outfit" />
+        <img *ngIf="image.status !== 'ready'" src="/assets/images/outfit-loading.gif" alt="Creating outfit..." class="loading-gif" />
+        <!-- Variants badge -->
+        <span class="variants-badge" *ngIf="image.variantCount && image.variantCount > 1">
+          <mat-icon>layers</mat-icon>
+          {{ image.variantCount }}
+        </span>
       </figure>
       <mat-card-content>
         <div class="meta">
@@ -69,6 +59,10 @@
       <button mat-menu-item (click)="viewImage(data.image, data.index)">
         <mat-icon>open_in_new</mat-icon>
         Review
+      </button>
+      <button mat-menu-item (click)="openEditDialog(data.image)" [disabled]="data.image.status !== 'ready'">
+        <mat-icon>tune</mat-icon>
+        Enhance
       </button>
       <button mat-menu-item (click)="remove(data.image)">
         <mat-icon>delete</mat-icon>

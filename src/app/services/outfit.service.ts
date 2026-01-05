@@ -21,12 +21,14 @@ import {
   Garment,
   GarmentGroup,
   GeneratedImage,
+  OutfitImageVariant,
   OutfitRequest,
   OutfitRequestSnapshot,
   SelectedInspiration,
   CreateOutfitDto,
   OutfitDto,
-  OutfitGarment
+  OutfitGarment,
+  AspectRatioOption
 } from '../models/outfit';
 
 import {
@@ -54,6 +56,9 @@ export interface ModelImageDto {
   notes: string | null;
   isActive: boolean;
   createdAtUtc: string | null;
+  isBackgroundVariant?: boolean;
+  sourceModelImageId?: string | null;
+  backgroundPrompt?: string | null;
 }
 
 export interface CreateModelImageDto {
@@ -96,6 +101,7 @@ export class OutfitService {
   private readonly poseIdSubject = new BehaviorSubject<string | null>(null);
   private readonly backgroundIdSubject = new BehaviorSubject<string | null>(null);
   private readonly customBackgroundPromptSubject = new BehaviorSubject<string | null>(null);
+  private readonly aspectRatioSubject = new BehaviorSubject<AspectRatioOption>('original');
   private readonly backgroundOptionsSubject = new BehaviorSubject<CatalogueOption[]>([]);
   private backgroundOptionsLoaded = false;
 
@@ -254,6 +260,7 @@ export class OutfitService {
   readonly selectedPoseId$ = this.poseIdSubject.asObservable();
   readonly selectedBackgroundId$ = this.backgroundIdSubject.asObservable();
   readonly customBackgroundPrompt$ = this.customBackgroundPromptSubject.asObservable();
+  readonly selectedAspectRatio$ = this.aspectRatioSubject.asObservable();
   readonly backgroundOptions$ = this.backgroundOptionsSubject.asObservable();
 
   readonly selectedBackground$ = combineLatest([
@@ -303,12 +310,17 @@ export class OutfitService {
   readonly imagePerspectives$ = this.imagePerspectivesSubject.asObservable();
 
   // These two are what `garment-library.component.ts` expects
+  // Allow any combination: at least one garment from any category
   readonly hasCompleteGarmentSelection$ = this.selectedGarments$.pipe(
     map((garments) => {
-      const hasFullBody = garments.fullBody.length > 0;
-      const hasTopBottom = garments.top.length > 0 && garments.bottom.length > 0;
+      const totalGarments =
+        garments.top.length +
+        garments.bottom.length +
+        garments.fullBody.length +
+        garments.jacket.length +
+        garments.accessories.length;
 
-      return hasFullBody || hasTopBottom;
+      return totalGarments > 0;
     }),
     distinctUntilChanged()
   );
@@ -392,6 +404,15 @@ export class OutfitService {
     return this.loadUserModelImages();
   }
 
+  /**
+   * Force reload user model images from API, bypassing cache.
+   * Use this after creating outfits with new backgrounds to see the generated variants.
+   */
+  forceReloadUserModelImages(): Observable<SelectedInspiration[]> {
+    this.userModelImagesLoaded = false;
+    return this.loadUserModelImages();
+  }
+
   private loadUserModelImages(): Observable<SelectedInspiration[]> {
     try {
       this.getApiBaseUrlOrThrow();
@@ -410,6 +431,14 @@ export class OutfitService {
         tap((images: SelectedInspiration[]) => {
           this.userModelImagesSubject.next(images);
           this.userModelImagesLoaded = true;
+
+          // Auto-select the first model image if no model is currently selected
+          const currentModelId = this.modelIdSubject.value;
+          if (!currentModelId && images.length > 0 && images[0].id) {
+            console.log('[OutfitService] Auto-selecting first model image:', images[0].id);
+            this.modelIdSubject.next(images[0].id);
+            this.setInspiration(images[0]);
+          }
         }),
         catchError((error: unknown) => {
           console.error(
@@ -446,33 +475,28 @@ uploadAndSetInspiration(
     return of(selection);
   }
 
-  const poseOptionId = this.poseIdSubject.value;
-  if (!poseOptionId) {
-    const selection: SelectedInspiration = {
-      file,
-      previewUrl,
-      source: 'upload'
-    };
-    this.setInspiration(selection);
-    return of(selection);
-  }
-
   const formData = new FormData();
   formData.append('fileData', file, file.name);
 
   // Must match CreateModelImageDto property names
   formData.append('Name', file.name);
-  formData.append('PoseOptionId', poseOptionId);
+
+  // PoseOptionId is optional - include if available
+  const poseOptionId = this.poseIdSubject.value;
+  if (poseOptionId) {
+    formData.append('PoseOptionId', poseOptionId);
+  }
 
   return this.outfitifyApi
     .uploadModelImage(formData)
     .pipe(
       map((response: ModelImageDto) => {
+        const resolvedUrl = this.resolveAssetUrl(response.imageUrl);
         const selection: SelectedInspiration = {
           file,
           previewUrl,
           source: 'upload',
-          remoteUrl: response.imageUrl,
+          remoteUrl: resolvedUrl,
           id: response.modelImageId
         };
 
@@ -508,6 +532,15 @@ uploadAndSetInspiration(
   // -----------------------------
   // Garment selection
   // -----------------------------
+
+  // Max limits for each garment category
+  private readonly maxGarmentLimits: Record<GarmentGroup, number> = {
+    'tops': 2,
+    'bottoms': 2,
+    'full-body': 1,
+    'jackets': 2,
+    'accessories': 3
+  };
 
   toggleSelectedGarment(group: GarmentGroup, garment: Garment): void {
     let garmentsSubject: BehaviorSubject<Garment[]>;
@@ -545,17 +578,24 @@ uploadAndSetInspiration(
       // Remove from selection
       const updated = currentGarments.filter(g => g.id !== garment.id);
       garmentsSubject.next(updated);
-      
+
       // Remove size entry for this garment
       const sizes = sizesSubject.value;
       const updatedSizes = { ...sizes };
       delete updatedSizes[garment.id];
       sizesSubject.next(updatedSizes);
     } else {
+      // Check if max limit reached for this group
+      const maxLimit = this.maxGarmentLimits[group];
+      if (currentGarments.length >= maxLimit) {
+        console.warn(`[OutfitService] Max ${maxLimit} ${group} garment(s) allowed`);
+        return; // Don't add more
+      }
+
       // Add to selection
       const updated = [...currentGarments, garment];
       garmentsSubject.next(updated);
-      
+
       // Set default size
       const sizes = garment.sizes ?? [];
       const defaultSize = sizes.length > 0
@@ -563,7 +603,7 @@ uploadAndSetInspiration(
         : group === 'bottoms'
           ? '32'
           : 'M';
-      
+
       const updatedSizes = { ...sizesSubject.value, [garment.id]: defaultSize };
       sizesSubject.next(updatedSizes);
     }
@@ -697,6 +737,14 @@ uploadAndSetInspiration(
     }
   }
 
+  setAspectRatio(ratio: AspectRatioOption): void {
+    this.aspectRatioSubject.next(ratio);
+  }
+
+  getAspectRatio(): AspectRatioOption {
+    return this.aspectRatioSubject.value;
+  }
+
   ensureBackgroundOptionsLoaded(): Observable<CatalogueOption[]> {
     if (this.backgroundOptionsLoaded) {
       return of(this.backgroundOptionsSubject.value);
@@ -747,6 +795,15 @@ uploadAndSetInspiration(
     if (this.garmentsLoaded) {
       return of(this.garmentsSubject.value);
     }
+    return this.loadGarments();
+  }
+
+  /**
+   * Force reload garments from API, bypassing cache.
+   * Use this after creating, updating, or deleting garments.
+   */
+  forceReloadGarments(): Observable<Garment[]> {
+    this.garmentsLoaded = false;
     return this.loadGarments();
   }
 
@@ -966,7 +1023,6 @@ uploadAndSetInspiration(
     }
 
     const modelId = this.getActiveModelImageId();
-    const backgroundId = this.getActiveBackgroundOptionId();
 
     if (!modelId) {
       throw new Error(
@@ -983,7 +1039,7 @@ uploadAndSetInspiration(
     // Fetch pose if not already loaded, then create outfit
     const poseId = this.getActivePoseOptionId();
     if (poseId) {
-      return this.doCreateOutfit(modelId, poseId, backgroundId, allGarments);
+      return this.doCreateOutfit(modelId, poseId, allGarments);
     }
 
     // Pose not loaded yet - fetch it first
@@ -995,7 +1051,7 @@ uploadAndSetInspiration(
           return throwError(() => new Error('No poses available. Please contact support.'));
         }
         this.poseIdSubject.next(firstPose.id);
-        return this.doCreateOutfit(modelId, firstPose.id, backgroundId, allGarments);
+        return this.doCreateOutfit(modelId, firstPose.id, allGarments);
       })
     );
   }
@@ -1003,7 +1059,6 @@ uploadAndSetInspiration(
   private doCreateOutfit(
     modelId: string,
     poseId: string,
-    backgroundId: string | null,
     allGarments: Garment[]
   ): Observable<GeneratedImage> {
     const outfitGarments: OutfitGarment[] = allGarments.map((garment) => ({
@@ -1011,13 +1066,13 @@ uploadAndSetInspiration(
       garmentSizeEntityId: null
     }));
 
-    const customPrompt = this.customBackgroundPromptSubject.value;
-
+    // Simplified payload - no background options (background editing is now separate)
     const payload: CreateOutfitDto = {
       modelImageId: modelId,
       poseOptionId: poseId,
-      backgroundOptionId: backgroundId,
-      customBackgroundPrompt: customPrompt || null,
+      backgroundOptionId: null,
+      customBackgroundPrompt: null,
+      aspectRatio: null,
       outfitGarments
     };
 
@@ -1076,6 +1131,23 @@ uploadAndSetInspiration(
   // Mapping helpers
   // -----------------------------
 
+  /**
+   * Resolves a URL by prepending the API base URL for relative paths.
+   * Returns the URL unchanged if it's already absolute or empty.
+   */
+  private resolveAssetUrl(url: string | null | undefined, fallback?: string): string {
+    if (!url) {
+      return fallback ?? '';
+    }
+    // If the URL starts with /, prepend the API base URL
+    if (url.startsWith('/')) {
+      const baseUrl = (this.apiBaseUrl?.trim() || '').replace(/\/$/, '');
+      return baseUrl + url;
+    }
+    // Already absolute or other format
+    return url;
+  }
+
   private mapGarmentSummaryToGarment(dto: GarmentSummaryDto): Garment {
     const fallbackGroup: GarmentGroup = 'full-body';
     const rawGroup =
@@ -1111,7 +1183,7 @@ uploadAndSetInspiration(
       name: dto.name,
       description: dto.description ?? '',
       group,
-      image: dto.imageUrl ?? 'assets/generated/placeholder-ready-1.svg',
+      image: this.resolveAssetUrl(dto.imageUrl, 'assets/generated/placeholder-ready-1.svg'),
       sizes: dto.sizes ?? []
     } as Garment & Record<string, any>;
 
@@ -1130,31 +1202,44 @@ uploadAndSetInspiration(
       : 'assets/generated/placeholder-processing.svg';
 
     let primaryImageUrl = defaultImage;
+    let outfitImageId: string | undefined;
+    let variants: OutfitImageVariant[] = [];
+
     if (response.outfitImages && response.outfitImages.length > 0) {
-      const assetUrl = response.outfitImages[0].assetUrl;
-      // Prepend API base URL for relative paths (starting with /)
-      if (assetUrl && assetUrl.startsWith('/')) {
-        const baseUrl = (this.apiBaseUrl?.trim() || '').replace(/\/$/, ''); // Remove trailing slash
-        primaryImageUrl = baseUrl + assetUrl;
-      } else {
-        primaryImageUrl = assetUrl || defaultImage;
-      }
+      // Map all outfit images to variants
+      variants = response.outfitImages.map(img => ({
+        id: img.id,
+        imageUrl: this.resolveAssetUrl(img.assetUrl, defaultImage),
+        editType: img.editType ?? null,
+        createdAt: img.createdAtUtc ? new Date(img.createdAtUtc) : new Date()
+      }));
+
+      // Primary image is the first one (original)
+      const primaryImage = response.outfitImages[0];
+      primaryImageUrl = this.resolveAssetUrl(primaryImage.assetUrl, defaultImage);
+      outfitImageId = primaryImage.id;
     }
 
     return {
       id: response.id,
+      outfitImageId,
       imageUrl: primaryImageUrl,
       createdAt: response.createdAtUtc ? new Date(response.createdAtUtc) : new Date(),
-      status: isReady ? 'ready' : 'processing'
+      status: isReady ? 'ready' : 'processing',
+      variants,
+      variantCount: variants.length
     };
   }
 
   private mapModelImageDtoToInspiration(dto: ModelImageDto): SelectedInspiration {
+    const resolvedUrl = this.resolveAssetUrl(dto.imageUrl);
     return {
-      previewUrl: dto.imageUrl,
+      previewUrl: resolvedUrl,
       source: 'upload',
-      remoteUrl: dto.imageUrl,
-      id: dto.modelImageId
+      remoteUrl: resolvedUrl,
+      id: dto.modelImageId,
+      isBackgroundVariant: dto.isBackgroundVariant ?? false,
+      name: dto.name
     };
   }
 
@@ -1165,7 +1250,7 @@ uploadAndSetInspiration(
     return {
       id: dto.backgroundImageId,
       name: dto.name,
-      thumbnailUrl: dto.imageUrl ?? fallbackThumbnail,
+      thumbnailUrl: this.resolveAssetUrl(dto.imageUrl, fallbackThumbnail),
       prompt: dto.prompt,
       isTemplate: dto.isTemplate ?? false
     };

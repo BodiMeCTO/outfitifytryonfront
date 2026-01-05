@@ -1,0 +1,217 @@
+<h2 mat-dialog-title>Enhance Image</h2>
+
+<mat-dialog-content>
+  <!-- Processing State -->
+  @if (isProcessing()) {
+    <div class="processing-state">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <p>Applying enhancements...</p>
+      <p class="processing-hint">This may take a moment</p>
+    </div>
+  }
+
+  <!-- Main Form -->
+  @if (!isProcessing()) {
+    <div class="edit-form">
+      <!-- Preview with live filter -->
+      <div class="preview-section">
+        <img
+          [src]="data.imageUrl"
+          alt="Preview"
+          class="preview-image"
+          [style.filter]="previewFilter()"
+        />
+      </div>
+
+      <!-- Tabs for Presets and Custom -->
+      <mat-tab-group [(selectedIndex)]="activeTab">
+        <!-- Presets Tab -->
+        <mat-tab label="Presets">
+          <div class="tab-content">
+            <p class="section-label">Filter Preset</p>
+            <div class="preset-grid">
+              @for (preset of presets; track preset.value) {
+                <button type="button"
+                        class="preset-btn"
+                        [class.selected]="selectedPreset() === preset.value"
+                        (click)="selectPreset(preset.value)">
+                  <mat-icon>{{ preset.icon }}</mat-icon>
+                  <span>{{ preset.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Custom Tab -->
+        <mat-tab label="Custom">
+          <div class="tab-content">
+            <p class="section-label">Custom Adjustments</p>
+
+            <div class="slider-group">
+              <label>
+                <span>Brightness</span>
+                <span class="value">{{ customFilters().brightness.toFixed(2) }}</span>
+              </label>
+              <mat-slider min="0.5" max="1.5" step="0.05" discrete>
+                <input matSliderThumb
+                       [value]="customFilters().brightness"
+                       (valueChange)="updateCustomFilter('brightness', $event)" />
+              </mat-slider>
+            </div>
+
+            <div class="slider-group">
+              <label>
+                <span>Contrast</span>
+                <span class="value">{{ customFilters().contrast.toFixed(2) }}</span>
+              </label>
+              <mat-slider min="0.5" max="1.5" step="0.05" discrete>
+                <input matSliderThumb
+                       [value]="customFilters().contrast"
+                       (valueChange)="updateCustomFilter('contrast', $event)" />
+              </mat-slider>
+            </div>
+
+            <div class="slider-group">
+              <label>
+                <span>Saturation</span>
+                <span class="value">{{ customFilters().saturation.toFixed(2) }}</span>
+              </label>
+              <mat-slider min="0" max="2" step="0.05" discrete>
+                <input matSliderThumb
+                       [value]="customFilters().saturation"
+                       (valueChange)="updateCustomFilter('saturation', $event)" />
+              </mat-slider>
+            </div>
+
+            <div class="slider-group">
+              <label>
+                <span>Warmth</span>
+                <span class="value">{{ customFilters().warmth.toFixed(0) }}</span>
+              </label>
+              <mat-slider min="-30" max="30" step="1" discrete>
+                <input matSliderThumb
+                       [value]="customFilters().warmth"
+                       (valueChange)="updateCustomFilter('warmth', $event)" />
+              </mat-slider>
+            </div>
+
+            <div class="slider-group">
+              <label>
+                <span>Sharpness</span>
+                <span class="value">{{ customFilters().sharpness.toFixed(2) }}</span>
+              </label>
+              <mat-slider min="0" max="2" step="0.1" discrete>
+                <input matSliderThumb
+                       [value]="customFilters().sharpness"
+                       (valueChange)="updateCustomFilter('sharpness', $event)" />
+              </mat-slider>
+            </div>
+
+            <button mat-button class="reset-btn" (click)="resetCustomFilters()">
+              <mat-icon>refresh</mat-icon>
+              Reset to Default
+            </button>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+
+      <!-- Upscale Section -->
+      <div class="upscale-section">
+        <p class="section-label">AI Upscaling</p>
+
+        <!-- Image dimensions info -->
+        @if (imageDimensions()) {
+          <p class="dimensions-info">
+            <mat-icon>photo_size_select_large</mat-icon>
+            Current size: {{ imageDimensions()!.width }}×{{ imageDimensions()!.height }}
+          </p>
+        }
+
+        <div class="upscale-toggle">
+          <mat-checkbox
+            [checked]="enableUpscale()"
+            [disabled]="!can2xUpscale()"
+            (change)="toggleUpscale()">
+            Upscale image{{ enableUpscale() ? ' (' + upscaleScale() + ')' : '' }}
+          </mat-checkbox>
+        </div>
+
+        <!-- Warning if image too large for any upscaling -->
+        @if (!can2xUpscale()) {
+          <div class="size-warning">
+            <mat-icon>warning</mat-icon>
+            <span>Image is too large for AI upscaling (max 1500×1500 for 2×)</span>
+          </div>
+        }
+
+        @if (enableUpscale()) {
+          <div class="upscale-options">
+            <div class="scale-buttons">
+              <button mat-stroked-button
+                      [class.selected]="upscaleScale() === '2x'"
+                      (click)="setUpscaleScale('2x')">
+                2x
+              </button>
+              <button mat-stroked-button
+                      [class.selected]="upscaleScale() === '4x'"
+                      [disabled]="!can4xUpscale()"
+                      (click)="setUpscaleScale('4x')">
+                4x
+              </button>
+            </div>
+
+            <!-- Warning if 4x selected but image too large -->
+            @if (upscaleScale() === '4x' && !can4xUpscale()) {
+              <div class="size-warning">
+                <mat-icon>warning</mat-icon>
+                <span>Image exceeds 800×800 limit for 4× upscaling</span>
+              </div>
+            }
+
+            <!-- Size hint for 4x -->
+            @if (!can4xUpscale() && can2xUpscale()) {
+              <p class="size-hint">4× requires images ≤ 800×800</p>
+            }
+
+            <div class="slider-group">
+              <label>
+                <span>Denoise</span>
+                <span class="value">{{ upscaleDenoise() }}</span>
+              </label>
+              <mat-slider min="0" max="3" step="1" discrete>
+                <input matSliderThumb
+                       [value]="upscaleDenoise()"
+                       (valueChange)="upscaleDenoise.set($event)" />
+              </mat-slider>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Credit Cost Notice -->
+      <div class="credit-notice" [class.has-cost]="creditCost() > 0">
+        <mat-icon>toll</mat-icon>
+        @if (creditCost() > 0) {
+          <span>This will use <strong>{{ creditCost() }} credit</strong></span>
+        } @else {
+          <span>Filters are <strong>free</strong></span>
+        }
+      </div>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="isProcessing()">Cancel</button>
+  <button mat-raised-button
+          color="primary"
+          [disabled]="!canApply()"
+          (click)="applyEdit()">
+    @if (isProcessing()) {
+      <mat-icon class="spinning">sync</mat-icon> Applying...
+    } @else {
+      <mat-icon>auto_fix_high</mat-icon> Apply
+    }
+  </button>
+</mat-dialog-actions>

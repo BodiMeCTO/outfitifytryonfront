@@ -1,10 +1,11 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, redirectToLoginGuard } from './guards/auth.guard';
+import { authGuard, noAuthGuard, redirectToLoginGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: 'auth',
+    canActivate: [noAuthGuard],
     children: [
       {
         path: '',
@@ -40,36 +41,15 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'generated-gallery',
+        redirectTo: 'studio',
         pathMatch: 'full'
       },
       {
-        path: 'user-image-upload',
+        path: 'studio',
         loadComponent: () =>
-          import('./components/user-image-upload/user-image-upload.component')
-            .then((m) => m.UserImageUploadComponent),
-        title: 'Upload User Image'
-      },
-      {
-        path: 'background-image-upload',
-        loadComponent: () =>
-          import('./components/background-image-upload/background-image-upload.component')
-            .then((m) => m.BackgroundImageUploadComponent),
-        title: 'Choose Background'
-      },
-      {
-        path: 'garment-library',
-        loadComponent: () =>
-          import('./components/garment-library/garment-library.component')
-            .then((m) => m.GarmentLibraryComponent),
-        title: 'Choose Garments'
-      },
-      {
-        path: 'size-and-submit',
-        loadComponent: () =>
-          import('./components/size-selection/size-selection.component')
-            .then((m) => m.SizeSelectionComponent),
-        title: 'Select Size & Create Outfit'
+          import('./components/studio/studio.component')
+            .then((m) => m.StudioComponent),
+        title: 'Outfitify Studio'
       },
       {
         path: 'generated-gallery',
@@ -91,11 +71,32 @@ export const routes: Routes = [
           import('./components/credits/credits.component')
             .then((m) => m.CreditsComponent),
         title: 'Credits'
+      },
+      // Legacy routes (redirect to studio)
+      {
+        path: 'user-image-upload',
+        redirectTo: 'studio',
+        pathMatch: 'full'
+      },
+      {
+        path: 'background-image-upload',
+        redirectTo: 'studio',
+        pathMatch: 'full'
+      },
+      {
+        path: 'garment-library',
+        redirectTo: 'studio',
+        pathMatch: 'full'
+      },
+      {
+        path: 'size-and-submit',
+        redirectTo: 'studio',
+        pathMatch: 'full'
       }
     ]
   },
   {
     path: '**',
-    redirectTo: 'generated-gallery'
+    redirectTo: 'studio'
   }
 ];

@@ -1,0 +1,262 @@
+<div class="studio-container">
+  <!-- Preview Panel (sticky on desktop) -->
+  <aside class="preview-panel">
+    <div class="preview-content">
+      <!-- Model preview -->
+      <div class="preview-image-wrapper" *ngIf="selectedModel$ | async as model; else noModelPreview">
+        <img
+          [src]="model.previewUrl || model.remoteUrl"
+          alt="Selected model"
+          class="preview-image"
+        />
+      </div>
+      <ng-template #noModelPreview>
+        <div class="preview-placeholder">
+          <mat-icon>person_outline</mat-icon>
+          <p>Select a model to preview</p>
+        </div>
+      </ng-template>
+
+      <!-- Selected items summary -->
+      <div class="selection-summary">
+        <div class="summary-item" *ngIf="selectedModel$ | async">
+          <mat-icon>check_circle</mat-icon>
+          <span>Model selected</span>
+        </div>
+        <div class="summary-item" *ngIf="(selectedGarmentCount$ | async) as count">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ count }} garment{{ count > 1 ? 's' : '' }} selected</span>
+        </div>
+      </div>
+
+      <!-- Credit cost indicator -->
+      <div class="credit-cost" *ngIf="(selectedGarmentCount$ | async)! > 0">
+        <mat-icon>toll</mat-icon>
+        <span>{{ generationCreditCost$ | async }} credits</span>
+      </div>
+
+      <!-- Generate button (desktop) -->
+      <app-luxe-button
+        class="generate-button desktop-only"
+        variant="primary"
+        size="lg"
+        [fullWidth]="true"
+        [loading]="isGenerating()"
+        [disabled]="!(canGenerate$ | async)"
+        (clicked)="generateOutfit()"
+      >
+        <mat-icon>auto_awesome</mat-icon>
+        {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
+      </app-luxe-button>
+    </div>
+  </aside>
+
+  <!-- Generation Progress Overlay -->
+  <app-generation-progress [isVisible]="isGenerating()"></app-generation-progress>
+
+  <!-- Workflow Sections -->
+  <main class="workflow-sections">
+    <!-- Your Photos Section (Original Uploads) -->
+    <section class="workflow-section">
+      <div class="section-header-row">
+        <h2 class="section-label-gold">Your Photos</h2>
+        <button class="upload-btn-small" (click)="modelUploadInput.click()">
+          <mat-icon>add_photo_alternate</mat-icon>
+          <mat-spinner *ngIf="isUploadingModel()" [diameter]="16"></mat-spinner>
+        </button>
+        <input
+          #modelUploadInput
+          type="file"
+          accept="image/*"
+          (change)="handleModelUpload($event)"
+          hidden
+        />
+      </div>
+
+      <ng-container *ngIf="originalModelImages$ | async as models">
+        <!-- Mobile: Carousel view -->
+        <app-luxe-carousel
+          class="mobile-carousel"
+          [showCount]="false"
+          [itemCount]="models.length"
+          gap="0.75rem"
+        >
+          <div class="model-card-wrapper carousel-item" *ngFor="let model of models">
+            <app-luxe-image-card
+              [src]="model.previewUrl || model.remoteUrl"
+              [selected]="(selectedModel$ | async)?.id === model.id"
+              aspectRatio="3:4"
+              (cardClick)="selectModel(model)"
+            ></app-luxe-image-card>
+            <div class="card-actions">
+              <button class="action-btn" (click)="openBackgroundEditDialog(model); $event.stopPropagation()">
+                <mat-icon>photo_library</mat-icon>
+                <span>BG</span>
+              </button>
+            </div>
+          </div>
+          <!-- Upload card in carousel -->
+          <div class="upload-card-wrapper carousel-item">
+            <button class="upload-card" (click)="modelUploadInput.click()">
+              <mat-icon>add_photo_alternate</mat-icon>
+              <span>Add</span>
+            </button>
+          </div>
+        </app-luxe-carousel>
+
+        <!-- Desktop: Grid view -->
+        <div class="model-grid desktop-grid">
+          <div class="model-card-wrapper" *ngFor="let model of models">
+            <app-luxe-image-card
+              [src]="model.previewUrl || model.remoteUrl"
+              [selected]="(selectedModel$ | async)?.id === model.id"
+              aspectRatio="3:4"
+              (cardClick)="selectModel(model)"
+            ></app-luxe-image-card>
+            <div class="card-actions">
+              <button class="action-btn" (click)="openBackgroundEditDialog(model); $event.stopPropagation()">
+                <mat-icon>photo_library</mat-icon>
+                <span>Change BG</span>
+              </button>
+            </div>
+          </div>
+          <button class="upload-card" (click)="modelUploadInput.click()">
+            <mat-icon>add_photo_alternate</mat-icon>
+            <span>Upload Photo</span>
+            <mat-spinner *ngIf="isUploadingModel()" [diameter]="24"></mat-spinner>
+          </button>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-hint" *ngIf="models.length === 0">
+          <mat-icon>person_outline</mat-icon>
+          <p>Upload a photo of yourself to get started</p>
+        </div>
+      </ng-container>
+    </section>
+
+    <!-- Edited Backgrounds Section -->
+    <section class="workflow-section">
+      <h2 class="section-label-gold">Edited Backgrounds</h2>
+
+      <ng-container *ngIf="editedModelImages$ | async as models">
+        <!-- Mobile: Carousel view -->
+        <app-luxe-carousel
+          class="mobile-carousel"
+          [showCount]="false"
+          [itemCount]="models.length"
+          gap="0.75rem"
+        >
+          <app-luxe-image-card
+            *ngFor="let model of models"
+            class="carousel-item"
+            [src]="model.previewUrl || model.remoteUrl"
+            [selected]="(selectedModel$ | async)?.id === model.id"
+            aspectRatio="3:4"
+            (cardClick)="selectModel(model)"
+          ></app-luxe-image-card>
+        </app-luxe-carousel>
+
+        <!-- Desktop: Grid view -->
+        <div class="model-grid desktop-grid">
+          <app-luxe-image-card
+            *ngFor="let model of models"
+            [src]="model.previewUrl || model.remoteUrl"
+            [selected]="(selectedModel$ | async)?.id === model.id"
+            aspectRatio="3:4"
+            (cardClick)="selectModel(model)"
+          ></app-luxe-image-card>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-hint" *ngIf="models.length === 0">
+          <mat-icon>auto_fix_high</mat-icon>
+          <p>Click the "Change BG" button on a photo above to edit the background</p>
+        </div>
+      </ng-container>
+    </section>
+
+    <!-- Garments Section -->
+    <section class="workflow-section">
+      <div class="section-header-row">
+        <h2 class="section-label-gold">Garments</h2>
+        <app-luxe-button
+          variant="secondary"
+          size="sm"
+          icon="add_photo_alternate"
+          (clicked)="openGarmentUploadDialog()"
+        >
+          Add Garment
+        </app-luxe-button>
+      </div>
+
+      <!-- Garment Carousels by Category -->
+      <ng-container *ngIf="garmentsByGroup$ | async as groups">
+        <div *ngFor="let group of garmentGroups" class="garment-category">
+          <ng-container *ngIf="groups[group.key]?.length">
+            <app-luxe-carousel
+              [label]="group.label"
+              [showCount]="true"
+              [itemCount]="groups[group.key].length"
+              gap="1rem"
+            >
+              <app-luxe-image-card
+                *ngFor="let garment of groups[group.key]"
+                class="garment-card"
+                [src]="garment.image"
+                [selected]="isGarmentSelected(garment)"
+                aspectRatio="3:4"
+                (cardClick)="toggleGarment(garment)"
+              ></app-luxe-image-card>
+            </app-luxe-carousel>
+          </ng-container>
+        </div>
+      </ng-container>
+
+      <!-- Empty state when no garments -->
+      <div class="empty-garments" *ngIf="(garments$ | async)?.length === 0">
+        <mat-icon>checkroom</mat-icon>
+        <p>No garments yet. Add your first garment to get started!</p>
+        <app-luxe-button
+          variant="primary"
+          icon="add_photo_alternate"
+          (clicked)="openGarmentUploadDialog()"
+        >
+          Add Garment
+        </app-luxe-button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Footer with selection summary and generate button -->
+  <div class="mobile-footer">
+    <!-- Selection summary -->
+    <div class="mobile-selection-summary">
+      <span class="summary-check" [class.is-checked]="selectedModel$ | async">
+        <mat-icon>{{ (selectedModel$ | async) ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+        Model
+      </span>
+      <span class="summary-check" [class.is-checked]="(selectedGarmentCount$ | async)! > 0">
+        <mat-icon>{{ (selectedGarmentCount$ | async)! > 0 ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+        Garments
+      </span>
+      <span class="credit-cost-mobile" *ngIf="(selectedGarmentCount$ | async)! > 0">
+        <mat-icon>toll</mat-icon>
+        {{ generationCreditCost$ | async }}
+      </span>
+    </div>
+
+    <!-- Generate button -->
+    <app-luxe-button
+      variant="primary"
+      size="lg"
+      [fullWidth]="true"
+      [loading]="isGenerating()"
+      [disabled]="!(canGenerate$ | async)"
+      (clicked)="generateOutfit()"
+    >
+      {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
+    </app-luxe-button>
+  </div>
+</div>

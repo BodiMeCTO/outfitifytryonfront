@@ -1,26 +1,52 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, signal, computed, inject } from '@angular/core';
 import { AsyncPipe, CommonModule, NgIf } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
-import { GeneratedImage } from '../../models/outfit';
+import { GeneratedImage, OutfitImageVariant } from '../../models/outfit';
+import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
 
 @Component({
   selector: 'app-image-review',
   standalone: true,
-  imports: [CommonModule, NgIf, AsyncPipe, RouterLink, MatButtonModule, MatIconModule, MatSnackBarModule],
+  imports: [CommonModule, NgIf, AsyncPipe, RouterLink, MatButtonModule, MatIconModule, MatSnackBarModule, MatDialogModule, MatTooltipModule],
   templateUrl: './image-review.component.html',
   styleUrls: ['./image-review.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ImageReviewComponent implements OnInit, OnDestroy {
   readonly image = signal<GeneratedImage | undefined>(undefined);
+  readonly selectedVariantIndex = signal<number>(0);
   private readonly subscriptions = new Subscription();
+  private readonly dialog = inject(MatDialog);
+
+  // Computed: get the currently selected variant
+  readonly currentVariant = computed(() => {
+    const img = this.image();
+    if (!img?.variants?.length) return null;
+    const index = this.selectedVariantIndex();
+    return img.variants[index] ?? img.variants[0];
+  });
+
+  // Computed: get the display image URL (from selected variant or fallback)
+  readonly displayImageUrl = computed(() => {
+    const variant = this.currentVariant();
+    if (variant) return variant.imageUrl;
+    return this.image()?.imageUrl ?? '';
+  });
+
+  // Computed: check if there are multiple variants
+  readonly hasVariants = computed(() => {
+    const img = this.image();
+    return (img?.variants?.length ?? 0) > 1;
+  });
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -73,15 +99,33 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     if (!current) {
       return;
     }
+    // Reset variant selection when navigating to a different outfit
+    this.selectedVariantIndex.set(0);
     const nextId = this.outfitService.getAdjacentImageId(current.id, direction);
     if (nextId) {
       this.router.navigate(['/review-image', nextId]);
     }
   }
 
+  // Select a variant by index
+  selectVariant(index: number): void {
+    this.selectedVariantIndex.set(index);
+  }
+
+  // Get display label for a variant
+  getVariantLabel(variant: OutfitImageVariant, index: number): string {
+    if (!variant.editType) return 'Original';
+    switch (variant.editType) {
+      case 'filtered': return 'Filtered';
+      case 'upscaled': return 'Upscaled';
+      case 'filtered_upscaled': return 'Enhanced';
+      default: return `Version ${index + 1}`;
+    }
+  }
+
   async share(): Promise<void> {
-    const image = this.image();
-    if (!image) {
+    const imageUrl = this.displayImageUrl();
+    if (!imageUrl) {
       return;
     }
     if (navigator.share) {
@@ -89,7 +133,7 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
         await navigator.share({
           title: 'Outfitify Generated Outfit',
           text: 'Check out this generated outfit I created!',
-          url: image.imageUrl
+          url: imageUrl
         });
       } catch (error) {
         if ((error as DOMException).name !== 'AbortError') {
@@ -101,15 +145,114 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     }
   }
 
-  download(): void {
+  async download(): Promise<void> {
+    const imageUrl = this.displayImageUrl();
+    const variant = this.currentVariant();
     const image = this.image();
+
+    if (!imageUrl || !image) {
+      return;
+    }
+
+    // Include variant info in filename
+    const variantSuffix = variant?.editType ? `-${variant.editType}` : '';
+    const filename = `outfitify-outfit-${image.id}${variantSuffix}.png`;
+
+    try {
+      // Fetch the image as a blob
+      const response = await fetch(imageUrl, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup after a short delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
+    } catch (error) {
+      console.error('Download failed:', error);
+
+      // Fallback: Direct link (may just navigate instead of download for cross-origin)
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = filename;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      this.snackBar.open('If download didn\'t start, right-click the image to save.', 'Got it', {
+        duration: 4000
+      });
+    }
+  }
+
+  openEditDialog(): void {
+    const variant = this.currentVariant();
+    const image = this.image();
+
     if (!image) {
       return;
     }
-    const link = document.createElement('a');
-    link.href = image.imageUrl;
-    link.download = `uniform-outfit-${image.id}.png`;
-    link.click();
+
+    // Use the current variant's ID, or fall back to the primary outfitImageId
+    const imageId = variant?.id ?? image.outfitImageId ?? image.id;
+    const imageUrl = this.displayImageUrl();
+
+    if (!variant?.id && !image.outfitImageId) {
+      console.warn('[ImageReviewComponent] No outfitImageId available, using outfit id. Edit may fail.');
+    }
+
+    const dialogRef = this.dialog.open(ImageEditDialogComponent, {
+      width: '550px',
+      maxWidth: '95vw',
+      data: {
+        outfitImageId: imageId,
+        imageUrl: imageUrl
+      } as ImageEditDialogData
+    });
+
+    dialogRef.afterClosed().pipe(take(1)).subscribe((result: ImageEditDialogResult | undefined) => {
+      if (result?.saved && result.newImage) {
+        this.snackBar.open('Image enhanced! Refreshing...', undefined, {
+          duration: 2500
+        });
+
+        // Refresh images to include the new variant
+        this.outfitService.refreshGeneratedImages().pipe(take(1)).subscribe({
+          next: () => {
+            // Reload current image to get updated variants
+            const id = this.image()?.id;
+            if (id) {
+              const updatedImage = this.outfitService.getGeneratedImageById(id);
+              if (updatedImage) {
+                this.image.set(updatedImage);
+                // Select the newest variant (last in array)
+                if (updatedImage.variants?.length) {
+                  this.selectedVariantIndex.set(updatedImage.variants.length - 1);
+                }
+              }
+            }
+          }
+        });
+      }
+    });
   }
 
   ngOnDestroy(): void {

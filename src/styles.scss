@@ -1,90 +1,644 @@
-@use '@angular/material' as mat;
+// =============================================================================
+// OUTFITIFY GLOBAL STYLES - Neutral Luxe Minimalism
+// =============================================================================
 
-$green-palette: (
-  50: #e9f5ed,
-  100: #c7e6d1,
-  200: #a2d6b3,
-  300: #7dc694,
-  400: #60ba7d,
-  500: #43af66,
-  600: #3da960,
-  700: #349f57,
-  800: #2c964f,
-  900: #1f863f,
-  A100: #d5ffd3,
-  A200: #a6ffa5,
-  A400: #77ff77,
-  A700: #60ff60,
+@use '@angular/material' as mat;
+@use 'styles/tokens' as *;
+@use 'styles/animations';
+
+// -----------------------------------------------------------------------------
+// Material Theme - Gold/Neutral Palette
+// -----------------------------------------------------------------------------
+
+$gold-palette: (
+  50: #FBF8F3,
+  100: #F5EFE4,
+  200: #EDE3D1,
+  300: #E2D3B8,
+  400: #D4C49A,
+  500: #C9A96E,
+  600: #B99A5F,
+  700: #A48850,
+  800: #8F7742,
+  900: #6E5C33,
+  A100: #FFF8E1,
+  A200: #FFE082,
+  A400: #FFD54F,
+  A700: #D4AF37,
   contrast: (
-    50: #00210f,
-    100: #00210f,
-    200: #00210f,
-    300: #001808,
-    400: #001808,
-    500: white,
-    600: white,
-    700: white,
-    800: white,
-    900: white,
-    A100: #00210f,
-    A200: #00210f,
-    A400: #00210f,
-    A700: #00210f
+    50: #111111,
+    100: #111111,
+    200: #111111,
+    300: #111111,
+    400: #111111,
+    500: #111111,
+    600: #FFFFFF,
+    700: #FFFFFF,
+    800: #FFFFFF,
+    900: #FFFFFF,
+    A100: #111111,
+    A200: #111111,
+    A400: #111111,
+    A700: #111111
   )
 );
 
-$primary: mat.m2-define-palette($green-palette, 500);
-$accent: mat.m2-define-palette(mat.$m2-amber-palette, 500);
+$neutral-palette: (
+  50: #FAF9F6,
+  100: #F5F4F0,
+  200: #E8E7E3,
+  300: #D4D3CF,
+  400: #B0AFAB,
+  500: #999999,
+  600: #6B6A67,
+  700: #4A4A47,
+  800: #1A1A1A,
+  900: #111111,
+  contrast: (
+    50: #111111,
+    100: #111111,
+    200: #111111,
+    300: #111111,
+    400: #111111,
+    500: #FFFFFF,
+    600: #FFFFFF,
+    700: #FFFFFF,
+    800: #FFFFFF,
+    900: #FFFFFF
+  )
+);
+
+$primary: mat.m2-define-palette($gold-palette, 500);
+$accent: mat.m2-define-palette($neutral-palette, 800);
 $warn: mat.m2-define-palette(mat.$m2-red-palette, 500);
 
-$uniform-theme: mat.m2-define-light-theme((
+// Custom typography with Helvetica Neue
+$luxe-typography: mat.m2-define-typography-config(
+  $font-family: $font-family-primary,
+  $headline-1: mat.m2-define-typography-level(2.5rem, 1.2, 300, $font-family-primary, $letter-spacing-tight),
+  $headline-2: mat.m2-define-typography-level(2rem, 1.2, 300, $font-family-primary, $letter-spacing-tight),
+  $headline-3: mat.m2-define-typography-level(1.5rem, 1.3, 400, $font-family-primary, $letter-spacing-tight),
+  $headline-4: mat.m2-define-typography-level(1.25rem, 1.4, 500, $font-family-primary, $letter-spacing-tight),
+  $headline-5: mat.m2-define-typography-level(1.125rem, 1.4, 500, $font-family-primary, normal),
+  $headline-6: mat.m2-define-typography-level(1rem, 1.5, 600, $font-family-primary, normal),
+  $body-1: mat.m2-define-typography-level(1rem, 1.5, 400, $font-family-primary, normal),
+  $body-2: mat.m2-define-typography-level(0.875rem, 1.5, 400, $font-family-primary, normal),
+  $caption: mat.m2-define-typography-level(0.75rem, 1.4, 400, $font-family-primary, $letter-spacing-wide),
+  $button: mat.m2-define-typography-level(0.875rem, 1, 500, $font-family-primary, $letter-spacing-wide)
+);
+
+$luxe-theme: mat.m2-define-light-theme((
   color: (
     primary: $primary,
     accent: $accent,
     warn: $warn
   ),
-  typography: mat.m2-define-typography-config(),
+  typography: $luxe-typography,
   density: 0
 ));
 
 @include mat.core();
-@include mat.all-component-themes($uniform-theme);
+@include mat.all-component-themes($luxe-theme);
+
+// -----------------------------------------------------------------------------
+// CSS Custom Properties (for runtime theming)
+// -----------------------------------------------------------------------------
+
+:root {
+  // Colors
+  --color-bg-primary: #{$color-bg-primary};
+  --color-bg-secondary: #{$color-bg-secondary};
+  --color-bg-tertiary: #{$color-bg-tertiary};
+  --color-text-primary: #{$color-text-primary};
+  --color-text-secondary: #{$color-text-secondary};
+  --color-text-muted: #{$color-text-muted};
+  --color-accent-gold: #{$color-accent-gold};
+  --color-accent-gold-hover: #{$color-accent-gold-hover};
+  --color-accent-rose: #{$color-accent-rose};
+  --color-border: #{$color-border};
+  --color-shadow: #{$color-shadow};
+
+  // Spacing
+  --header-height: #{$header-height};
+  --drawer-width: #{$drawer-width};
+
+  // Transitions
+  --transition-fast: #{$transition-fast};
+  --transition-base: #{$transition-base};
+  --transition-slow: #{$transition-slow};
+}
+
+// -----------------------------------------------------------------------------
+// Base Reset & Typography
+// -----------------------------------------------------------------------------
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 html,
 body {
   height: 100%;
   margin: 0;
-  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
-  background: #f3f7f5;
-  color: rgba(20, 41, 30, 0.92);
+  font-family: $font-family-primary;
+  font-weight: $font-weight-regular;
+  font-size: 16px;
+  line-height: $line-height-base;
+  background: $color-bg-secondary;
+  color: $color-text-primary;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Typography reset
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-tight;
+  color: $color-text-primary;
+}
+
+h1 { font-size: $font-size-2xl; font-weight: $font-weight-light; }
+h2 { font-size: $font-size-xl; font-weight: $font-weight-light; }
+h3 { font-size: $font-size-lg; }
+h4 { font-size: $font-size-md; }
+h5 { font-size: $font-size-base; font-weight: $font-weight-semibold; }
+h6 { font-size: $font-size-sm; font-weight: $font-weight-semibold; text-transform: uppercase; letter-spacing: $letter-spacing-wide; }
+
+p {
+  margin: 0;
 }
 
 a {
   color: inherit;
+  text-decoration: none;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $color-accent-gold;
+  }
 }
+
+// Selection color
+::selection {
+  background: $color-accent-gold-light;
+  color: $color-text-primary;
+}
+
+// -----------------------------------------------------------------------------
+// App Shell Layout
+// -----------------------------------------------------------------------------
 
 .app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: $color-bg-secondary;
 }
 
 .app-content {
   flex: 1;
-  padding: 1.5rem 1rem;
+  padding: $space-4;
   margin: 0 auto;
-  width: min(100%, 960px);
+  width: 100%;
+  max-width: 1400px;
+
+  @include md {
+    padding: $space-6 $space-8;
+  }
+
+  @include lg {
+    padding: $space-8;
+  }
 }
+
+// -----------------------------------------------------------------------------
+// Card Styles
+// -----------------------------------------------------------------------------
 
 .section-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  padding: 1.5rem;
+  background: $card-bg;
+  border-radius: $card-radius;
+  box-shadow: $card-shadow;
+  padding: $card-padding;
+  border: 1px solid $color-border;
 }
 
-@media (min-width: 768px) {
-  .app-content {
-    padding: 2.5rem 2rem 3rem;
+.card-header {
+  margin-bottom: $space-6;
+}
+
+.card-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $space-2;
+}
+
+.card-subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+// -----------------------------------------------------------------------------
+// Button Overrides (Material)
+// -----------------------------------------------------------------------------
+
+.mat-mdc-raised-button.mat-primary {
+  background: $color-accent-gold !important;
+  color: $color-text-primary !important;
+  border-radius: $button-radius !important;
+  font-weight: $font-weight-medium;
+  letter-spacing: $letter-spacing-wide;
+  text-transform: uppercase;
+  padding: 0 $button-padding-x;
+  height: $button-height-md;
+  box-shadow: none !important;
+  transition: background-color $transition-fast, transform $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $color-accent-gold-hover !important;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background: $color-bg-tertiary !important;
+    color: $color-text-muted !important;
+  }
+}
+
+.mat-mdc-outlined-button.mat-primary {
+  border-color: $color-accent-gold !important;
+  color: $color-accent-gold !important;
+  border-radius: $button-radius !important;
+  font-weight: $font-weight-medium;
+  letter-spacing: $letter-spacing-wide;
+  text-transform: uppercase;
+  height: $button-height-md;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $color-accent-gold-light !important;
+  }
+}
+
+.mat-mdc-button {
+  border-radius: $button-radius !important;
+  font-weight: $font-weight-medium;
+  letter-spacing: $letter-spacing-wide;
+  text-transform: uppercase;
+  height: $button-height-md;
+}
+
+// Icon buttons
+.mat-mdc-icon-button {
+  color: $color-text-secondary;
+  transition: color $transition-fast, background-color $transition-fast;
+
+  &:hover {
+    color: $color-accent-gold;
+    background-color: $color-accent-gold-light;
+  }
+}
+
+// Stroked buttons (for tiles/cards)
+.mat-mdc-stroked-button {
+  border-color: $color-border !important;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: $color-border-strong !important;
+    background: $color-bg-tertiary !important;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Checkbox & Radio Overrides (Material) - Gold accent
+// -----------------------------------------------------------------------------
+
+.mat-mdc-checkbox {
+  --mdc-checkbox-selected-checkmark-color: #{$color-text-primary};
+  --mdc-checkbox-selected-focus-icon-color: #{$color-accent-gold};
+  --mdc-checkbox-selected-hover-icon-color: #{$color-accent-gold-hover};
+  --mdc-checkbox-selected-icon-color: #{$color-accent-gold};
+  --mdc-checkbox-selected-pressed-icon-color: #{$color-accent-gold};
+  --mdc-checkbox-selected-focus-state-layer-color: #{$color-accent-gold};
+  --mdc-checkbox-selected-hover-state-layer-color: #{$color-accent-gold};
+  --mdc-checkbox-selected-pressed-state-layer-color: #{$color-accent-gold};
+  --mdc-checkbox-unselected-focus-icon-color: #{$color-text-secondary};
+  --mdc-checkbox-unselected-hover-icon-color: #{$color-accent-gold};
+}
+
+.mat-mdc-radio-button {
+  --mdc-radio-selected-focus-icon-color: #{$color-accent-gold};
+  --mdc-radio-selected-hover-icon-color: #{$color-accent-gold-hover};
+  --mdc-radio-selected-icon-color: #{$color-accent-gold};
+  --mdc-radio-selected-pressed-icon-color: #{$color-accent-gold};
+  --mdc-radio-selected-focus-state-layer-color: #{$color-accent-gold};
+  --mdc-radio-selected-hover-state-layer-color: #{$color-accent-gold};
+  --mdc-radio-selected-pressed-state-layer-color: #{$color-accent-gold};
+  --mdc-radio-unselected-focus-icon-color: #{$color-text-secondary};
+  --mdc-radio-unselected-hover-icon-color: #{$color-accent-gold};
+}
+
+.mat-mdc-slide-toggle {
+  --mdc-switch-selected-focus-handle-color: #{$color-accent-gold};
+  --mdc-switch-selected-hover-handle-color: #{$color-accent-gold-hover};
+  --mdc-switch-selected-handle-color: #{$color-accent-gold};
+  --mdc-switch-selected-pressed-handle-color: #{$color-accent-gold};
+  --mdc-switch-selected-focus-track-color: #{$color-accent-gold-light};
+  --mdc-switch-selected-hover-track-color: #{$color-accent-gold-light};
+  --mdc-switch-selected-track-color: #{$color-accent-gold-light};
+  --mdc-switch-selected-pressed-track-color: #{$color-accent-gold-light};
+  --mdc-switch-selected-focus-state-layer-color: #{$color-accent-gold};
+  --mdc-switch-selected-hover-state-layer-color: #{$color-accent-gold};
+  --mdc-switch-selected-pressed-state-layer-color: #{$color-accent-gold};
+}
+
+// -----------------------------------------------------------------------------
+// Form Field Overrides (Material)
+// -----------------------------------------------------------------------------
+
+.mat-mdc-form-field {
+  &.mat-focused {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $color-accent-gold !important;
+    }
+
+    .mat-mdc-floating-label {
+      color: $color-accent-gold !important;
+    }
+  }
+}
+
+.mat-mdc-text-field-wrapper {
+  background: $color-bg-primary !important;
+}
+
+// -----------------------------------------------------------------------------
+// Progress Bar Overrides
+// -----------------------------------------------------------------------------
+
+.mat-mdc-progress-bar {
+  --mdc-linear-progress-active-indicator-color: #{$color-accent-gold};
+  --mdc-linear-progress-track-color: #{$color-accent-gold-light};
+}
+
+// -----------------------------------------------------------------------------
+// Snackbar Overrides
+// -----------------------------------------------------------------------------
+
+.mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: #{$color-text-primary};
+  --mdc-snackbar-supporting-text-color: #{$color-bg-primary};
+  --mat-snack-bar-button-color: #{$color-accent-gold};
+}
+
+// -----------------------------------------------------------------------------
+// Card Overrides (Material)
+// -----------------------------------------------------------------------------
+
+.mat-mdc-card {
+  background: $card-bg !important;
+  border-radius: $card-radius !important;
+  box-shadow: none !important;
+  border: 1px solid $color-border;
+}
+
+.mat-mdc-card-title {
+  font-size: $font-size-lg !important;
+  font-weight: $font-weight-medium !important;
+  color: $color-text-primary !important;
+}
+
+.mat-mdc-card-subtitle {
+  font-size: $font-size-sm !important;
+  color: $color-text-muted !important;
+}
+
+// -----------------------------------------------------------------------------
+// Toolbar Overrides
+// -----------------------------------------------------------------------------
+
+.mat-toolbar {
+  background: $header-bg !important;
+  color: $color-text-primary !important;
+  border-bottom: 1px solid $color-border;
+  height: $header-height !important;
+}
+
+// -----------------------------------------------------------------------------
+// Utility Classes
+// -----------------------------------------------------------------------------
+
+// Text colors
+.text-primary { color: $color-text-primary; }
+.text-secondary { color: $color-text-secondary; }
+.text-muted { color: $color-text-muted; }
+.text-gold { color: $color-accent-gold; }
+
+// Text styles
+.text-uppercase { text-transform: uppercase; letter-spacing: $letter-spacing-wide; }
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+// Font weights
+.font-light { font-weight: $font-weight-light; }
+.font-regular { font-weight: $font-weight-regular; }
+.font-medium { font-weight: $font-weight-medium; }
+.font-semibold { font-weight: $font-weight-semibold; }
+
+// Flexbox utilities
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.gap-1 { gap: $space-1; }
+.gap-2 { gap: $space-2; }
+.gap-3 { gap: $space-3; }
+.gap-4 { gap: $space-4; }
+.gap-6 { gap: $space-6; }
+.gap-8 { gap: $space-8; }
+
+// Grid utilities
+.grid { display: grid; }
+
+// Spacing utilities
+.m-0 { margin: 0; }
+.mt-4 { margin-top: $space-4; }
+.mt-6 { margin-top: $space-6; }
+.mb-4 { margin-bottom: $space-4; }
+.mb-6 { margin-bottom: $space-6; }
+.p-0 { padding: 0; }
+.p-4 { padding: $space-4; }
+.p-6 { padding: $space-6; }
+
+// Width utilities
+.w-full { width: 100%; }
+.max-w-sm { max-width: $breakpoint-sm; }
+.max-w-md { max-width: $breakpoint-md; }
+.max-w-lg { max-width: $breakpoint-lg; }
+
+// Visibility
+.hidden { display: none; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Responsive visibility
+@include md {
+  .hidden-md-up { display: none; }
+}
+
+@include lg {
+  .hidden-lg-up { display: none; }
+}
+
+// -----------------------------------------------------------------------------
+// Section Labels
+// -----------------------------------------------------------------------------
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  margin-bottom: $space-4;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wider;
+  color: $color-text-muted;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $color-border;
+  }
+}
+
+.section-label-gold {
+  @extend .section-label;
+  color: $color-accent-gold;
+
+  &::after {
+    background: linear-gradient(to right, $color-accent-gold, transparent);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Selection States
+// -----------------------------------------------------------------------------
+
+.is-selected {
+  box-shadow: 0 0 0 3px $color-accent-gold !important;
+  background: $color-accent-gold-light !important;
+}
+
+.is-selectable {
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(.is-selected) {
+    box-shadow: 0 0 0 2px $color-border-strong;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Badges & Pills
+// -----------------------------------------------------------------------------
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-1 $space-3;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  letter-spacing: $letter-spacing-wide;
+  text-transform: uppercase;
+  border-radius: $radius-full;
+  background: $color-bg-tertiary;
+  color: $color-text-secondary;
+}
+
+.badge-gold {
+  @extend .badge;
+  background: $color-accent-gold-light;
+  color: $color-accent-gold;
+}
+
+.badge-rose {
+  @extend .badge;
+  background: $color-accent-rose-light;
+  color: darken($color-accent-rose, 30%);
+}
+
+// Credits pill (header)
+.credits-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  background: $color-accent-gold-light;
+  color: $color-accent-gold;
+  border-radius: $radius-full;
+  border: 1px solid rgba($color-accent-gold, 0.3);
+}
+
+// -----------------------------------------------------------------------------
+// Dividers
+// -----------------------------------------------------------------------------
+
+.divider {
+  height: 1px;
+  background: $color-border;
+  margin: $space-6 0;
+}
+
+.divider-vertical {
+  width: 1px;
+  background: $color-border;
+  align-self: stretch;
+}
+
+// -----------------------------------------------------------------------------
+// Tutorial Dialog Panel
+// -----------------------------------------------------------------------------
+
+.tutorial-dialog-panel {
+  .mat-mdc-dialog-container {
+    background: $color-overlay;
+    backdrop-filter: blur(8px);
+  }
+
+  .mat-mdc-dialog-surface {
+    background: transparent;
+    box-shadow: none;
   }
 }

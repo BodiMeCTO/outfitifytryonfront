@@ -1,91 +1,19 @@
 <section class="section-card garment-library">
-  <!-- PAGE NAVIGATION -->
-  <div class="page-nav">
-    <button mat-button routerLink="/user-image-upload" class="back-button">
-      <mat-icon>arrow_back</mat-icon>
-      Back to Model Photo
-    </button>
-    <span class="step-indicator">Step 2 of 3</span>
-  </div>
-
-  <mat-accordion class="upload-accordion" multi="false">
-    <mat-expansion-panel hideToggle>
-      <mat-expansion-panel-header>
-        <mat-panel-title>Upload a garment image</mat-panel-title>
-        <mat-panel-description>Select a garment category and image perspective</mat-panel-description>
-      </mat-expansion-panel-header>
-
-      <div class="upload-grid">
-        <div class="upload-actions">
-          <input
-            #garmentFileInput
-            type="file"
-            accept="image/*"
-            (change)="handleGarmentUploadFile($event)"
-            hidden
-          />
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="garmentFileInput.click()"
-            [disabled]="isUploadingGarment() || selectedGarmentCategoryId() === null || selectedImagePerspectiveId() === null"
-          >
-            <mat-icon>upload</mat-icon>
-            {{ isUploadingGarment() ? 'Uploading…' : 'Upload garment image' }}
-          </button>
-          <p class="hint">
-            Select a garment category, then upload an image to add it to your library.
-          </p>
-          <mat-progress-bar *ngIf="isUploadingGarment()" mode="indeterminate"></mat-progress-bar>
-        </div>
-
-        <mat-form-field appearance="outline" class="group-select">
-          <mat-label>Garment category</mat-label>
-          <mat-select
-            [value]="selectedGarmentCategoryId()"
-            (valueChange)="selectedGarmentCategoryId.set($event)"
-            [disabled]="isLoadingCategories()"
-          >
-            <mat-option
-              *ngFor="let category of garmentCategoryOptions()"
-              [value]="categoryId(category)"
-            >
-              {{ categoryLabel(category) }}
-            </mat-option>
-          </mat-select>
-          <mat-hint *ngIf="garmentCategoriesError()">{{ garmentCategoriesError() }}</mat-hint>
-          <mat-hint *ngIf="!garmentCategoriesError() && isLoadingCategories()">
-            Loading garment categories…
-          </mat-hint>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="group-select">
-          <mat-label>Image perspective</mat-label>
-          <mat-select
-            [value]="selectedImagePerspectiveId()"
-            (valueChange)="selectedImagePerspectiveId.set($event)"
-            [disabled]="isLoadingImagePerspectives()"
-          >
-            <mat-option
-              *ngFor="let perspective of imagePerspectives()"
-              [value]="perspectiveId(perspective)"
-            >
-              {{ perspectiveName(perspective) }}
-            </mat-option>
-          </mat-select>
-          <mat-hint *ngIf="imagePerspectivesError()">{{ imagePerspectivesError() }}</mat-hint>
-          <mat-hint *ngIf="!imagePerspectivesError() && isLoadingImagePerspectives()">
-            Loading image perspectives…
-          </mat-hint>
-        </mat-form-field>
-      </div>
-    </mat-expansion-panel>
-  </mat-accordion>
-
+  <!-- PAGE HEADER -->
   <header class="section-header">
-    <h1>Select garments to build your outfit</h1>
+    <div class="header-top">
+      <a routerLink="/studio" class="back-link">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Back to Studio</span>
+      </a>
+      <button mat-raised-button color="accent" class="upload-btn" (click)="openUploadDialog()">
+        <mat-icon>add_photo_alternate</mat-icon>
+        Add Garment
+      </button>
+    </div>
+    <h1>Your Garment Library</h1>
     <p class="subtitle">
-      Choose any combination of garments. You can select multiple items from each category.
+      Manage your garments or select items to use in the studio.
     </p>
   </header>
 

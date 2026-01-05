@@ -1,0 +1,40 @@
+<div class="tutorial-overlay">
+  <div class="tutorial-card">
+    <!-- Header with progress indicator -->
+    <header class="tutorial-header">
+      <h2 class="tutorial-title">Welcome to Outfitify</h2>
+      <div class="step-indicator">
+        @for (step of steps; track step.id) {
+          <span
+            class="step-dot"
+            [class.active]="currentStep() === step.id"
+            [class.completed]="currentStep() > step.id">
+          </span>
+        }
+      </div>
+    </header>
+
+    <!-- Step Content -->
+    <div class="tutorial-content">
+      @if (currentStepData; as step) {
+        <div class="step-icon-wrapper">
+          <mat-icon class="step-icon">{{ step.icon }}</mat-icon>
+        </div>
+        <h3 class="step-title">{{ step.title }}</h3>
+        <p class="step-description">{{ step.description }}</p>
+      }
+    </div>
+
+    <!-- Actions -->
+    <footer class="tutorial-actions">
+      <button class="skip-btn" (click)="skipTutorial()">
+        Skip Tutorial
+      </button>
+      <app-luxe-button
+        variant="primary"
+        (clicked)="nextStep()">
+        {{ currentStepData?.actionLabel }}
+      </app-luxe-button>
+    </footer>
+  </div>
+</div>

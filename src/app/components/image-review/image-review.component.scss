@@ -1,28 +1,141 @@
+@use '../../../styles/tokens' as *;
+
 .image-review {
   display: grid;
   gap: 1.5rem;
   justify-items: center;
+  padding: 1rem;
 }
 
 .preview {
   margin: 0;
   width: min(100%, 420px);
+  max-height: 60vh;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
-  background: rgba(67, 175, 102, 0.1);
+  background: $color-accent-gold-light;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .preview img {
   display: block;
   width: 100%;
+  height: auto;
+  max-height: 60vh;
+  object-fit: contain;
 }
 
 .controls {
   display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 1rem;
   justify-content: center;
+  align-items: center;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1.5px solid $color-accent-gold;
+  border-radius: 50%;
+  background: $color-bg-primary;
+  color: $color-accent-gold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  &:hover {
+    background: $color-accent-gold;
+    color: $color-bg-primary;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// Variant thumbnails strip
+.variants-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.variants-label {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+  font-weight: 500;
+}
+
+.variants-list {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.variant-thumb {
+  position: relative;
+  width: 60px;
+  height: 80px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: $color-bg-tertiary;
+  transition: all 0.2s ease;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &:hover {
+    border-color: rgba($color-accent-gold, 0.5);
+    transform: translateY(-2px);
+  }
+
+  &.selected {
+    border-color: $color-accent-gold;
+    box-shadow: 0 2px 8px rgba($color-accent-gold, 0.3);
+  }
+}
+
+.variant-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  background: $color-accent-gold;
+  color: $color-bg-primary;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
 }
 
 .actions {
@@ -30,4 +143,60 @@
   gap: 0.75rem;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 1.5px solid $color-accent-gold;
+  border-radius: 24px;
+  background: $color-bg-primary;
+  color: $color-accent-gold;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: $color-accent-gold-light;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  // Primary filled button
+  &.primary {
+    background: $color-accent-gold;
+    color: $color-bg-primary;
+    border-color: $color-accent-gold;
+
+    &:hover {
+      background: $color-accent-gold-hover;
+      border-color: $color-accent-gold-hover;
+    }
+  }
+
+  // Secondary/subtle button
+  &.secondary {
+    border-color: $color-border;
+    color: $color-text-muted;
+
+    &:hover {
+      border-color: $color-accent-gold;
+      color: $color-accent-gold;
+      background: $color-accent-gold-light;
+    }
+  }
 }

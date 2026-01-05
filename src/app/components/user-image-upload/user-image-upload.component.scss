@@ -1,3 +1,5 @@
+@use '../../../styles/tokens' as *;
+
 .user-image-upload {
   display: grid;
   gap: 1.5rem;
@@ -58,11 +60,14 @@
 .preview {
   display: grid;
   gap: 1rem;
+  justify-items: center;
 }
 
 .preview img {
   width: 100%;
   max-width: 320px;
+  max-height: 50vh; // Prevent large images from pushing actions off-screen
+  object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
 }
@@ -127,8 +132,8 @@
 }
 
 .model-card .image-tile.is-selected {
-  box-shadow: 0 0 0 3px #673ab7;
-  background: rgba(103, 58, 183, 0.05);
+  box-shadow: 0 0 0 3px $color-accent-gold;
+  background: $color-accent-gold-light;
 }
 
 /* Background image grid */
@@ -136,6 +141,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 0.75rem;
+
+  @media (max-width: 360px) {
+    grid-template-columns: repeat(2, 1fr); // Force 2 columns on very small screens
+    gap: 0.5rem;
+  }
 }
 
 .image-tile {
@@ -198,15 +208,21 @@
   border-radius: 8px;
   transition: all 0.2s ease;
 
+  @media (max-width: 360px) {
+    padding: 0.75rem 0.35rem;
+    min-height: 80px;
+    gap: 0.35rem;
+  }
+
   &:hover {
     background: rgba(0, 0, 0, 0.04);
     border-color: rgba(0, 0, 0, 0.24);
   }
 
   &.is-selected {
-    background: rgba(103, 58, 183, 0.08);
-    border-color: #673ab7;
-    box-shadow: 0 0 0 2px #673ab7;
+    background: $color-accent-gold-light;
+    border-color: $color-accent-gold;
+    box-shadow: 0 0 0 2px $color-accent-gold;
   }
 
   .template-icon {
@@ -258,6 +274,75 @@
   font-size: 0.85rem;
   color: rgba(0, 0, 0, 0.6);
   font-style: italic;
+}
+
+/* Aspect ratio selection */
+.aspect-ratio-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.section-hint {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.aspect-ratio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.75rem;
+
+  @media (max-width: 360px) {
+    grid-template-columns: repeat(3, 1fr); // Force 3 columns on very small screens
+    gap: 0.5rem;
+  }
+}
+
+.aspect-ratio-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
+  min-height: 70px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  @media (max-width: 360px) {
+    padding: 0.5rem 0.25rem;
+    min-height: 60px;
+    gap: 0.25rem;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.24);
+  }
+
+  &.is-selected {
+    background: $color-accent-gold-light;
+    border-color: $color-accent-gold;
+    box-shadow: 0 0 0 2px $color-accent-gold;
+  }
+
+  .ratio-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    opacity: 0.7;
+  }
+
+  .ratio-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.2;
+  }
 }
 
 /* Continue button section */

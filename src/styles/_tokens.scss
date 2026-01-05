@@ -1,0 +1,251 @@
+// =============================================================================
+// OUTFITIFY DESIGN TOKENS - Neutral Luxe Minimalism
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Colors
+// -----------------------------------------------------------------------------
+
+// Background colors
+$color-bg-primary: #FFFFFF;
+$color-bg-secondary: #FAF9F6;
+$color-bg-tertiary: #F5F4F0;
+
+// Text colors
+$color-text-primary: #111111;
+$color-text-secondary: #1A1A1A;
+$color-text-muted: #999999;
+$color-text-inverse: #FFFFFF;
+
+// Accent colors
+$color-accent-gold: #C9A96E;
+$color-accent-gold-hover: #D4AF37;
+$color-accent-gold-light: rgba(201, 169, 110, 0.12);
+$color-accent-gold-dark: #8B7355; // WCAG AA compliant for text (4.5:1 contrast)
+$color-accent-gold-text: #7A6548; // Even darker for small text (5.5:1 contrast)
+$color-accent-rose: #E8C3C8;
+$color-accent-rose-light: rgba(232, 195, 200, 0.2);
+
+// UI colors
+$color-border: rgba(0, 0, 0, 0.08);
+$color-border-strong: rgba(0, 0, 0, 0.16);
+$color-shadow: rgba(0, 0, 0, 0.08);
+$color-overlay: rgba(0, 0, 0, 0.5);
+$color-overlay-light: rgba(255, 255, 255, 0.85);
+
+// Status colors (success uses gold to match brand)
+$color-success: $color-accent-gold;
+$color-warning: #FF9800;
+$color-error: #F44336;
+
+// -----------------------------------------------------------------------------
+// Typography
+// -----------------------------------------------------------------------------
+
+$font-family-primary: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+$font-family-mono: 'SF Mono', Monaco, 'Courier New', monospace;
+
+// Font weights
+$font-weight-light: 300;
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+
+// Font sizes (mobile-first)
+$font-size-xs: 0.75rem;    // 12px
+$font-size-sm: 0.875rem;   // 14px
+$font-size-base: 1rem;     // 16px
+$font-size-md: 1.125rem;   // 18px
+$font-size-lg: 1.25rem;    // 20px
+$font-size-xl: 1.5rem;     // 24px
+$font-size-2xl: 2rem;      // 32px
+$font-size-3xl: 2.5rem;    // 40px
+
+// Line heights
+$line-height-tight: 1.2;
+$line-height-base: 1.5;
+$line-height-relaxed: 1.75;
+
+// Letter spacing
+$letter-spacing-tight: -0.02em;
+$letter-spacing-normal: 0;
+$letter-spacing-wide: 0.05em;
+$letter-spacing-wider: 0.1em;
+
+// -----------------------------------------------------------------------------
+// Spacing
+// -----------------------------------------------------------------------------
+
+$space-0: 0;
+$space-1: 0.25rem;   // 4px
+$space-2: 0.5rem;    // 8px
+$space-3: 0.75rem;   // 12px
+$space-4: 1rem;      // 16px
+$space-5: 1.25rem;   // 20px
+$space-6: 1.5rem;    // 24px
+$space-8: 2rem;      // 32px
+$space-10: 2.5rem;   // 40px
+$space-12: 3rem;     // 48px
+$space-16: 4rem;     // 64px
+$space-20: 5rem;     // 80px
+
+// -----------------------------------------------------------------------------
+// Breakpoints
+// -----------------------------------------------------------------------------
+
+$breakpoint-sm: 480px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+
+// Breakpoint mixins
+@mixin sm {
+  @media (min-width: $breakpoint-sm) {
+    @content;
+  }
+}
+
+@mixin md {
+  @media (min-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin lg {
+  @media (min-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin xl {
+  @media (min-width: $breakpoint-xl) {
+    @content;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Border Radius
+// -----------------------------------------------------------------------------
+
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-2xl: 24px;
+$radius-full: 9999px;
+
+// -----------------------------------------------------------------------------
+// Shadows
+// -----------------------------------------------------------------------------
+
+$shadow-sm: 0 1px 2px $color-shadow;
+$shadow-md: 0 4px 8px $color-shadow;
+$shadow-lg: 0 8px 24px $color-shadow;
+$shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+
+// Lift shadow for hover states
+$shadow-lift: 0 12px 32px rgba(0, 0, 0, 0.12);
+
+// -----------------------------------------------------------------------------
+// Transitions
+// -----------------------------------------------------------------------------
+
+$transition-fast: 150ms ease;
+$transition-base: 250ms ease;
+$transition-slow: 400ms ease;
+$transition-drawer: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+// -----------------------------------------------------------------------------
+// Z-Index Scale
+// -----------------------------------------------------------------------------
+
+$z-base: 0;
+$z-dropdown: 100;
+$z-sticky: 200;
+$z-fixed: 300;
+$z-drawer-backdrop: 400;
+$z-drawer: 500;
+$z-modal-backdrop: 600;
+$z-modal: 700;
+$z-toast: 800;
+$z-tooltip: 900;
+
+// -----------------------------------------------------------------------------
+// Component-specific tokens
+// -----------------------------------------------------------------------------
+
+// Cards
+$card-bg: $color-bg-primary;
+$card-border: $color-border;
+$card-radius: $radius-lg;
+$card-shadow: $shadow-md;
+$card-padding: $space-6;
+
+// Buttons
+$button-height-sm: 32px;
+$button-height-md: 44px;
+$button-height-lg: 52px;
+$button-padding-x: $space-6;
+$button-radius: $radius-full;
+
+// Image cards
+$image-card-radius: $radius-md;
+$image-card-selected-ring: 3px solid $color-accent-gold;
+
+// Carousel
+$carousel-gap: $space-4;
+$carousel-card-width-mobile: 140px;
+$carousel-card-width-desktop: 180px;
+
+// Header
+$header-height: 64px;
+$header-bg: $color-bg-primary;
+
+// Drawer
+$drawer-width: 280px;
+$drawer-bg: $color-bg-primary;
+
+// Bottom Navigation
+$bottom-nav-height: 56px;
+$bottom-nav-bg: $color-bg-primary;
+
+// Touch Targets (WCAG/Apple HIG minimum)
+$touch-target-min: 44px;
+$touch-target-comfortable: 48px;
+
+// Safe Areas (for notched devices)
+$safe-area-top: env(safe-area-inset-top, 0px);
+$safe-area-bottom: env(safe-area-inset-bottom, 0px);
+$safe-area-left: env(safe-area-inset-left, 0px);
+$safe-area-right: env(safe-area-inset-right, 0px);
+
+// -----------------------------------------------------------------------------
+// Utility Mixins
+// -----------------------------------------------------------------------------
+
+// Ensure minimum touch target size
+@mixin touch-target($size: $touch-target-min) {
+  min-width: $size;
+  min-height: $size;
+}
+
+// Safe area padding
+@mixin safe-area-padding($direction: bottom, $additional: 0px) {
+  @if $direction == bottom {
+    padding-bottom: calc(#{$additional} + env(safe-area-inset-bottom, 0px));
+  } @else if $direction == top {
+    padding-top: calc(#{$additional} + env(safe-area-inset-top, 0px));
+  } @else if $direction == left {
+    padding-left: calc(#{$additional} + env(safe-area-inset-left, 0px));
+  } @else if $direction == right {
+    padding-right: calc(#{$additional} + env(safe-area-inset-right, 0px));
+  }
+}
+
+// Focus visible ring for accessibility
+@mixin focus-ring($color: $color-accent-gold, $offset: 2px) {
+  &:focus-visible {
+    outline: 2px solid $color;
+    outline-offset: $offset;
+  }
+}

@@ -1,0 +1,660 @@
+@use '../../../styles/tokens' as *;
+
+.studio-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - #{$header-height});
+
+  @include lg {
+    flex-direction: row;
+    gap: $space-8;
+  }
+}
+
+// Preview Panel
+.preview-panel {
+  position: relative;
+  background: $color-bg-primary;
+  border-radius: $radius-lg;
+  border: 1px solid $color-border;
+  overflow: hidden;
+
+  @include lg {
+    position: sticky;
+    top: calc(#{$header-height} + #{$space-6});
+    width: 45%;
+    max-width: 500px;
+    // Use flex to size to content, with max constraint
+    height: auto;
+    max-height: calc(100vh - #{$header-height} - #{$space-12});
+    display: flex;
+    flex-direction: column;
+    align-self: flex-start; // Prevent stretching to container height
+  }
+}
+
+.preview-content {
+  padding: $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+
+  @include lg {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0; // Allow flex child to shrink
+  }
+}
+
+.preview-image-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: $color-bg-tertiary;
+
+  @include lg {
+    max-height: 50vh; // Constrain image height on desktop
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.preview-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+
+  @include lg {
+    max-height: 50vh; // Match wrapper constraint
+  }
+}
+
+.preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-4;
+  padding: $space-16 $space-6;
+  color: $color-text-muted;
+  text-align: center;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    opacity: 0.3;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.selection-summary {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: $font-size-sm;
+  color: $color-accent-gold-dark; // Accessible gold for text
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: $color-accent-gold; // Icons can use brighter gold
+  }
+}
+
+// Credit cost indicator (desktop)
+.credit-cost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-3 $space-4;
+  background: $color-bg-tertiary;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: $color-accent-gold;
+  }
+}
+
+.generate-button {
+  &.desktop-only {
+    display: none;
+
+    @include lg {
+      display: block;
+    }
+  }
+}
+
+// Progress overlay moved to GenerationProgressComponent
+
+// Workflow Sections
+.workflow-sections {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-8;
+  // Space for: mobile footer (approx 100px) + bottom nav (56px) + safe area
+  padding-bottom: calc(160px + #{$bottom-nav-height} + env(safe-area-inset-bottom, 0px));
+
+  @include lg {
+    padding-bottom: $space-8;
+    max-width: 800px; // Prevent content from spreading too wide on ultra-wide screens
+  }
+}
+
+.workflow-section {
+  background: $color-bg-primary;
+  border-radius: $radius-lg;
+  border: 1px solid $color-border;
+  padding: $space-6;
+}
+
+// Model Grid
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: $space-4;
+
+  @include md {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+// Responsive carousel/grid visibility
+.mobile-carousel {
+  display: block;
+
+  @include lg {
+    display: none;
+  }
+}
+
+.desktop-grid {
+  display: none;
+
+  @include lg {
+    display: grid;
+  }
+}
+
+// Carousel item sizing
+.carousel-item {
+  width: 120px;
+  flex-shrink: 0;
+
+  @include md {
+    width: 140px;
+  }
+}
+
+// Model card wrapper with action bar
+.model-card-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: center;
+  padding: $space-2 0;
+  gap: $space-2;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  min-height: $touch-target-min; // Ensure minimum touch target
+  padding: $space-2 $space-4;
+  border: 1.5px solid $color-accent-gold;
+  border-radius: $radius-full;
+  background: $color-accent-gold-light;
+  color: $color-accent-gold-dark; // Use accessible color
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-fast;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wide;
+  -webkit-tap-highlight-color: transparent;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: $color-accent-gold;
+    color: $color-bg-primary;
+    border-color: $color-accent-gold;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @include focus-ring;
+}
+
+// Empty hint for edited backgrounds section
+.empty-hint {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-8 $space-4;
+  text-align: center;
+  color: $color-text-muted;
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    opacity: 0.4;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    max-width: 260px;
+    margin: 0;
+  }
+}
+
+// Upload options container
+.upload-options {
+  display: contents; // Items flow into parent grid
+
+  @include md {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+}
+
+.upload-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  min-height: 100px;
+  aspect-ratio: 3 / 4;
+  border: 2px dashed $color-border-strong;
+  border-radius: $radius-md;
+  background: transparent;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: all $transition-fast;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover,
+  &:focus {
+    border-color: $color-accent-gold;
+    color: $color-accent-gold-dark;
+    background: $color-accent-gold-light;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  span {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: $letter-spacing-wide;
+  }
+
+  @include focus-ring;
+}
+
+// Camera upload button - more prominent on mobile
+.upload-camera {
+  border-color: $color-accent-gold;
+  color: $color-accent-gold-dark;
+  background: $color-accent-gold-light;
+
+  // Hide on desktop where camera capture is less useful
+  @include lg {
+    display: none;
+  }
+
+  &:hover,
+  &:focus {
+    background: rgba($color-accent-gold, 0.2);
+  }
+}
+
+// Garment Cards
+.garment-card {
+  width: $carousel-card-width-mobile;
+  flex-shrink: 0;
+
+  @include md {
+    width: $carousel-card-width-desktop;
+  }
+}
+
+// Background Options
+.background-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: $space-3;
+}
+
+.background-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-4;
+  min-height: 90px;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-bg-primary;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: $color-border-strong;
+    background: $color-bg-tertiary;
+  }
+
+  &.is-selected {
+    border-color: $color-accent-gold;
+    background: $color-accent-gold-light;
+    color: $color-accent-gold;
+    box-shadow: 0 0 0 3px $color-accent-gold;
+  }
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    opacity: 0.7;
+  }
+
+  span {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    text-align: center;
+    line-height: 1.2;
+  }
+}
+
+.custom-tile {
+  border-style: dashed;
+  border-width: 2px;
+}
+
+.custom-prompt-section {
+  display: grid;
+  gap: $space-4;
+  margin-top: $space-6;
+  padding: $space-4;
+  background: $color-bg-secondary;
+  border-radius: $radius-md;
+}
+
+.custom-prompt-field {
+  width: 100%;
+}
+
+// Aspect Ratio Selection
+.aspect-ratio-section {
+  margin-top: $space-6;
+  padding-top: $space-6;
+  border-top: 1px solid $color-border;
+}
+
+.section-title {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wider;
+  color: $color-text-muted;
+  margin-bottom: $space-4;
+}
+
+.aspect-ratio-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: $space-3;
+}
+
+.ratio-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-3;
+  min-height: 70px;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-bg-primary;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: $color-border-strong;
+    background: $color-bg-tertiary;
+  }
+
+  &.is-selected {
+    border-color: $color-accent-gold;
+    background: $color-accent-gold-light;
+    color: $color-accent-gold;
+    box-shadow: 0 0 0 3px $color-accent-gold;
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+  }
+
+  span {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+  }
+}
+
+// Section header with action button
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-4;
+}
+
+// Upload button in section header
+.upload-btn-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-1;
+  min-width: $touch-target-min;
+  min-height: $touch-target-min;
+  padding: $space-2;
+  border: 1.5px solid $color-border-strong;
+  border-radius: $radius-md;
+  background: transparent;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: all $transition-fast;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  mat-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  &:hover {
+    border-color: $color-accent-gold;
+    color: $color-accent-gold-dark;
+    background: $color-accent-gold-light;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  @include focus-ring;
+}
+
+// Garment category spacing
+.garment-category {
+  margin-bottom: $space-6;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Empty garments state
+.empty-garments {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-4;
+  padding: $space-10 $space-6;
+  text-align: center;
+  color: $color-text-muted;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.4;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    max-width: 280px;
+  }
+}
+
+// Mobile Footer - positioned above bottom nav
+.mobile-footer {
+  position: fixed;
+  bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  padding: $space-3 $space-4;
+  @include safe-area-padding(left, $space-4);
+  @include safe-area-padding(right, $space-4);
+  background: $color-bg-primary;
+  border-top: 1px solid $color-border;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  z-index: calc(#{$z-fixed} - 1); // Below bottom nav
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+
+  @include lg {
+    display: none;
+  }
+}
+
+// Mobile selection summary
+.mobile-selection-summary {
+  display: flex;
+  justify-content: center;
+  gap: $space-6;
+}
+
+.summary-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  min-height: $touch-target-min; // Proper touch target
+  padding: $space-1 $space-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-muted;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wide;
+  border-radius: $radius-full;
+  transition: all $transition-fast;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.is-checked {
+    color: $color-accent-gold-dark; // Accessible gold for text
+    background: $color-accent-gold-light;
+  }
+}
+
+// Credit cost in mobile footer
+.credit-cost-mobile {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-1 $space-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+  background: $color-bg-tertiary;
+  border-radius: $radius-full;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: $color-accent-gold;
+  }
+}

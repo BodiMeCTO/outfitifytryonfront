@@ -30,6 +30,8 @@ export interface SelectedInspiration {
   source: 'upload' | 'generated';
   remoteUrl?: string;
   id?: string;
+  isBackgroundVariant?: boolean;
+  name?: string;
 }
 
 export interface UploadedInspirationResponse {
@@ -45,11 +47,22 @@ export interface UploadedInspirationResponse {
 // Gallery models (old shape)
 // -----------------------
 
+// Represents a single outfit image (original or enhanced variant)
+export interface OutfitImageVariant {
+  id: string;              // OutfitImage ID
+  imageUrl: string;
+  editType?: string | null;  // 'filtered', 'upscaled', 'filtered_upscaled', or null for original
+  createdAt: Date;
+}
+
 export interface GeneratedImage {
-  id: string;
+  id: string;              // Outfit ID
+  outfitImageId?: string;  // Primary OutfitImage ID (for edit operations)
   imageUrl: string;
   createdAt: Date;
   status: 'processing' | 'ready';
+  variants?: OutfitImageVariant[];  // All images for this outfit (original + enhanced)
+  variantCount?: number;   // Quick count for badge display
 }
 
 export interface GeneratedImageResponse {
@@ -108,12 +121,15 @@ export interface OutfitImage {
   id: string;
   assetUrl: string;
   createdAtUtc?: string | null;
+  editType?: string | null;  // 'filtered', 'upscaled', 'filtered_upscaled', or null for original
 }
 
 export interface OutfitDto {
   id: string;
   modelImageId: string;
   backgroundOptionId: string | null;
+  aspectRatio?: string | null;
+  generatedModelImageId?: string | null;
   creditCost?: number | null;
   status?: string | null;
   createdAtUtc?: string | null;
@@ -126,7 +142,19 @@ export interface CreateOutfitDto {
   poseOptionId: string;
   backgroundOptionId: string | null;
   customBackgroundPrompt?: string | null;
+  aspectRatio?: string | null;
   outfitGarments: OutfitGarment[];
 }
+
+// Aspect ratios supported for background replacement (portrait/square only)
+// Landscape ratios are not supported as they create canvases where the person is too small
+export type AspectRatioOption = 'original' | '1:1' | '3:4' | '9:16';
+
+export const ASPECT_RATIO_OPTIONS: { value: AspectRatioOption; label: string }[] = [
+  { value: 'original', label: 'Original' },
+  { value: '1:1', label: '1:1 Square' },
+  { value: '3:4', label: '3:4 Portrait' },
+  { value: '9:16', label: '9:16 Story' }
+];
 
 export type CreateOutfitResponse = OutfitDto;

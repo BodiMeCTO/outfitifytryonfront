@@ -1,3 +1,5 @@
+@use '../../../styles/tokens' as *;
+
 .credits-page {
   display: grid;
   gap: 1.5rem;
@@ -38,13 +40,13 @@
   font-size: 48px;
   width: 48px;
   height: 48px;
-  color: #673ab7;
+  color: $color-accent-gold;
 }
 
 .balance-value {
   font-size: 3rem;
   font-weight: 700;
-  color: #673ab7;
+  color: $color-accent-gold;
   line-height: 1;
 }
 
@@ -86,8 +88,15 @@
 }
 
 /* Transactions Table */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto; // Enable horizontal scroll on mobile
+  -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+}
+
 .transactions-table {
   width: 100%;
+  min-width: 400px; // Ensure table doesn't get too squished
 }
 
 .transactions-table th {
@@ -95,11 +104,11 @@
 }
 
 .transactions-table td.credit {
-  color: #2e7d32;
+  color: $color-accent-gold;
   font-weight: 600;
 }
 
 .transactions-table td.debit {
-  color: #c62828;
+  color: $color-error;
   font-weight: 600;
 }

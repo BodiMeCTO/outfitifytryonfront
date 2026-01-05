@@ -8,6 +8,9 @@ const redirectToLogin = (router: Router, target?: string): UrlTree =>
     queryParams: target && target !== '/' ? { returnUrl: target } : undefined
   });
 
+const redirectToStudio = (router: Router): UrlTree =>
+  router.createUrlTree(['/studio']);
+
 export const authGuard: CanActivateChildFn = (_childRoute, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -28,4 +31,19 @@ export const redirectToLoginGuard: CanActivateFn = (_route, state) => {
   }
 
   return redirectToLogin(router, state.url);
+};
+
+/**
+ * Guard for auth pages (login, signup, etc.)
+ * Redirects logged-in users to studio
+ */
+export const noAuthGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.isLoggedIn()) {
+    return redirectToStudio(router);
+  }
+
+  return true;
 };

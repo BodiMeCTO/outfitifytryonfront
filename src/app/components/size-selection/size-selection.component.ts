@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule, NgIf } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonToggleChange, MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatButtonModule } from '@angular/material/button';
@@ -74,6 +74,7 @@ const DEFAULT_BOTTOM_SIZES = ['28', '30', '32', '34', '36'];
 export class SizeSelectionComponent {
   private readonly outfitService = inject(OutfitService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly router = inject(Router);
 
   readonly inspiration$ = this.outfitService.selectedInspiration$;
 
@@ -180,10 +181,11 @@ export class SizeSelectionComponent {
         next: () => {
           this.isSubmitting.set(false);
           this.snackBar.open(
-            'Outfit creation started. We will notify you when images are ready.',
+            'Outfit creation started!',
             'Nice!',
             { duration: 3500 }
           );
+          this.router.navigate(['/generated-gallery']);
         },
         error: () => {
           this.isSubmitting.set(false);

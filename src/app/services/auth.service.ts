@@ -139,7 +139,11 @@ export class AuthService {
       skinTone: dto.skinTone ?? null,
       gender: dto.gender ?? null,
       isActive: dto.isActive ?? null,
-      modelImageId: dto.modelId ?? null,
+      // Note: modelImageId is NOT the same as modelId
+      // modelId = user's Model profile entity (ethnicity, body type, etc.)
+      // modelImageId = an uploaded ModelImage for virtual try-on
+      // Backend doesn't return modelImageId in profile - user must select from their gallery
+      modelImageId: null,
       poseOptionId: null,
       backgroundOptionId: null
     };

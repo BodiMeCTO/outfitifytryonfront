@@ -63,7 +63,7 @@ export class LoginComponent {
 
     this.auth.login(email, password).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/generated-gallery';
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/studio';
         this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {

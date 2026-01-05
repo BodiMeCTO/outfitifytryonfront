@@ -1,32 +1,53 @@
 <section class="section-card image-review">
   <ng-container *ngIf="image() as current">
     <figure class="preview">
-      <img [src]="current.imageUrl" alt="Selected generated outfit" />
+      <img [src]="displayImageUrl()" alt="Selected generated outfit" />
     </figure>
 
+    <!-- Variant thumbnails (only show if there are multiple variants) -->
+    <div class="variants-strip" *ngIf="hasVariants()">
+      <span class="variants-label">Versions:</span>
+      <div class="variants-list">
+        <button
+          *ngFor="let variant of current.variants; let i = index"
+          class="variant-thumb"
+          [class.selected]="selectedVariantIndex() === i"
+          (click)="selectVariant(i)"
+          [matTooltip]="getVariantLabel(variant, i)"
+        >
+          <img [src]="variant.imageUrl" [alt]="getVariantLabel(variant, i)" />
+          <span class="variant-badge" *ngIf="variant.editType">
+            <mat-icon>{{ variant.editType === 'upscaled' ? 'zoom_in' : variant.editType === 'filtered' ? 'tune' : 'auto_fix_high' }}</mat-icon>
+          </span>
+        </button>
+      </div>
+    </div>
+
     <div class="controls">
-      <button mat-stroked-button color="primary" (click)="navigate(-1)">
-        <mat-icon>navigate_before</mat-icon>
-        Previous
+      <button class="nav-btn" (click)="navigate(-1)" aria-label="Previous image">
+        <mat-icon>chevron_left</mat-icon>
       </button>
-      <button mat-stroked-button color="primary" (click)="navigate(1)">
-        Next
-        <mat-icon>navigate_next</mat-icon>
+      <button class="nav-btn" (click)="navigate(1)" aria-label="Next image">
+        <mat-icon>chevron_right</mat-icon>
       </button>
     </div>
 
     <div class="actions">
-      <button mat-raised-button color="primary" (click)="share()">
+      <button class="action-btn primary" (click)="share()">
         <mat-icon>ios_share</mat-icon>
         Share
       </button>
-      <button mat-stroked-button (click)="download()">
+      <button class="action-btn" (click)="openEditDialog()">
+        <mat-icon>auto_fix_high</mat-icon>
+        Enhance
+      </button>
+      <button class="action-btn" (click)="download()">
         <mat-icon>download</mat-icon>
         Download
       </button>
-      <button mat-button routerLink="/generated-gallery">
+      <button class="action-btn secondary" routerLink="/generated-gallery">
         <mat-icon>grid_view</mat-icon>
-        Back to gallery
+        Gallery
       </button>
     </div>
   </ng-container>

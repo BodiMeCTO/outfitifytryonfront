@@ -1,3 +1,5 @@
+@use '../../../styles/tokens' as *;
+
 .outfit-gallery {
   display: grid;
   gap: 1.5rem;
@@ -27,27 +29,6 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-.gallery-actions {
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: rgba(67, 175, 102, 0.08);
-  border-radius: 12px;
-  align-items: center;
-  text-align: center;
-}
-
-.gallery-actions .actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.gallery-actions button mat-icon {
-  margin-right: 0.4rem;
-}
 
 .gallery-item {
   display: grid;
@@ -58,7 +39,35 @@
   margin: 0;
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(67, 175, 102, 0.1);
+  background: $color-accent-gold-light;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  position: relative;
+}
+
+// Variants badge - shows when image has enhanced versions
+.variants-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: $color-accent-gold;
+  color: $color-bg-primary;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
 }
 
 .gallery-item img {
@@ -66,6 +75,15 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.gallery-item img.loading-gif {
+  width: auto;
+  height: auto;
+  max-width: 80%;
+  max-height: 200px;
+  object-fit: contain;
+  padding: 1rem;
 }
 
 .meta {
@@ -95,8 +113,8 @@
 }
 
 .status-badge--ready {
-  background: rgba(67, 175, 102, 0.18);
-  color: #2e7d32;
+  background: $color-accent-gold-light;
+  color: $color-accent-gold-dark; // Accessible gold for text
 }
 
 .meta button {

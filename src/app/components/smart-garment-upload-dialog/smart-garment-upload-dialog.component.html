@@ -1,0 +1,141 @@
+<h2 mat-dialog-title>Add Garment</h2>
+
+<mat-dialog-content>
+  <!-- Analyzing State -->
+  @if (isAnalyzing()) {
+    <div class="analyzing-state">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <p>Analyzing image...</p>
+    </div>
+  }
+
+  <!-- Upload Zone (when no analysis result yet) -->
+  @if (!analysisResult() && !isAnalyzing()) {
+    <div class="upload-zone">
+      <button mat-raised-button color="primary" class="smart-upload-button" (click)="fileInput.click()">
+        <mat-icon>auto_awesome</mat-icon>
+        Upload Image
+      </button>
+      <input #fileInput type="file" accept="image/*" hidden (change)="handleSmartUpload($event)">
+      <p class="upload-hint">
+        Upload any garment image - we'll automatically detect if it's a flat-lay or person wearing clothing
+      </p>
+    </div>
+  }
+
+  <!-- Analysis Results -->
+  @if (analysisResult()) {
+    <div class="analysis-results">
+      <div class="analysis-header">
+        <h3>
+          <mat-icon>check_circle</mat-icon>
+          Analysis Complete
+        </h3>
+      </div>
+
+      <!-- Preview Image with Detection Overlay -->
+      @if (analysisResult()!.previewImageBase64) {
+        <div class="preview-image-container">
+          <img [src]="'data:image/png;base64,' + analysisResult()!.previewImageBase64"
+               alt="Analysis Preview"
+               class="preview-image">
+          <p class="preview-label">
+            @if (confirmedImageType() === 'PersonWearing') {
+              Colored areas show detected clothing regions (gold, silver, bronze)
+            } @else {
+              Gold tint indicates flat-lay detection with background removed
+            }
+          </p>
+        </div>
+      }
+
+      <!-- Flat Lay Results -->
+      @if (confirmedImageType() === 'FlatLay') {
+        <div class="flat-lay-confirmation">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Garment Name</mat-label>
+            <input matInput [value]="confirmedGarmentName()"
+                   (input)="confirmedGarmentName.set($any($event.target).value)">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Category</mat-label>
+            <mat-select [value]="confirmedCategoryId()"
+                        (selectionChange)="confirmedCategoryId.set($event.value)">
+              @for (cat of garmentCategoryOptions(); track categoryId(cat)) {
+                <mat-option [value]="categoryId(cat)">{{ categoryLabel(cat) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+
+      <!-- Person Wearing Results -->
+      @if (confirmedImageType() === 'PersonWearing' && analysisResult()!.detectedRegions) {
+        <div class="person-confirmation">
+          <h4>Detected Clothing Regions</h4>
+          <p class="hint">Select the garments you want to extract and save:</p>
+
+          <div class="detected-regions">
+            @for (region of analysisResult()!.detectedRegions; track region.region) {
+              <div class="region-card" [class.selected]="isRegionSelected(region.region)"
+                   (click)="toggleRegionSelection(region)">
+                <mat-checkbox [checked]="isRegionSelected(region.region)" (click)="$event.stopPropagation()">
+                  {{ region.displayName || (region.region | titlecase) }}
+                </mat-checkbox>
+                @if (isRegionSelected(region.region)) {
+                  <div class="category-select" (click)="$event.stopPropagation()">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Category</mat-label>
+                      <mat-select [value]="getRegionCategoryId(region.region)"
+                                  (selectionChange)="setRegionCategoryId(region.region, $event.value)">
+                        @for (cat of garmentCategoryOptions(); track categoryId(cat)) {
+                          <mat-option [value]="categoryId(cat)">{{ categoryLabel(cat) }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Type Override -->
+      <div class="type-override">
+        <p class="override-label">Detected as:</p>
+        <mat-button-toggle-group [value]="confirmedImageType()"
+                                  (change)="confirmedImageType.set($event.value)">
+          <mat-button-toggle value="FlatLay">
+            <mat-icon>checkroom</mat-icon> Flat Lay
+          </mat-button-toggle>
+          <mat-button-toggle value="PersonWearing">
+            <mat-icon>person</mat-icon> Person
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (analysisResult()) {
+    <button mat-button (click)="clearAnalysis()">
+      <mat-icon>refresh</mat-icon> Start Over
+    </button>
+  }
+  <button mat-button (click)="cancel()">Cancel</button>
+  @if (analysisResult()) {
+    <button mat-raised-button color="primary"
+            [disabled]="isSavingGarment() || (confirmedImageType() === 'PersonWearing' && selectedRegions().length === 0)"
+            (click)="saveAnalyzedGarment()">
+      <ng-container *ngIf="isSavingGarment(); else saveButton">
+        <mat-icon class="spinning">sync</mat-icon> Saving...
+      </ng-container>
+      <ng-template #saveButton>
+        <mat-icon>save</mat-icon> Save Garment
+      </ng-template>
+    </button>
+  }
+</mat-dialog-actions>

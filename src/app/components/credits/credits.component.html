@@ -52,7 +52,8 @@
         <p>No transactions yet. Add some credits to get started!</p>
       </div>
 
-      <table mat-table [dataSource]="transactions()" *ngIf="!isLoading() && transactions().length > 0" class="transactions-table">
+      <div class="table-wrapper" *ngIf="!isLoading() && transactions().length > 0">
+      <table mat-table [dataSource]="transactions()" class="transactions-table">
         <!-- Date Column -->
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Date</th>
@@ -82,6 +83,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
       </table>
+      </div>
     </mat-card-content>
   </mat-card>
 </section>

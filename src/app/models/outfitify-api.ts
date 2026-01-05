@@ -182,3 +182,30 @@ export interface GarmentInstanceDto {
   garmentSizeEntityId: number | null;
   sizeStr?: string | null;
 }
+
+// --- Outfit Image Edit ---
+export interface FilterSettingsDto {
+  brightness?: number;
+  contrast?: number;
+  saturation?: number;
+  warmth?: number;
+  sharpness?: number;
+}
+
+export interface UpscaleSettingsDto {
+  scale?: '2x' | '4x';
+  denoise?: number;
+}
+
+export interface EditOutfitImageDto {
+  filterPreset?: string;
+  customFilters?: FilterSettingsDto;
+  upscale?: UpscaleSettingsDto;
+}
+
+export interface EditOutfitImageResponseDto {
+  newOutfitImageId: string;
+  assetUrl: string;
+  resolution: string;
+  creditCost: number;
+}

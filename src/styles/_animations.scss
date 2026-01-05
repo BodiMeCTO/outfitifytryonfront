@@ -1,0 +1,536 @@
+// =============================================================================
+// OUTFITIFY ANIMATIONS - Neutral Luxe Minimalism
+// =============================================================================
+
+@use 'tokens' as *;
+
+// -----------------------------------------------------------------------------
+// Keyframes
+// -----------------------------------------------------------------------------
+
+// Fade in
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Fade out
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+// Slide up with fade
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Slide down with fade
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Slide in from left (for drawer)
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+// Slide out to left (for drawer)
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+// Scale up (for selection)
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+// Shimmer loading effect
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// Pulse (for progress indicators)
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Spin (for loading spinners)
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Progress ring animation
+@keyframes progressRing {
+  0% {
+    stroke-dashoffset: 251.2;
+    transform: rotate(0deg);
+  }
+  50% {
+    stroke-dashoffset: 62.8;
+  }
+  100% {
+    stroke-dashoffset: 251.2;
+    transform: rotate(360deg);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Animation Classes
+// -----------------------------------------------------------------------------
+
+.animate-fade-in {
+  animation: fadeIn $transition-base forwards;
+}
+
+.animate-fade-out {
+  animation: fadeOut $transition-base forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp $transition-slow forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown $transition-slow forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp $transition-base forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+// -----------------------------------------------------------------------------
+// Staggered Animations (for lists)
+// -----------------------------------------------------------------------------
+
+@for $i from 1 through 12 {
+  .stagger-#{$i} {
+    animation-delay: #{$i * 50}ms;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Transition Utilities
+// -----------------------------------------------------------------------------
+
+.transition-fast {
+  transition: all $transition-fast;
+}
+
+.transition-base {
+  transition: all $transition-base;
+}
+
+.transition-slow {
+  transition: all $transition-slow;
+}
+
+.transition-colors {
+  transition: color $transition-base, background-color $transition-base, border-color $transition-base;
+}
+
+.transition-transform {
+  transition: transform $transition-base;
+}
+
+.transition-opacity {
+  transition: opacity $transition-base;
+}
+
+.transition-shadow {
+  transition: box-shadow $transition-base;
+}
+
+// -----------------------------------------------------------------------------
+// Hover Effects
+// -----------------------------------------------------------------------------
+
+// Card lift effect
+.hover-lift {
+  transition: transform $transition-fast, box-shadow $transition-fast;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lift;
+  }
+}
+
+// Subtle scale on hover
+.hover-scale {
+  transition: transform $transition-fast;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+}
+
+// Gold highlight on hover
+.hover-gold {
+  transition: color $transition-base;
+
+  &:hover {
+    color: $color-accent-gold;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Loading States
+// -----------------------------------------------------------------------------
+
+// Skeleton shimmer
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    $color-bg-tertiary 0%,
+    $color-bg-secondary 50%,
+    $color-bg-tertiary 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: $radius-md;
+}
+
+// Skeleton variants
+.skeleton-text {
+  @extend .skeleton;
+  height: 1em;
+  width: 100%;
+}
+
+.skeleton-avatar {
+  @extend .skeleton;
+  width: 48px;
+  height: 48px;
+  border-radius: $radius-full;
+}
+
+.skeleton-image {
+  @extend .skeleton;
+  aspect-ratio: 3 / 4;
+  width: 100%;
+}
+
+// -----------------------------------------------------------------------------
+// Progress Overlay
+// -----------------------------------------------------------------------------
+
+.progress-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-4;
+  background: $color-overlay-light;
+  backdrop-filter: blur(8px);
+  animation: fadeIn $transition-base forwards;
+  z-index: $z-modal;
+}
+
+.progress-ring {
+  width: 64px;
+  height: 64px;
+
+  circle {
+    fill: none;
+    stroke: $color-accent-gold;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 251.2;
+    transform-origin: center;
+    animation: progressRing 2s ease-in-out infinite;
+  }
+}
+
+.progress-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  letter-spacing: $letter-spacing-wide;
+  text-transform: uppercase;
+}
+
+// -----------------------------------------------------------------------------
+// Scroll Snap (for carousels)
+// -----------------------------------------------------------------------------
+
+.snap-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snap-center {
+  scroll-snap-align: center;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+// Hide scrollbar but keep functionality
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Micro-Interaction Keyframes
+// -----------------------------------------------------------------------------
+
+// Selection bounce (like iOS toggle)
+@keyframes selectionBounce {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// Success pop animation
+@keyframes successPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Error shake animation
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+// Tap ripple effect
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+// Gentle bob (for loading states)
+@keyframes bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+// Checkmark draw animation
+@keyframes drawCheck {
+  0% {
+    stroke-dashoffset: 50;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Micro-Interaction Classes
+// -----------------------------------------------------------------------------
+
+// Selection bounce effect
+.animate-select {
+  animation: selectionBounce 350ms ease-out;
+}
+
+// Success pop effect
+.animate-success {
+  animation: successPop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+// Error shake effect
+.animate-shake {
+  animation: shake 500ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+// Loading bob effect
+.animate-bob {
+  animation: bob 1.2s ease-in-out infinite;
+}
+
+// -----------------------------------------------------------------------------
+// Interactive Feedback Mixins
+// -----------------------------------------------------------------------------
+
+// Tap/press feedback
+@mixin press-feedback {
+  transition: transform $transition-fast;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+// Gold glow on selection
+@mixin selection-glow {
+  transition: box-shadow $transition-fast;
+
+  &.is-selected,
+  &.selected,
+  &[aria-selected="true"] {
+    box-shadow: 0 0 0 3px $color-accent-gold, 0 4px 12px rgba($color-accent-gold, 0.25);
+  }
+}
+
+// Lift on interaction
+@mixin interactive-lift {
+  transition: transform $transition-fast, box-shadow $transition-fast;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lift;
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: $shadow-md;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Success Feedback Component
+// -----------------------------------------------------------------------------
+
+.success-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: $color-accent-gold;
+  border-radius: 50%;
+  animation: successPop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &::after {
+    content: '';
+    width: 20px;
+    height: 10px;
+    border-left: 3px solid $color-bg-primary;
+    border-bottom: 3px solid $color-bg-primary;
+    transform: rotate(-45deg) translateY(-2px);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Touch Ripple Effect
+// -----------------------------------------------------------------------------
+
+.touch-ripple {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba($color-accent-gold, 0.3) 0%, transparent 70%);
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  &:active::after {
+    animation: ripple 500ms ease-out;
+  }
+}

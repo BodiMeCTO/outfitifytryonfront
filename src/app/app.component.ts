@@ -1,16 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { BehaviorSubject, filter, map, shareReplay, startWith, switchMap, of, catchError, interval } from 'rxjs';
+import { filter, map, startWith, switchMap, of, catchError, interval } from 'rxjs';
 
 import { AuthService } from './services/auth.service';
 import { OutfitifyApiService } from './services/outfitify-api.service';
+import { LuxeDrawerComponent, DrawerNavItem } from './components/shared/luxe-drawer/luxe-drawer.component';
+import { BottomNavComponent, BottomNavItem } from './components/shared/bottom-nav/bottom-nav.component';
 
 @Component({
   selector: 'app-root',
@@ -18,34 +17,25 @@ import { OutfitifyApiService } from './services/outfitify-api.service';
   imports: [
     RouterOutlet,
     RouterLink,
-    RouterLinkActive,
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
-    MatSidenavModule,
-    MatListModule,
     AsyncPipe,
-    NgIf
+    NgIf,
+    LuxeDrawerComponent,
+    BottomNavComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent implements OnInit {
-  private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly api = inject(OutfitifyApiService);
 
-  private readonly creditsSubject = new BehaviorSubject<number | null>(null);
-  readonly credits$ = this.creditsSubject.asObservable();
-
-  readonly isHandset$ = this.breakpointObserver
-    .observe(Breakpoints.Handset)
-    .pipe(
-      map((result) => result.matches),
-      shareReplay({ refCount: true, bufferSize: 1 })
-    );
+  readonly credits = signal<number | null>(null);
+  readonly isDrawerOpen = signal(false);
 
   readonly isLoggedIn$ = this.auth.token$.pipe(map((token) => !!token));
 
@@ -55,11 +45,16 @@ export class AppComponent implements OnInit {
     map(() => this.router.url.startsWith('/auth'))
   );
 
-  readonly links = [
-    { path: '/user-image-upload', label: '1. User image' },
-    { path: '/garment-library', label: '2. Garments' },
-    { path: '/size-and-submit', label: '3. Size & Submit' },
-    { path: '/generated-gallery', label: '4. Gallery' }
+  readonly navItems: DrawerNavItem[] = [
+    { label: 'Studio', route: '/studio', icon: 'auto_awesome' },
+    { label: 'Gallery', route: '/generated-gallery', icon: 'collections' },
+    { label: 'Credits', route: '/credits', icon: 'toll' }
+  ];
+
+  readonly bottomNavItems: BottomNavItem[] = [
+    { label: 'Studio', route: '/studio', icon: 'auto_awesome', activeIcon: 'auto_awesome' },
+    { label: 'Gallery', route: '/generated-gallery', icon: 'collections', activeIcon: 'collections' },
+    { label: 'Credits', route: '/credits', icon: 'toll', activeIcon: 'toll' }
   ];
 
   ngOnInit(): void {
@@ -78,7 +73,7 @@ export class AppComponent implements OnInit {
           ))
         );
       })
-    ).subscribe(credits => this.creditsSubject.next(credits));
+    ).subscribe(credits => this.credits.set(credits));
 
     // Also refresh on navigation
     this.router.events.pipe(
@@ -89,11 +84,19 @@ export class AppComponent implements OnInit {
   refreshCredits(): void {
     this.api.getCreditsBalance().pipe(
       catchError(() => of({ balance: 0, reservedCredits: 0 }))
-    ).subscribe(balance => this.creditsSubject.next(balance.balance));
+    ).subscribe(balance => this.credits.set(balance.balance));
+  }
+
+  toggleDrawer(): void {
+    this.isDrawerOpen.update(v => !v);
+  }
+
+  closeDrawer(): void {
+    this.isDrawerOpen.set(false);
   }
 
   onLogout(): void {
-    this.creditsSubject.next(null);
+    this.credits.set(null);
     this.auth.logout();
     this.router.navigate(['/auth/login']);
   }

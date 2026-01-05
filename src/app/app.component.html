@@ -1,73 +1,71 @@
 <ng-container *ngIf="(isAuthRoute$ | async) === false; else authOutlet">
-  <mat-sidenav-container class="app-shell" autosize>
-    <mat-sidenav
-      #drawer
-      class="app-drawer"
-      [mode]="(isHandset$ | async) ? 'over' : 'side'"
-      [opened]="(isHandset$ | async) === false"
-      [disableClose]="(isHandset$ | async) === false"
+  <div class="app-shell">
+    <!-- Luxe Drawer Navigation -->
+    <app-luxe-drawer
+      [isOpen]="isDrawerOpen()"
+      [navItems]="navItems"
+      (closed)="closeDrawer()"
     >
-      <mat-nav-list *ngIf="(isLoggedIn$ | async)">
-        <a
-          mat-list-item
-          *ngFor="let link of links"
-          [routerLink]="link.path"
-          routerLinkActive="active-link"
-          (click)="drawer.close()"
+      <div drawerFooter>
+        <button
+          mat-button
+          class="logout-button"
+          (click)="onLogout()"
+          *ngIf="(isLoggedIn$ | async)"
         >
-          {{ link.label }}
-        </a>
-      </mat-nav-list>
-    </mat-sidenav>
+          <mat-icon>logout</mat-icon>
+          Sign out
+        </button>
+      </div>
+    </app-luxe-drawer>
 
-    <mat-sidenav-content>
-      <mat-toolbar color="primary" class="app-toolbar" role="navigation">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
         <button
           mat-icon-button
           type="button"
           aria-label="Toggle navigation"
-          (click)="drawer.toggle()"
+          (click)="toggleDrawer()"
           class="menu-button"
         >
           <mat-icon>menu</mat-icon>
         </button>
-        <span class="brand">Outfitify</span>
-        <button
-          mat-icon-button
-          type="button"
-          aria-label="Go to gallery"
-          routerLink="/generated-gallery"
-          class="home-button"
-          *ngIf="(isLoggedIn$ | async)"
-        >
-          <mat-icon>home</mat-icon>
-        </button>
-        <span class="spacer"></span>
-        <nav class="desktop-links" *ngIf="(isHandset$ | async) === false && (isLoggedIn$ | async)">
-          <a mat-button *ngFor="let link of links" [routerLink]="link.path" routerLinkActive="active-link">
-            {{ link.label }}
-          </a>
-        </nav>
-        <button
-          mat-stroked-button
-          class="credits-button"
+        <a routerLink="/studio" class="brand">OUTFITIFY</a>
+      </div>
+
+      <div class="header-right" *ngIf="(isLoggedIn$ | async)">
+        <a
+          class="credits-pill"
           routerLink="/credits"
-          *ngIf="(isLoggedIn$ | async)"
+          aria-label="View credits"
         >
           <mat-icon>toll</mat-icon>
-          <span class="credits-value">{{ (credits$ | async) ?? '...' }}</span>
-          <span class="credits-label">credits</span>
-        </button>
-        <button mat-stroked-button color="accent" type="button" (click)="onLogout()" *ngIf="(isLoggedIn$ | async)">
-          Sign out
-        </button>
-      </mat-toolbar>
+          <span class="credits-value">{{ credits() ?? '...' }}</span>
+        </a>
 
-      <main class="app-content">
-        <router-outlet />
-      </main>
-    </mat-sidenav-content>
-  </mat-sidenav-container>
+        <button
+          mat-icon-button
+          class="user-button"
+          (click)="toggleDrawer()"
+          aria-label="User menu"
+        >
+          <mat-icon>person_outline</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-content">
+      <router-outlet />
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <app-bottom-nav
+      *ngIf="(isLoggedIn$ | async)"
+      [items]="bottomNavItems"
+    ></app-bottom-nav>
+  </div>
 </ng-container>
 
 <ng-template #authOutlet>

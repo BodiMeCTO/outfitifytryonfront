@@ -19,7 +19,9 @@ import {
   TokenResponse,
   ModelProfileDto,
   GarmentImageDto,
-  UpdateBackgroundImageDto
+  UpdateBackgroundImageDto,
+  EditOutfitImageDto,
+  EditOutfitImageResponseDto
 } from '../models/outfitify-api';
 import { CreateOutfitDto, OutfitDto } from '../models/outfit';
 import { CreateModelImageDto, ModelImageDto } from './outfit.service';
@@ -115,14 +117,32 @@ export class OutfitifyApiService {
   }
 
   // --- User uploaded model images ---
-  listModelImages(): Observable<ModelImageDto[]> {
-    return this.http.get<ModelImageDto[]>(this.buildUrl('/api/model-images'));
+  listModelImages(isBackgroundVariant?: boolean): Observable<ModelImageDto[]> {
+    let url = '/api/model-images';
+    if (isBackgroundVariant !== undefined) {
+      url += `?isBackgroundVariant=${isBackgroundVariant}`;
+    }
+    return this.http.get<ModelImageDto[]>(this.buildUrl(url));
   }
 
   uploadModelImage(formData: FormData): Observable<ModelImageDto> {
     return this.http.post<ModelImageDto>(this.buildUrl('/api/model-images/upload'), formData);
   }
 
+  createModelImageWithBackground(payload: CreateModelImageWithBackgroundDto): Observable<CreateModelImageWithBackgroundResponse> {
+    return this.http.post<CreateModelImageWithBackgroundResponse>(
+      this.buildUrl('/api/model-images/create-with-background'),
+      payload
+    );
+  }
+
+  // --- Outfit Image Edit ---
+  editOutfitImage(outfitImageId: string, payload: EditOutfitImageDto): Observable<EditOutfitImageResponseDto> {
+    return this.http.post<EditOutfitImageResponseDto>(
+      this.buildUrl(`/api/outfit-images/${outfitImageId}/edit`),
+      payload
+    );
+  }
 
   // --- Inventory ---
   listInventory(): Observable<InventoryItemDto[]> {
@@ -179,9 +199,154 @@ export class OutfitifyApiService {
     return `${base}${path}`.replace(/(?<!:)\/\//g, '/');
   }
 
+  // --- Clothing Segmentation ---
+  analyzeClothingSegmentation(file: File): Observable<ClothingSegmentationResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ClothingSegmentationResponse>(
+      this.buildUrl('/api/clothing-segmentation/analyze'),
+      formData
+    );
+  }
+
+  extractGarmentsFromSegmentation(
+    file: File,
+    extractions: GarmentExtractionItem[]
+  ): Observable<ExtractGarmentsResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('extractions', JSON.stringify(extractions));
+    return this.http.post<ExtractGarmentsResponse>(
+      this.buildUrl('/api/clothing-segmentation/extract'),
+      formData
+    );
+  }
+
+  // --- Smart Garment Analysis ---
+  analyzeGarmentImage(file: File): Observable<GarmentAnalysisResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<GarmentAnalysisResponse>(
+      this.buildUrl('/api/garment-analysis/analyze'),
+      formData
+    );
+  }
+
+  saveAnalyzedGarment(request: SaveGarmentRequest): Observable<SaveGarmentResponse> {
+    const formData = new FormData();
+    formData.append('file', request.file);
+    formData.append('imageType', request.imageType);
+    if (request.garmentName) formData.append('garmentName', request.garmentName);
+    if (request.garmentGroup) formData.append('garmentGroup', request.garmentGroup);
+    if (request.categoryId) formData.append('categoryId', request.categoryId.toString());
+    if (request.extractions) formData.append('extractions', JSON.stringify(request.extractions));
+    return this.http.post<SaveGarmentResponse>(
+      this.buildUrl('/api/garment-analysis/save'),
+      formData
+    );
+  }
+
   private apiRoot(): string {
     return this.apiBaseUrl.endsWith('/api')
       ? this.apiBaseUrl.replace(/\/api$/, '')
       : this.apiBaseUrl;
   }
+}
+
+// Clothing segmentation types
+export interface ClothingSegmentationResponse {
+  success: boolean;
+  errorMessage?: string;
+  detectedRegions: DetectedClothingRegion[];
+  previewImageBase64?: string;
+}
+
+export interface DetectedClothingRegion {
+  region: string;
+  displayName: string;
+  suggestedGroup: string;
+  confidence?: number;
+  boundingBox?: number[];
+}
+
+export interface GarmentExtractionItem {
+  region: string;
+  garmentGroup: string;
+  categoryId?: number;
+  name?: string;
+}
+
+export interface ExtractGarmentsResponse {
+  success: boolean;
+  errorMessage?: string;
+  extractedGarments: ExtractedGarment[];
+}
+
+export interface ExtractedGarment {
+  region: string;
+  garmentGroup: string;
+  name?: string;
+  imageUrl: string;
+  garmentEntityId: string;
+}
+
+// Garment analysis types
+export interface GarmentAnalysisResponse {
+  success: boolean;
+  detectedImageType: 'FlatLay' | 'PersonWearing' | 'Unknown';
+  imageTypeConfidence: number;
+  suggestedGroup?: string;
+  suggestedCategory?: string;
+  suggestedCategoryId?: number;
+  classificationConfidence: number;
+  alternativeClassifications: GarmentClassification[];
+  detectedRegions?: DetectedClothingRegion[];
+  previewImageBase64?: string;
+  errorMessage?: string;
+}
+
+export interface GarmentClassification {
+  label: string;
+  group: string;
+  confidence: number;
+}
+
+export interface SaveGarmentRequest {
+  file: File;
+  imageType: 'FlatLay' | 'PersonWearing';
+  garmentName?: string;
+  garmentGroup?: string;
+  categoryId?: number;
+  extractions?: GarmentExtractionItem[];
+}
+
+export interface SaveGarmentResponse {
+  success: boolean;
+  savedGarments: SavedGarment[];
+  errorMessage?: string;
+}
+
+export interface SavedGarment {
+  garmentId: string;
+  name: string;
+  imageUrl: string;
+  group: string;
+}
+
+// Model image with background types
+export interface CreateModelImageWithBackgroundDto {
+  sourceModelImageId: string;
+  backgroundImageId?: string;
+  backgroundPrompt?: string;
+  aspectRatio?: string;
+  name?: string;
+  /** If true, removes background, repositions model (8% top, 10% bottom), then applies new background. */
+  repositionModel?: boolean;
+}
+
+export interface CreateModelImageWithBackgroundResponse {
+  modelImageId: string;
+  imageUrl: string;
+  name: string;
+  isBackgroundVariant: boolean;
 }
