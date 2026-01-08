@@ -113,7 +113,7 @@ export class GarmentLibraryComponent implements OnInit {
   private readonly attemptedImageFallbacks = signal<Record<string, number>>({});
 
   // Credits cost estimation
-  readonly estimatedCost = toSignal(this.outfitService.estimatedCreditsCost$, { initialValue: 1 });
+  readonly estimatedCost = toSignal(this.outfitService.estimatedCreditsCost$, { initialValue: 2 });
 
   // Archive panel
   readonly isArchivePanelOpen = signal(false);

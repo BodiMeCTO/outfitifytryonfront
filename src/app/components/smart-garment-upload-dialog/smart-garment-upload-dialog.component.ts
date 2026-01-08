@@ -107,11 +107,15 @@ export class SmartGarmentUploadDialogComponent {
   handleFileSelection(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files = input.files;
-    input.value = '';
 
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      input.value = '';
+      return;
+    }
 
+    // Extract files BEFORE clearing the input (clearing input clears the FileList reference)
     const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    input.value = ''; // Clear input AFTER extracting files
     if (imageFiles.length === 0) {
       this.snackBar.open('Please select image files.', 'Dismiss', { duration: 4000 });
       return;

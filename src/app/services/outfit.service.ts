@@ -329,30 +329,27 @@ export class OutfitService {
     distinctUntilChanged()
   );
 
-  // Credits cost calculation: 1 (base) + 1 (if background changed) + number of garments
+  // Credits cost calculation: 2 (base) + 1 (if pose changed) + 1 (if background changed) = max 4
   readonly estimatedCreditsCost$ = combineLatest([
-    this.selectedGarments$,
+    this.posePromptSubject,
     this.selectedBackgroundId$,
     this.customBackgroundPrompt$
   ]).pipe(
-    map(([garments, backgroundId, customPrompt]) => {
-      // Base cost
-      let cost = 1;
+    map(([posePrompt, backgroundId, customPrompt]) => {
+      // Flat generation cost
+      let cost = 2;
+
+      // +1 if pose is changed
+      const hasPoseChange = !!posePrompt;
+      if (hasPoseChange) {
+        cost += 1;
+      }
 
       // +1 if background is changed (either preset or custom prompt)
       const hasBackgroundChange = !!backgroundId || !!customPrompt;
       if (hasBackgroundChange) {
         cost += 1;
       }
-
-      // + number of garments selected
-      const garmentCount =
-        garments.top.length +
-        garments.bottom.length +
-        garments.fullBody.length +
-        garments.jacket.length +
-        garments.accessories.length;
-      cost += garmentCount;
 
       return cost;
     }),
