@@ -19,13 +19,9 @@ import { take } from 'rxjs/operators';
 import { Garment, GarmentGroup } from '../../models/outfit';
 import { OutfitService } from '../../services/outfit.service';
 import { GarmentCategoryDto } from '../../models/outfitify-api';
-import {
-  OutfitifyApiService,
-  ClothingSegmentationResponse,
-  DetectedClothingRegion,
-  GarmentExtractionItem
-} from '../../services/outfitify-api.service';
+import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { SmartGarmentUploadDialogComponent } from '../smart-garment-upload-dialog/smart-garment-upload-dialog.component';
+import { ArchivePanelComponent } from '../archive-panel/archive-panel.component';
 
 type GarmentFilter = GarmentGroup | 'all';
 
@@ -46,7 +42,8 @@ type GarmentFilter = GarmentGroup | 'all';
     MatExpansionModule,
     MatButtonToggleModule,
     MatCheckboxModule,
-    MatDialogModule
+    MatDialogModule,
+    ArchivePanelComponent
   ],
   templateUrl: './garment-library.component.html',
   styleUrls: ['./garment-library.component.scss'],
@@ -115,17 +112,12 @@ export class GarmentLibraryComponent implements OnInit {
   readonly isSubmitting = signal(false);
   private readonly attemptedImageFallbacks = signal<Record<string, number>>({});
 
-  // Legacy segmentation (From Person upload) - kept for compatibility
-  readonly selectedRegions = signal<string[]>([]);
-  private regionCategories = new Map<string, string>();
-  private pendingFile: File | null = null;
-  readonly imageSourceType = signal<'flat-lay' | 'from-person'>('flat-lay');
-  readonly isAnalyzingSegmentation = signal(false);
-  readonly segmentationResult = signal<ClothingSegmentationResponse | null>(null);
-  readonly isExtractingGarments = signal(false);
-
   // Credits cost estimation
   readonly estimatedCost = toSignal(this.outfitService.estimatedCreditsCost$, { initialValue: 1 });
+
+  // Archive panel
+  readonly isArchivePanelOpen = signal(false);
+  readonly isArchivingGarment = signal(false);
 
   readonly garmentCategoryOptions = computed(() => {
     const cats = [...this.garmentCategories()];
@@ -323,115 +315,6 @@ export class GarmentLibraryComponent implements OnInit {
     return allowed.includes(value as GarmentGroup) ? (value as GarmentGroup) : null;
   }
 
-  // --- Segmentation (From Person) Methods ---
-
-  handlePersonPhotoUpload(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-
-    if (!file || !file.type.startsWith('image/')) {
-      this.snackBar.open('Please select an image file.', 'Dismiss', { duration: 4000 });
-      return;
-    }
-
-    this.pendingFile = file;
-    this.isAnalyzingSegmentation.set(true);
-    this.segmentationResult.set(null);
-    this.selectedRegions.set([]);
-    this.regionCategories.clear();
-
-    this.apiService.analyzeClothingSegmentation(file).pipe(take(1)).subscribe({
-      next: (result) => {
-        this.isAnalyzingSegmentation.set(false);
-        if (result.success) {
-          this.segmentationResult.set(result);
-          // Pre-select all detected regions and set default categories
-          const regionIds = result.detectedRegions.map(r => r.region);
-          this.selectedRegions.set(regionIds);
-          result.detectedRegions.forEach(r => {
-            this.regionCategories.set(r.region, r.suggestedGroup || 'tops');
-          });
-        } else {
-          this.snackBar.open(result.errorMessage || 'Segmentation failed.', 'Dismiss', { duration: 4000 });
-        }
-      },
-      error: (err) => {
-        this.isAnalyzingSegmentation.set(false);
-        const msg = err instanceof Error ? err.message : 'Failed to analyze image.';
-        this.snackBar.open(msg, 'Dismiss', { duration: 4000 });
-      }
-    });
-  }
-
-  isRegionSelected(region: string): boolean {
-    return this.selectedRegions().includes(region);
-  }
-
-  toggleRegionSelection(regionItem: DetectedClothingRegion): void {
-    const region = regionItem.region;
-    const current = this.selectedRegions();
-    if (current.includes(region)) {
-      this.selectedRegions.set(current.filter(r => r !== region));
-    } else {
-      this.selectedRegions.set([...current, region]);
-      // Set default category if not already set
-      if (!this.regionCategories.has(region)) {
-        this.regionCategories.set(region, regionItem.suggestedGroup || 'tops');
-      }
-    }
-  }
-
-  getRegionCategory(region: string): string {
-    return this.regionCategories.get(region) || 'tops';
-  }
-
-  setRegionCategory(region: string, category: string): void {
-    this.regionCategories.set(region, category);
-  }
-
-  extractSelectedRegions(): void {
-    if (!this.pendingFile || this.selectedRegions().length === 0) return;
-
-    const extractions: GarmentExtractionItem[] = this.selectedRegions().map(region => ({
-      region,
-      garmentGroup: this.regionCategories.get(region) || 'tops'
-    }));
-
-    this.isExtractingGarments.set(true);
-
-    this.apiService.extractGarmentsFromSegmentation(this.pendingFile, extractions).pipe(take(1)).subscribe({
-      next: (result) => {
-        this.isExtractingGarments.set(false);
-        if (result.success) {
-          const count = result.extractedGarments.length;
-          this.snackBar.open(`Extracted ${count} garment(s)!`, 'Great!', { duration: 3000 });
-          this.clearSegmentation();
-          // Force reload garments to show newly extracted ones (bypass cache)
-          this.isLoadingGarments.set(true);
-          this.outfitService.forceReloadGarments().pipe(take(1)).subscribe({
-            next: () => this.isLoadingGarments.set(false),
-            error: () => this.isLoadingGarments.set(false)
-          });
-        } else {
-          this.snackBar.open(result.errorMessage || 'Extraction failed.', 'Dismiss', { duration: 4000 });
-        }
-      },
-      error: (err) => {
-        this.isExtractingGarments.set(false);
-        const msg = err instanceof Error ? err.message : 'Failed to extract garments.';
-        this.snackBar.open(msg, 'Dismiss', { duration: 4000 });
-      }
-    });
-  }
-
-  clearSegmentation(): void {
-    this.segmentationResult.set(null);
-    this.selectedRegions.set([]);
-    this.regionCategories.clear();
-    this.pendingFile = null;
-  }
-
   // --- Smart Garment Upload Dialog ---
 
   openUploadDialog(): void {
@@ -458,6 +341,108 @@ export class GarmentLibraryComponent implements OnInit {
         });
       }
     });
+  }
+}
+
+  // --- Archive Methods ---
+
+  openArchivePanel(): void {
+    this.isArchivePanelOpen.set(true);
+  }
+
+  closeArchivePanel(): void {
+    this.isArchivePanelOpen.set(false);
+  }
+
+  archiveGarment(event: Event, garment: Garment): void {
+    event.stopPropagation();
+    if (this.isArchivingGarment()) return;
+
+    this.isArchivingGarment.set(true);
+    this.apiService.archiveGarment(garment.id).pipe(take(1)).subscribe({
+      next: () => {
+        this.isArchivingGarment.set(false);
+        this.snackBar.open('Garment archived', 'Undo', { duration: 5000 })
+          .onAction()
+          .pipe(take(1))
+          .subscribe(() => this.unarchiveGarmentById(garment.id));
+        
+        // Reload garments to reflect the change
+        this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
+      },
+      error: () => {
+        this.isArchivingGarment.set(false);
+        this.snackBar.open('Failed to archive garment', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  private unarchiveGarmentById(id: string): void {
+    this.apiService.unarchiveGarment(id).pipe(take(1)).subscribe({
+      next: () => {
+        this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
+        this.snackBar.open('Garment restored', 'Dismiss', { duration: 3000 });
+      },
+      error: () => {
+        this.snackBar.open('Failed to restore garment', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  onArchiveItemRestored(): void {
+    // Refresh garments when an item is restored from the archive panel
+    this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
+  }
+}
+
+  // --- Archive Methods ---
+
+  openArchivePanel(): void {
+    this.isArchivePanelOpen.set(true);
+  }
+
+  closeArchivePanel(): void {
+    this.isArchivePanelOpen.set(false);
+  }
+
+  archiveGarment(event: Event, garment: Garment): void {
+    event.stopPropagation();
+    if (this.isArchivingGarment()) return;
+
+    this.isArchivingGarment.set(true);
+    this.apiService.archiveGarment(garment.id).pipe(take(1)).subscribe({
+      next: () => {
+        this.isArchivingGarment.set(false);
+        this.snackBar.open('Garment archived', 'Undo', { duration: 5000 })
+          .onAction()
+          .pipe(take(1))
+          .subscribe(() => this.unarchiveGarmentById(garment.id));
+        
+        // Reload garments to reflect the change
+        this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
+      },
+      error: () => {
+        this.isArchivingGarment.set(false);
+        this.snackBar.open('Failed to archive garment', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  private unarchiveGarmentById(id: string): void {
+    this.apiService.unarchiveGarment(id).pipe(take(1)).subscribe({
+      next: () => {
+        this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
+        this.snackBar.open('Garment restored', 'Dismiss', { duration: 3000 });
+      },
+      error: () => {
+        this.snackBar.open('Failed to restore garment', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  onArchiveItemRestored(): void {
+    // Refresh garments when an item is restored from the archive panel
+    this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
   }
 }
 

@@ -23,6 +23,18 @@
           <mat-icon>check_circle</mat-icon>
           <span>Model selected</span>
         </div>
+        <div class="summary-item" *ngIf="selectedPoseId() !== 'original'">
+          <mat-icon>check_circle</mat-icon>
+          <span>Pose: {{ selectedPoseId() }}</span>
+        </div>
+        <div class="summary-item" *ngIf="hasBackgroundSelection()">
+          <mat-icon>check_circle</mat-icon>
+          <span>Background selected</span>
+        </div>
+        <div class="summary-item" *ngIf="selectedAspectRatio() !== 'original'">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ selectedAspectRatio() }} ratio</span>
+        </div>
         <div class="summary-item" *ngIf="(selectedGarmentCount$ | async) as count">
           <mat-icon>check_circle</mat-icon>
           <span>{{ count }} garment{{ count > 1 ? 's' : '' }} selected</span>
@@ -32,22 +44,28 @@
       <!-- Credit cost indicator -->
       <div class="credit-cost" *ngIf="(selectedGarmentCount$ | async)! > 0">
         <mat-icon>toll</mat-icon>
-        <span>{{ generationCreditCost$ | async }} credits</span>
+        <span>{{ generationCreditCost }} credits</span>
       </div>
 
       <!-- Generate button (desktop) -->
-      <app-luxe-button
-        class="generate-button desktop-only"
-        variant="primary"
-        size="lg"
-        [fullWidth]="true"
-        [loading]="isGenerating()"
-        [disabled]="!(canGenerate$ | async)"
-        (clicked)="generateOutfit()"
+      <div
+        class="generate-button-wrapper desktop-only"
+        [matTooltip]="(canGenerate$ | async) ? '' : 'Select a model and at least one garment to generate'"
+        matTooltipPosition="above"
       >
-        <mat-icon>auto_awesome</mat-icon>
-        {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
-      </app-luxe-button>
+        <app-luxe-button
+          class="generate-button"
+          variant="primary"
+          size="lg"
+          [fullWidth]="true"
+          [loading]="isGenerating()"
+          [disabled]="!(canGenerate$ | async)"
+          (clicked)="generateOutfit()"
+        >
+          <mat-icon>auto_awesome</mat-icon>
+          {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
+        </app-luxe-button>
+      </div>
     </div>
   </aside>
 
@@ -56,18 +74,44 @@
 
   <!-- Workflow Sections -->
   <main class="workflow-sections">
-    <!-- Your Photos Section (Original Uploads) -->
+    <!-- Model Images Section -->
     <section class="workflow-section">
       <div class="section-header-row">
-        <h2 class="section-label-gold">Your Photos</h2>
-        <button class="upload-btn-small" (click)="modelUploadInput.click()">
-          <mat-icon>add_photo_alternate</mat-icon>
-          <mat-spinner *ngIf="isUploadingModel()" [diameter]="16"></mat-spinner>
-        </button>
+        <h2 class="section-label-gold">Model Images</h2>
+        <div class="section-actions">
+          <button
+            class="template-toggle-btn"
+            [class.active]="showTemplates()"
+            (click)="toggleShowTemplates()"
+            [matTooltip]="showTemplates() ? 'Hide preloaded templates' : 'Show preloaded templates'"
+            aria-label="Toggle preloaded template visibility"
+          >
+            <mat-icon>{{ showTemplates() ? 'visibility' : 'visibility_off' }}</mat-icon>
+            <span class="toggle-label">Templates</span>
+          </button>
+          <button
+            class="archive-btn-small"
+            (click)="openArchivePanel()"
+            matTooltip="View archived items"
+            aria-label="View archived model images"
+          >
+            <mat-icon>inventory_2</mat-icon>
+          </button>
+          <button
+            class="upload-btn-small"
+            (click)="modelUploadInput.click()"
+            aria-label="Upload model image"
+            matTooltip="Upload model image"
+          >
+            <mat-icon>add_photo_alternate</mat-icon>
+            <mat-spinner *ngIf="isUploadingModel()" [diameter]="16"></mat-spinner>
+          </button>
+        </div>
         <input
           #modelUploadInput
           type="file"
           accept="image/*"
+          multiple
           (change)="handleModelUpload($event)"
           hidden
         />
@@ -88,12 +132,14 @@
               aspectRatio="3:4"
               (cardClick)="selectModel(model)"
             ></app-luxe-image-card>
-            <div class="card-actions">
-              <button class="action-btn" (click)="openBackgroundEditDialog(model); $event.stopPropagation()">
-                <mat-icon>photo_library</mat-icon>
-                <span>BG</span>
-              </button>
-            </div>
+            <button
+              class="card-archive-btn"
+              (click)="archiveModelImage($event, model)"
+              matTooltip="Archive"
+              *ngIf="model.id"
+            >
+              <mat-icon>archive</mat-icon>
+            </button>
           </div>
           <!-- Upload card in carousel -->
           <div class="upload-card-wrapper carousel-item">
@@ -113,16 +159,18 @@
               aspectRatio="3:4"
               (cardClick)="selectModel(model)"
             ></app-luxe-image-card>
-            <div class="card-actions">
-              <button class="action-btn" (click)="openBackgroundEditDialog(model); $event.stopPropagation()">
-                <mat-icon>photo_library</mat-icon>
-                <span>Change BG</span>
-              </button>
-            </div>
+            <button
+              class="card-archive-btn"
+              (click)="archiveModelImage($event, model)"
+              matTooltip="Archive"
+              *ngIf="model.id"
+            >
+              <mat-icon>archive</mat-icon>
+            </button>
           </div>
           <button class="upload-card" (click)="modelUploadInput.click()">
             <mat-icon>add_photo_alternate</mat-icon>
-            <span>Upload Photo</span>
+            <span>Upload</span>
             <mat-spinner *ngIf="isUploadingModel()" [diameter]="24"></mat-spinner>
           </button>
         </div>
@@ -130,64 +178,142 @@
         <!-- Empty state -->
         <div class="empty-hint" *ngIf="models.length === 0">
           <mat-icon>person_outline</mat-icon>
-          <p>Upload a photo of yourself to get started</p>
+          <p>Upload a model image to get started</p>
         </div>
       </ng-container>
     </section>
 
-    <!-- Edited Backgrounds Section -->
-    <section class="workflow-section">
-      <h2 class="section-label-gold">Edited Backgrounds</h2>
+    <!-- Pose Section (Optional - pre-defined poses) -->
+    <section class="workflow-section pose-section">
+      <div class="section-header-row">
+        <h2 class="section-label-gold">Pose <span class="optional-tag">(Optional)</span></h2>
+      </div>
 
-      <ng-container *ngIf="editedModelImages$ | async as models">
-        <!-- Mobile: Carousel view -->
-        <app-luxe-carousel
-          class="mobile-carousel"
-          [showCount]="false"
-          [itemCount]="models.length"
-          gap="0.75rem"
+      <div class="pose-preset-grid">
+        <button
+          class="pose-tile"
+          *ngFor="let pose of posePresets"
+          [class.selected]="isPoseSelected(pose.id)"
+          (click)="selectPose(pose.id)"
         >
-          <app-luxe-image-card
-            *ngFor="let model of models"
-            class="carousel-item"
-            [src]="model.previewUrl || model.remoteUrl"
-            [selected]="(selectedModel$ | async)?.id === model.id"
-            aspectRatio="3:4"
-            (cardClick)="selectModel(model)"
-          ></app-luxe-image-card>
-        </app-luxe-carousel>
+          <span class="pose-name">{{ pose.name }}</span>
+          <mat-icon class="pose-check" *ngIf="isPoseSelected(pose.id)">check_circle</mat-icon>
+        </button>
+      </div>
+    </section>
 
-        <!-- Desktop: Grid view -->
-        <div class="model-grid desktop-grid">
-          <app-luxe-image-card
-            *ngFor="let model of models"
-            [src]="model.previewUrl || model.remoteUrl"
-            [selected]="(selectedModel$ | async)?.id === model.id"
-            aspectRatio="3:4"
-            (cardClick)="selectModel(model)"
-          ></app-luxe-image-card>
+    <!-- Background Section (Optional - AI-generated or uploaded) -->
+    <section class="workflow-section background-section">
+      <div class="section-header-row">
+        <h2 class="section-label-gold">Background <span class="optional-tag">(Optional)</span></h2>
+      </div>
+
+      <!-- Selected Background Indicator -->
+      <div class="selected-background-indicator" *ngIf="selectedPresetInfo">
+        <div class="indicator-content">
+          <mat-icon>wallpaper</mat-icon>
+          <div class="indicator-text">
+            <span class="indicator-name">{{ selectedPresetInfo.name }}</span>
+            <span class="indicator-category">{{ selectedPresetInfo.category }}</span>
+          </div>
+        </div>
+        <button class="indicator-clear" (click)="clearBackgroundSelection()" matTooltip="Clear selection">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Category Cards Grid -->
+      <div class="background-category-grid">
+        <button
+          *ngFor="let cat of backgroundCategories"
+          class="category-card"
+          [class.expanded]="isCategoryExpanded(cat.id)"
+          [class.has-selection]="activeBackgroundCategory() === cat.id && hasBackgroundSelection()"
+          (click)="selectBackgroundCategory(cat.id)"
+        >
+          <span class="category-name">{{ cat.label }}</span>
+          <span class="category-desc">{{ cat.description }}</span>
+          <mat-icon class="category-expand-icon">{{ isCategoryExpanded(cat.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+      </div>
+
+      <!-- Expanded Category Content -->
+      <div class="category-expanded-content" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
+        <!-- Preset Grid -->
+        <div class="background-preset-grid">
+          <button
+            class="preset-tile"
+            *ngFor="let preset of filteredPresets"
+            [class.selected]="isPresetSelected(preset.id)"
+            (click)="selectPreset(preset)"
+          >
+            <span class="preset-name">{{ preset.name }}</span>
+            <mat-icon class="preset-check" *ngIf="isPresetSelected(preset.id)">check_circle</mat-icon>
+          </button>
         </div>
 
-        <!-- Empty state -->
-        <div class="empty-hint" *ngIf="models.length === 0">
-          <mat-icon>auto_fix_high</mat-icon>
-          <p>Click the "Change BG" button on a photo above to edit the background</p>
+        <!-- Custom Prompt -->
+        <div class="custom-prompt-section">
+          <label class="prompt-label">Or describe a custom background</label>
+          <textarea
+            class="custom-prompt-input"
+            [value]="customBackgroundPrompt()"
+            (input)="onCustomPromptChange($any($event.target).value)"
+            placeholder="e.g., modern minimalist living room with large windows and natural light"
+            rows="2"
+          ></textarea>
         </div>
-      </ng-container>
+      </div>
+
+      <!-- Original Category Expanded (empty state) -->
+      <div class="category-expanded-content original-expanded" *ngIf="expandedCategory() === 'original'">
+        <div class="original-empty-state">
+          <mat-icon>photo_camera</mat-icon>
+          <p>The original background from your model image will be preserved</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Aspect Ratio Section -->
+    <section class="workflow-section aspect-ratio-section">
+      <div class="section-header-row">
+        <h2 class="section-label-gold">Aspect Ratio</h2>
+      </div>
+
+      <div class="aspect-ratio-options">
+        <button
+          class="aspect-ratio-btn"
+          *ngFor="let option of aspectRatioOptions"
+          [class.selected]="selectedAspectRatio() === option.value"
+          (click)="selectAspectRatio(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
     </section>
 
     <!-- Garments Section -->
     <section class="workflow-section">
       <div class="section-header-row">
         <h2 class="section-label-gold">Garments</h2>
-        <app-luxe-button
-          variant="secondary"
-          size="sm"
-          icon="add_photo_alternate"
-          (clicked)="openGarmentUploadDialog()"
-        >
-          Add Garment
-        </app-luxe-button>
+        <div class="section-actions">
+          <button
+            class="archive-btn-small"
+            (click)="openArchivePanel()"
+            matTooltip="View archived items"
+            aria-label="View archived garments"
+          >
+            <mat-icon>inventory_2</mat-icon>
+          </button>
+          <app-luxe-button
+            variant="secondary"
+            size="sm"
+            icon="add_photo_alternate"
+            (clicked)="openGarmentUploadDialog()"
+          >
+            Add Garment
+          </app-luxe-button>
+        </div>
       </div>
 
       <!-- Garment Carousels by Category -->
@@ -200,14 +326,22 @@
               [itemCount]="groups[group.key].length"
               gap="1rem"
             >
-              <app-luxe-image-card
-                *ngFor="let garment of groups[group.key]"
-                class="garment-card"
-                [src]="garment.image"
-                [selected]="isGarmentSelected(garment)"
-                aspectRatio="3:4"
-                (cardClick)="toggleGarment(garment)"
-              ></app-luxe-image-card>
+              <div class="garment-card-wrapper" *ngFor="let garment of groups[group.key]">
+                <app-luxe-image-card
+                  class="garment-card"
+                  [src]="garment.image"
+                  [selected]="isGarmentSelected(garment)"
+                  aspectRatio="3:4"
+                  (cardClick)="toggleGarment(garment)"
+                ></app-luxe-image-card>
+                <button
+                  class="card-archive-btn"
+                  (click)="archiveGarment($event, garment)"
+                  matTooltip="Archive"
+                >
+                  <mat-icon>archive</mat-icon>
+                </button>
+              </div>
             </app-luxe-carousel>
           </ng-container>
         </div>
@@ -231,32 +365,53 @@
 
   <!-- Mobile Footer with selection summary and generate button -->
   <div class="mobile-footer">
-    <!-- Selection summary -->
+    <!-- Selection summary (icons only) -->
     <div class="mobile-selection-summary">
-      <span class="summary-check" [class.is-checked]="selectedModel$ | async">
-        <mat-icon>{{ (selectedModel$ | async) ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
-        Model
+      <span class="summary-icon" [class.is-checked]="selectedModel$ | async" matTooltip="Model">
+        <mat-icon>person</mat-icon>
+        <mat-icon class="status-icon">{{ (selectedModel$ | async) ? 'check' : 'close' }}</mat-icon>
       </span>
-      <span class="summary-check" [class.is-checked]="(selectedGarmentCount$ | async)! > 0">
-        <mat-icon>{{ (selectedGarmentCount$ | async)! > 0 ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
-        Garments
+      <span class="summary-icon optional" [class.is-checked]="selectedPoseId() !== 'original'" matTooltip="Pose (optional)">
+        <mat-icon>accessibility_new</mat-icon>
+        <mat-icon class="status-icon" *ngIf="selectedPoseId() !== 'original'">check</mat-icon>
+      </span>
+      <span class="summary-icon optional" [class.is-checked]="hasBackgroundSelection()" matTooltip="Background (optional)">
+        <mat-icon>wallpaper</mat-icon>
+        <mat-icon class="status-icon" *ngIf="hasBackgroundSelection()">check</mat-icon>
+      </span>
+      <span class="summary-icon" [class.is-checked]="(selectedGarmentCount$ | async)! > 0" matTooltip="Garments">
+        <mat-icon>checkroom</mat-icon>
+        <mat-icon class="status-icon">{{ (selectedGarmentCount$ | async)! > 0 ? 'check' : 'close' }}</mat-icon>
       </span>
       <span class="credit-cost-mobile" *ngIf="(selectedGarmentCount$ | async)! > 0">
         <mat-icon>toll</mat-icon>
-        {{ generationCreditCost$ | async }}
+        {{ generationCreditCost }}
       </span>
     </div>
 
     <!-- Generate button -->
-    <app-luxe-button
-      variant="primary"
-      size="lg"
-      [fullWidth]="true"
-      [loading]="isGenerating()"
-      [disabled]="!(canGenerate$ | async)"
-      (clicked)="generateOutfit()"
+    <div
+      class="generate-button-wrapper"
+      [matTooltip]="(canGenerate$ | async) ? '' : 'Select a model and at least one garment'"
+      matTooltipPosition="above"
     >
-      {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
-    </app-luxe-button>
+      <app-luxe-button
+        variant="primary"
+        size="lg"
+        [fullWidth]="true"
+        [loading]="isGenerating()"
+        [disabled]="!(canGenerate$ | async)"
+        (clicked)="generateOutfit()"
+      >
+        {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
+      </app-luxe-button>
+    </div>
   </div>
 </div>
+
+<!-- Archive Panel -->
+<app-archive-panel
+  [isOpen]="isArchivePanelOpen()"
+  (closed)="closeArchivePanel()"
+  (itemRestored)="onArchiveItemRestored()"
+></app-archive-panel>

@@ -18,8 +18,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { take, map } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
+import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { SelectedInspiration, ASPECT_RATIO_OPTIONS, AspectRatioOption } from '../../models/outfit';
 import { CatalogueOption } from '../../models/outfitify-api';
+import { ArchivePanelComponent } from '../archive-panel/archive-panel.component';
 
 // Icon mapping for template backgrounds
 const TEMPLATE_ICONS: Record<string, string> = {
@@ -46,7 +48,8 @@ const TEMPLATE_ICONS: Record<string, string> = {
     MatFormFieldModule,
     MatInputModule,
     MatProgressBarModule,
-    RouterLink
+    RouterLink,
+    ArchivePanelComponent
   ],
   templateUrl: './user-image-upload.component.html',
   styleUrls: ['./user-image-upload.component.scss'],
@@ -54,6 +57,7 @@ const TEMPLATE_ICONS: Record<string, string> = {
 })
 export class UserImageUploadComponent implements OnInit {
   private readonly outfitService = inject(OutfitService);
+  private readonly apiService = inject(OutfitifyApiService);
   private readonly snackBar = inject(MatSnackBar);
 
   // Model image state
@@ -81,6 +85,10 @@ export class UserImageUploadComponent implements OnInit {
 
   // Track if "Keep Original" is selected (default)
   readonly isKeepOriginal = signal(true);
+
+  // Archive panel state
+  readonly isArchivePanelOpen = signal(false);
+  readonly isArchivingModelImage = signal(false);
 
   ngOnInit(): void {
     // Load model images

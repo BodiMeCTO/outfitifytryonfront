@@ -144,20 +144,24 @@ import { MatButtonModule } from '@angular/material/button';
       top: 50%;
       transform: translateY(-50%);
       z-index: 10;
-      background: $color-bg-primary !important;
-      box-shadow: $shadow-lg;
-      border: 1px solid $color-border;
-      width: 40px;
-      height: 40px;
+      background: rgba($color-bg-primary, 0.95) !important;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba($color-border, 0.5);
+      width: 32px;
+      height: 32px;
       display: none;
+      transition: all $transition-fast;
 
       @include lg {
         display: flex;
       }
 
       &:hover {
-        background: $color-bg-secondary !important;
+        background: $color-bg-primary !important;
         border-color: $color-accent-gold;
+        box-shadow: 0 4px 12px rgba($color-accent-gold, 0.2);
+        transform: translateY(-50%) scale(1.05);
 
         mat-icon {
           color: $color-accent-gold;
@@ -165,17 +169,20 @@ import { MatButtonModule } from '@angular/material/button';
       }
 
       mat-icon {
-        color: $color-text-secondary;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: $color-text-muted;
         transition: color $transition-fast;
       }
     }
 
     .scroll-left {
-      left: -20px;
+      left: $space-2;
     }
 
     .scroll-right {
-      right: -20px;
+      right: $space-2;
     }
 
     .scroll-indicators {

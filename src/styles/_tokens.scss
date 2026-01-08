@@ -33,6 +33,15 @@ $color-shadow: rgba(0, 0, 0, 0.08);
 $color-overlay: rgba(0, 0, 0, 0.5);
 $color-overlay-light: rgba(255, 255, 255, 0.85);
 
+// Text opacity variants (for subtle text)
+$color-text-subtle: rgba(0, 0, 0, 0.7);      // Strong secondary text
+$color-text-hint: rgba(0, 0, 0, 0.6);        // Hints and captions
+$color-text-disabled: rgba(0, 0, 0, 0.4);   // Disabled/placeholder text
+
+// Background opacity variants (for subtle backgrounds)
+$color-bg-subtle: rgba(0, 0, 0, 0.02);      // Very subtle background
+$color-bg-hover: rgba(0, 0, 0, 0.04);       // Hover state background
+
 // Status colors (success uses gold to match brand)
 $color-success: $color-accent-gold;
 $color-warning: #FF9800;

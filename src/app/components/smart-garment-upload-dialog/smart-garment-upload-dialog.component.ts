@@ -1,14 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
@@ -17,11 +15,19 @@ import { OutfitService } from '../../services/outfit.service';
 import { GarmentCategoryDto } from '../../models/outfitify-api';
 import {
   OutfitifyApiService,
-  GarmentAnalysisResponse,
-  GarmentClassification,
-  GarmentExtractionItem,
-  DetectedClothingRegion
+  GarmentAnalysisResponse
 } from '../../services/outfitify-api.service';
+
+// Represents a pending garment in the batch upload queue
+interface PendingGarment {
+  id: string;
+  file: File;
+  previewUrl: string;
+  status: 'pending' | 'analyzing' | 'ready' | 'saving' | 'saved' | 'error';
+  analysisResult: GarmentAnalysisResponse | null;
+  selectedCategoryId: number | null;
+  errorMessage: string | null;
+}
 
 @Component({
   selector: 'app-smart-garment-upload-dialog',
@@ -33,10 +39,8 @@ import {
     MatIconModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatInputModule,
     MatProgressBarModule,
-    MatButtonToggleModule,
-    MatCheckboxModule,
+    MatProgressSpinnerModule,
     MatSnackBarModule
   ],
   templateUrl: './smart-garment-upload-dialog.component.html',
@@ -49,30 +53,26 @@ export class SmartGarmentUploadDialogComponent {
   private readonly apiService = inject(OutfitifyApiService);
   private readonly snackBar = inject(MatSnackBar);
 
-  // Categories
   readonly garmentCategories = toSignal(this.outfitService.garmentCategories$, { initialValue: [] as GarmentCategoryDto[] });
 
-  // Smart Garment Analysis
-  readonly isAnalyzing = signal(false);
-  readonly analysisResult = signal<GarmentAnalysisResponse | null>(null);
-  readonly isSavingGarment = signal(false);
-  private pendingFile: File | null = null;
-
-  // User corrections/confirmations for analysis results
-  readonly confirmedImageType = signal<'FlatLay' | 'PersonWearing' | null>(null);
-  readonly confirmedGarmentName = signal<string>('');
-  readonly confirmedCategoryId = signal<number | null>(null);
-  readonly selectedRegions = signal<string[]>([]);
-  private regionCategoryIds = new Map<string, number>();
-  private regionCategories = new Map<string, string>(); // Keep for backwards compat
-
-  // Saved garments count for success message
-  private savedCount = 0;
-
+  // Batch upload state
+  readonly pendingGarments = signal<PendingGarment[]>([]);
   readonly garmentCategoryOptions = signal<GarmentCategoryDto[]>([]);
+  readonly isSavingAll = signal(false);
+
+  // Computed states
+  readonly hasGarments = computed(() => this.pendingGarments().length > 0);
+  readonly allReady = computed(() => {
+    const garments = this.pendingGarments();
+    return garments.length > 0 && garments.every(g => g.status === 'ready' || g.status === 'saved');
+  });
+  readonly readyCount = computed(() => this.pendingGarments().filter(g => g.status === 'ready').length);
+  readonly savedCount = computed(() => this.pendingGarments().filter(g => g.status === 'saved').length);
+  readonly analyzingCount = computed(() => this.pendingGarments().filter(g => g.status === 'analyzing').length);
+
+  private idCounter = 0;
 
   constructor() {
-    // Load categories on init
     this.outfitService.ensureGarmentCategoriesLoaded().pipe(take(1)).subscribe({
       next: (cats) => {
         const sorted = [...cats].sort((a, b) => {
@@ -85,13 +85,16 @@ export class SmartGarmentUploadDialogComponent {
           return (a.category ?? '').toLowerCase().localeCompare(b.category ?? '');
         });
         this.garmentCategoryOptions.set(sorted);
+      },
+      error: (err) => {
+        console.error('[SmartGarmentUpload] Failed to load categories:', err);
       }
     });
   }
 
   categoryId(category: GarmentCategoryDto | undefined): number | null {
     if (!category) return null;
-    return category.garmentCategoryEntityId ?? (category as any).garmentCategoryEntityID ?? null;
+    return category.garmentCategoryEntityID ?? category.garmentCategoryEntityId ?? null;
   }
 
   categoryLabel(category: GarmentCategoryDto): string {
@@ -100,187 +103,186 @@ export class SmartGarmentUploadDialogComponent {
     return specific && specific !== group ? `${specific} • ${group}` : group;
   }
 
-  handleSmartUpload(event: Event): void {
+  // Handle multiple file selection
+  handleFileSelection(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const files = input.files;
     input.value = '';
 
-    if (!file || !file.type.startsWith('image/')) {
-      this.snackBar.open('Please select an image file.', 'Dismiss', { duration: 4000 });
+    if (!files || files.length === 0) return;
+
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      this.snackBar.open('Please select image files.', 'Dismiss', { duration: 4000 });
       return;
     }
 
-    this.pendingFile = file;
-    this.isAnalyzing.set(true);
-    this.analysisResult.set(null);
-    this.confirmedImageType.set(null);
-    this.confirmedGarmentName.set('');
-    this.confirmedCategoryId.set(null);
-    this.selectedRegions.set([]);
-    this.regionCategories.clear();
-
-    this.apiService.analyzeGarmentImage(file).pipe(take(1)).subscribe({
-      next: (result) => {
-        this.isAnalyzing.set(false);
-        if (result.success) {
-          this.analysisResult.set(result);
-          this.confirmedImageType.set(result.detectedImageType as 'FlatLay' | 'PersonWearing');
-          this.confirmedGarmentName.set(result.suggestedCategory || 'New Garment');
-          this.confirmedCategoryId.set(result.suggestedCategoryId ?? null);
-
-          if (result.detectedImageType === 'PersonWearing' && result.detectedRegions) {
-            const regionIds = result.detectedRegions.map(r => r.region);
-            this.selectedRegions.set(regionIds);
-            result.detectedRegions.forEach(r => {
-              this.regionCategories.set(r.region, r.suggestedGroup || 'tops');
-              // Set default category ID based on suggested group
-              const defaultCat = this.findDefaultCategoryForGroup(r.suggestedGroup || 'tops');
-              if (defaultCat !== null) {
-                this.regionCategoryIds.set(r.region, defaultCat);
-              }
-            });
-          }
-        } else {
-          this.snackBar.open(result.errorMessage || 'Analysis failed.', 'Dismiss', { duration: 4000 });
-        }
-      },
-      error: (err) => {
-        this.isAnalyzing.set(false);
-        const msg = err instanceof Error ? err.message : 'Failed to analyze image.';
-        this.snackBar.open(msg, 'Dismiss', { duration: 4000 });
-      }
-    });
-  }
-
-  saveAnalyzedGarment(): void {
-    if (!this.pendingFile || !this.analysisResult()) return;
-
-    const imageType = this.confirmedImageType();
-    if (!imageType) return;
-
-    this.isSavingGarment.set(true);
-
-    let extractions: GarmentExtractionItem[] | undefined;
-    if (imageType === 'PersonWearing' && this.selectedRegions().length > 0) {
-      extractions = this.selectedRegions().map(region => {
-        const categoryId = this.regionCategoryIds.get(region);
-        const group = this.regionCategories.get(region) || 'tops';
-        const categoryInfo = categoryId
-          ? this.garmentCategoryOptions().find(c => this.categoryId(c) === categoryId)
-          : null;
-        const name = categoryInfo?.category || `Extracted ${group}`;
-        return {
-          region,
-          garmentGroup: group,
-          categoryId,
-          name
+    // Add each file to the pending queue and start analyzing
+    imageFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const previewUrl = reader.result as string;
+        const garment: PendingGarment = {
+          id: `garment-${++this.idCounter}`,
+          file,
+          previewUrl,
+          status: 'pending',
+          analysisResult: null,
+          selectedCategoryId: null,
+          errorMessage: null
         };
-      });
-    }
 
-    this.apiService.saveAnalyzedGarment({
-      file: this.pendingFile,
-      imageType: imageType,
-      garmentName: this.confirmedGarmentName() || 'New Garment',
-      garmentGroup: this.analysisResult()?.suggestedGroup,
-      categoryId: this.confirmedCategoryId() ?? undefined,
-      extractions
-    }).pipe(take(1)).subscribe({
+        // Add to queue
+        this.pendingGarments.update(list => [...list, garment]);
+
+        // Start analysis
+        this.analyzeGarment(garment.id);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Analyze a single garment
+  private analyzeGarment(garmentId: string): void {
+    const garment = this.pendingGarments().find(g => g.id === garmentId);
+    if (!garment) return;
+
+    this.updateGarment(garmentId, { status: 'analyzing' });
+
+    this.apiService.analyzeGarmentImage(garment.file).pipe(take(1)).subscribe({
       next: (result) => {
-        this.isSavingGarment.set(false);
         if (result.success) {
-          this.savedCount = result.savedGarments.length;
-          this.snackBar.open(`Saved ${this.savedCount} garment(s)!`, 'Great!', { duration: 3000 });
-          this.dialogRef.close({ saved: true, count: this.savedCount });
+          this.updateGarment(garmentId, {
+            status: 'ready',
+            analysisResult: result,
+            selectedCategoryId: result.suggestedCategoryId ?? null
+          });
         } else {
-          this.snackBar.open(result.errorMessage || 'Save failed.', 'Dismiss', { duration: 4000 });
+          this.updateGarment(garmentId, {
+            status: 'error',
+            errorMessage: result.errorMessage || 'Analysis failed'
+          });
         }
       },
       error: (err) => {
-        this.isSavingGarment.set(false);
-        const msg = err instanceof Error ? err.message : 'Failed to save garment.';
-        this.snackBar.open(msg, 'Dismiss', { duration: 4000 });
+        const msg = err instanceof Error ? err.message : 'Failed to analyze image';
+        this.updateGarment(garmentId, { status: 'error', errorMessage: msg });
       }
     });
   }
 
-  clearAnalysis(): void {
-    this.analysisResult.set(null);
-    this.confirmedImageType.set(null);
-    this.confirmedGarmentName.set('');
-    this.confirmedCategoryId.set(null);
-    this.selectedRegions.set([]);
-    this.regionCategories.clear();
-    this.regionCategoryIds.clear();
-    this.pendingFile = null;
-  }
-
-  getAlternativeClassifications(): GarmentClassification[] {
-    return this.analysisResult()?.alternativeClassifications || [];
-  }
-
-  selectAlternativeClassification(classification: GarmentClassification): void {
-    const matchingCat = this.garmentCategoryOptions().find(c =>
-      c.group?.toLowerCase() === classification.group.toLowerCase()
+  // Update a garment in the list
+  private updateGarment(garmentId: string, updates: Partial<PendingGarment>): void {
+    this.pendingGarments.update(list =>
+      list.map(g => g.id === garmentId ? { ...g, ...updates } : g)
     );
-    if (matchingCat) {
-      this.confirmedCategoryId.set(this.categoryId(matchingCat));
-      this.confirmedGarmentName.set(classification.label);
-    }
   }
 
-  isRegionSelected(region: string): boolean {
-    return this.selectedRegions().includes(region);
+  // Update category for a garment
+  updateCategory(garmentId: string, categoryId: number | null): void {
+    this.updateGarment(garmentId, { selectedCategoryId: categoryId });
   }
 
-  toggleRegionSelection(regionItem: DetectedClothingRegion): void {
-    const region = regionItem.region;
-    const current = this.selectedRegions();
-    if (current.includes(region)) {
-      this.selectedRegions.set(current.filter(r => r !== region));
-    } else {
-      this.selectedRegions.set([...current, region]);
-      if (!this.regionCategories.has(region)) {
-        const group = regionItem.suggestedGroup || 'tops';
-        this.regionCategories.set(region, group);
-        const defaultCat = this.findDefaultCategoryForGroup(group);
-        if (defaultCat !== null) {
-          this.regionCategoryIds.set(region, defaultCat);
+  // Remove a garment from the queue
+  removeGarment(garmentId: string): void {
+    this.pendingGarments.update(list => list.filter(g => g.id !== garmentId));
+  }
+
+  // Retry analysis for a failed garment
+  retryAnalysis(garmentId: string): void {
+    this.updateGarment(garmentId, { status: 'pending', errorMessage: null });
+    this.analyzeGarment(garmentId);
+  }
+
+  // Save all ready garments
+  saveAll(): void {
+    const readyGarments = this.pendingGarments().filter(g => g.status === 'ready');
+    if (readyGarments.length === 0) return;
+
+    this.isSavingAll.set(true);
+    let savedCount = 0;
+    let errorCount = 0;
+    const totalToSave = readyGarments.length;
+
+    readyGarments.forEach(garment => {
+      this.updateGarment(garment.id, { status: 'saving' });
+
+      this.apiService.saveAnalyzedGarment({
+        file: garment.file,
+        imageType: 'FlatLay',
+        garmentName: undefined,
+        garmentGroup: garment.analysisResult?.suggestedGroup,
+        categoryId: garment.selectedCategoryId ?? undefined,
+        extractions: undefined
+      }).pipe(take(1)).subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.updateGarment(garment.id, { status: 'saved' });
+            savedCount++;
+          } else {
+            this.updateGarment(garment.id, {
+              status: 'error',
+              errorMessage: result.errorMessage || 'Save failed'
+            });
+            errorCount++;
+          }
+          this.checkSaveCompletion(totalToSave, savedCount + errorCount, savedCount);
+        },
+        error: (err) => {
+          const msg = err instanceof Error ? err.message : 'Failed to save garment';
+          this.updateGarment(garment.id, { status: 'error', errorMessage: msg });
+          errorCount++;
+          this.checkSaveCompletion(totalToSave, savedCount + errorCount, savedCount);
         }
+      });
+    });
+  }
+
+  private checkSaveCompletion(total: number, completed: number, saved: number): void {
+    if (completed === total) {
+      this.isSavingAll.set(false);
+
+      // Check if all garments are now saved
+      const allSaved = this.pendingGarments().every(g => g.status === 'saved');
+
+      if (allSaved) {
+        this.snackBar.open(
+          `${saved} garment${saved > 1 ? 's' : ''} saved successfully!`,
+          'Great!',
+          { duration: 3000 }
+        );
+        this.dialogRef.close({ saved: true, count: saved });
+      } else if (saved > 0) {
+        this.snackBar.open(
+          `${saved} of ${total} garments saved. Some had errors.`,
+          'OK',
+          { duration: 4000 }
+        );
       }
     }
   }
 
-  getRegionCategory(region: string): string {
-    return this.regionCategories.get(region) || 'tops';
-  }
-
-  setRegionCategory(region: string, category: string): void {
-    this.regionCategories.set(region, category);
-  }
-
-  getRegionCategoryId(region: string): number | null {
-    return this.regionCategoryIds.get(region) ?? null;
-  }
-
-  setRegionCategoryId(region: string, categoryId: number): void {
-    this.regionCategoryIds.set(region, categoryId);
-    // Also update the group based on the selected category
-    const cat = this.garmentCategoryOptions().find(c => this.categoryId(c) === categoryId);
-    if (cat?.group) {
-      this.regionCategories.set(region, cat.group);
+  // Get preview image for a garment (use analysis result if available)
+  getPreviewImage(garment: PendingGarment): string {
+    if (garment.analysisResult?.previewImageBase64) {
+      return 'data:image/png;base64,' + garment.analysisResult.previewImageBase64;
     }
+    return garment.previewUrl;
   }
 
-  private findDefaultCategoryForGroup(group: string): number | null {
-    const normalizedGroup = group.toLowerCase();
-    const cat = this.garmentCategoryOptions().find(c =>
-      c.group?.toLowerCase() === normalizedGroup
-    );
-    return cat ? this.categoryId(cat) : null;
+  // Get category name for display
+  getCategoryName(categoryId: number | null): string {
+    if (!categoryId) return 'Select category';
+    const cat = this.garmentCategoryOptions().find(c => this.categoryId(c) === categoryId);
+    return cat ? this.categoryLabel(cat) : 'Unknown';
   }
 
   cancel(): void {
-    this.dialogRef.close({ saved: false });
+    const saved = this.savedCount();
+    this.dialogRef.close({ saved: saved > 0, count: saved });
+  }
+
+  clearAll(): void {
+    this.pendingGarments.set([]);
   }
 }

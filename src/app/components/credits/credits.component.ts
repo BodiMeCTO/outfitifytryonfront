@@ -10,6 +10,7 @@ import { MatTableModule } from '@angular/material/table';
 import { take } from 'rxjs/operators';
 
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
+import { CreditsService } from '../../services/credits.service';
 import { CreditsLedgerEntryDto } from '../../models/outfitify-api';
 
 @Component({
@@ -33,6 +34,7 @@ export class CreditsComponent {
   private readonly snackBar = inject(MatSnackBar);
   private readonly location = inject(Location);
   private readonly router = inject(Router);
+  private readonly creditsService = inject(CreditsService);
 
   readonly balance = signal<number | null>(null);
   readonly transactions = signal<CreditsLedgerEntryDto[]>([]);
@@ -85,6 +87,7 @@ export class CreditsComponent {
     this.api.grantCredits(100, 'Demo credit grant').pipe(take(1)).subscribe({
       next: (response) => {
         this.balance.set(response.balance);
+        this.creditsService.setBalance(response.balance);
         this.isGranting.set(false);
         this.snackBar.open('100 credits added to your account!', 'Great!', { duration: 3000 });
         // Reload transactions to show the new entry

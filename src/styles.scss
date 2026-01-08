@@ -642,3 +642,36 @@ a {
     box-shadow: none;
   }
 }
+
+// -----------------------------------------------------------------------------
+// Garment Upload Dialog - Mobile optimized
+// -----------------------------------------------------------------------------
+
+.garment-upload-dialog {
+  // On mobile, make dialog full height
+  @media (max-width: #{$breakpoint-sm}) {
+    .mat-mdc-dialog-container {
+      max-height: 100vh !important;
+      height: 100vh;
+    }
+
+    .mat-mdc-dialog-surface {
+      max-height: 100vh !important;
+      height: 100%;
+      border-radius: 0 !important;
+    }
+  }
+
+  // Ensure dialog content uses flexbox for proper layout
+  .mat-mdc-dialog-content {
+    display: flex;
+    flex-direction: column;
+    max-height: none !important;
+    overflow: hidden;
+
+    @media (max-width: #{$breakpoint-sm}) {
+      flex: 1;
+      min-height: 0;
+    }
+  }
+}

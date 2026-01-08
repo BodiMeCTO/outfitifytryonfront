@@ -1,141 +1,127 @@
-<h2 mat-dialog-title>Add Garment</h2>
+<h2 mat-dialog-title>
+  Add Garments
+  @if (hasGarments()) {
+    <span class="garment-count">{{ pendingGarments().length }} item{{ pendingGarments().length > 1 ? 's' : '' }}</span>
+  }
+</h2>
 
 <mat-dialog-content>
-  <!-- Analyzing State -->
-  @if (isAnalyzing()) {
-    <div class="analyzing-state">
-      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      <p>Analyzing image...</p>
-    </div>
-  }
-
-  <!-- Upload Zone (when no analysis result yet) -->
-  @if (!analysisResult() && !isAnalyzing()) {
-    <div class="upload-zone">
-      <button mat-raised-button color="primary" class="smart-upload-button" (click)="fileInput.click()">
-        <mat-icon>auto_awesome</mat-icon>
-        Upload Image
-      </button>
-      <input #fileInput type="file" accept="image/*" hidden (change)="handleSmartUpload($event)">
+  <!-- Upload Zone -->
+  <div class="upload-zone" [class.has-items]="hasGarments()">
+    <button mat-raised-button color="primary" class="smart-upload-button" (click)="fileInput.click()">
+      <mat-icon>add_photo_alternate</mat-icon>
+      {{ hasGarments() ? 'Add More' : 'Select Images' }}
+    </button>
+    <input #fileInput type="file" accept="image/*" multiple hidden (change)="handleFileSelection($event)">
+    @if (!hasGarments()) {
       <p class="upload-hint">
-        Upload any garment image - we'll automatically detect if it's a flat-lay or person wearing clothing
+        Select one or more garment images - we'll analyze each and suggest categories
       </p>
-    </div>
-  }
+    }
+  </div>
 
-  <!-- Analysis Results -->
-  @if (analysisResult()) {
-    <div class="analysis-results">
-      <div class="analysis-header">
-        <h3>
-          <mat-icon>check_circle</mat-icon>
-          Analysis Complete
-        </h3>
-      </div>
-
-      <!-- Preview Image with Detection Overlay -->
-      @if (analysisResult()!.previewImageBase64) {
-        <div class="preview-image-container">
-          <img [src]="'data:image/png;base64,' + analysisResult()!.previewImageBase64"
-               alt="Analysis Preview"
-               class="preview-image">
-          <p class="preview-label">
-            @if (confirmedImageType() === 'PersonWearing') {
-              Colored areas show detected clothing regions (gold, silver, bronze)
-            } @else {
-              Gold tint indicates flat-lay detection with background removed
-            }
-          </p>
-        </div>
-      }
-
-      <!-- Flat Lay Results -->
-      @if (confirmedImageType() === 'FlatLay') {
-        <div class="flat-lay-confirmation">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Garment Name</mat-label>
-            <input matInput [value]="confirmedGarmentName()"
-                   (input)="confirmedGarmentName.set($any($event.target).value)">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Category</mat-label>
-            <mat-select [value]="confirmedCategoryId()"
-                        (selectionChange)="confirmedCategoryId.set($event.value)">
-              @for (cat of garmentCategoryOptions(); track categoryId(cat)) {
-                <mat-option [value]="categoryId(cat)">{{ categoryLabel(cat) }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
-      }
-
-      <!-- Person Wearing Results -->
-      @if (confirmedImageType() === 'PersonWearing' && analysisResult()!.detectedRegions) {
-        <div class="person-confirmation">
-          <h4>Detected Clothing Regions</h4>
-          <p class="hint">Select the garments you want to extract and save:</p>
-
-          <div class="detected-regions">
-            @for (region of analysisResult()!.detectedRegions; track region.region) {
-              <div class="region-card" [class.selected]="isRegionSelected(region.region)"
-                   (click)="toggleRegionSelection(region)">
-                <mat-checkbox [checked]="isRegionSelected(region.region)" (click)="$event.stopPropagation()">
-                  {{ region.displayName || (region.region | titlecase) }}
-                </mat-checkbox>
-                @if (isRegionSelected(region.region)) {
-                  <div class="category-select" (click)="$event.stopPropagation()">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Category</mat-label>
-                      <mat-select [value]="getRegionCategoryId(region.region)"
-                                  (selectionChange)="setRegionCategoryId(region.region, $event.value)">
-                        @for (cat of garmentCategoryOptions(); track categoryId(cat)) {
-                          <mat-option [value]="categoryId(cat)">{{ categoryLabel(cat) }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                }
+  <!-- Garment Queue -->
+  @if (hasGarments()) {
+    <div class="garment-queue">
+      @for (garment of pendingGarments(); track garment.id) {
+        <div class="garment-item" [class.saved]="garment.status === 'saved'" [class.error]="garment.status === 'error'">
+          <!-- Preview Image -->
+          <div class="garment-preview">
+            <img [src]="getPreviewImage(garment)" alt="Garment preview">
+            @if (garment.status === 'analyzing' || garment.status === 'saving') {
+              <div class="preview-overlay">
+                <mat-spinner diameter="32"></mat-spinner>
               </div>
+            }
+            @if (garment.status === 'saved') {
+              <div class="preview-overlay success">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+            }
+            @if (garment.status === 'error') {
+              <div class="preview-overlay error">
+                <mat-icon>error</mat-icon>
+              </div>
+            }
+          </div>
+
+          <!-- Garment Details -->
+          <div class="garment-details">
+            <!-- Status indicator -->
+            @if (garment.status === 'analyzing') {
+              <span class="status-text analyzing">Analyzing...</span>
+            }
+            @if (garment.status === 'saving') {
+              <span class="status-text saving">Saving...</span>
+            }
+            @if (garment.status === 'saved') {
+              <span class="status-text saved">Saved</span>
+            }
+            @if (garment.status === 'error') {
+              <span class="status-text error">{{ garment.errorMessage }}</span>
+            }
+
+            <!-- Category Selector (when ready) -->
+            @if (garment.status === 'ready') {
+              <mat-form-field appearance="outline" class="category-select">
+                <mat-label>Category</mat-label>
+                <mat-select
+                  [value]="garment.selectedCategoryId"
+                  (selectionChange)="updateCategory(garment.id, $event.value)">
+                  @for (cat of garmentCategoryOptions(); track categoryId(cat)) {
+                    <mat-option [value]="categoryId(cat)">{{ categoryLabel(cat) }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+          </div>
+
+          <!-- Actions -->
+          <div class="garment-actions">
+            @if (garment.status === 'error') {
+              <button mat-icon-button (click)="retryAnalysis(garment.id)" matTooltip="Retry">
+                <mat-icon>refresh</mat-icon>
+              </button>
+            }
+            @if (garment.status !== 'saving' && garment.status !== 'saved') {
+              <button mat-icon-button (click)="removeGarment(garment.id)" matTooltip="Remove">
+                <mat-icon>close</mat-icon>
+              </button>
             }
           </div>
         </div>
       }
-
-      <!-- Type Override -->
-      <div class="type-override">
-        <p class="override-label">Detected as:</p>
-        <mat-button-toggle-group [value]="confirmedImageType()"
-                                  (change)="confirmedImageType.set($event.value)">
-          <mat-button-toggle value="FlatLay">
-            <mat-icon>checkroom</mat-icon> Flat Lay
-          </mat-button-toggle>
-          <mat-button-toggle value="PersonWearing">
-            <mat-icon>person</mat-icon> Person
-          </mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
     </div>
+
+    <!-- Progress Summary -->
+    @if (analyzingCount() > 0) {
+      <div class="progress-summary">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <span>Analyzing {{ analyzingCount() }} garment{{ analyzingCount() > 1 ? 's' : '' }}...</span>
+      </div>
+    }
   }
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  @if (analysisResult()) {
-    <button mat-button (click)="clearAnalysis()">
-      <mat-icon>refresh</mat-icon> Start Over
+  @if (hasGarments() && !isSavingAll()) {
+    <button mat-button (click)="clearAll()">
+      <mat-icon>delete_sweep</mat-icon> Clear All
     </button>
   }
-  <button mat-button (click)="cancel()">Cancel</button>
-  @if (analysisResult()) {
+  <button mat-button (click)="cancel()">
+    {{ savedCount() > 0 ? 'Done' : 'Cancel' }}
+  </button>
+  @if (readyCount() > 0) {
     <button mat-raised-button color="primary"
-            [disabled]="isSavingGarment() || (confirmedImageType() === 'PersonWearing' && selectedRegions().length === 0)"
-            (click)="saveAnalyzedGarment()">
-      <ng-container *ngIf="isSavingGarment(); else saveButton">
+            [disabled]="isSavingAll()"
+            (click)="saveAll()">
+      @if (isSavingAll()) {
         <mat-icon class="spinning">sync</mat-icon> Saving...
-      </ng-container>
-      <ng-template #saveButton>
-        <mat-icon>save</mat-icon> Save Garment
-      </ng-template>
+      } @else {
+        <mat-icon>save</mat-icon>
+        Save {{ readyCount() }} Garment{{ readyCount() > 1 ? 's' : '' }}
+      }
     </button>
   }
 </mat-dialog-actions>

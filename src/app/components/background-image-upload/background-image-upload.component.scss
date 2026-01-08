@@ -10,8 +10,8 @@
   gap: 1rem;
   margin-top: 1rem;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 12px;
+  background: $color-bg-subtle;
+  border-radius: $radius-lg;
 }
 
 .selection-preview {
@@ -24,7 +24,7 @@
   font-size: 48px;
   width: 48px;
   height: 48px;
-  color: rgba(0, 0, 0, 0.5);
+  color: $color-text-hint;
 }
 
 .preview-info {
@@ -46,7 +46,7 @@
   margin: 0.5rem 0 0;
   font-size: 0.85rem;
   font-style: italic;
-  color: rgba(0, 0, 0, 0.6);
+  color: $color-text-hint;
 }
 
 .actions {
@@ -84,7 +84,7 @@
 }
 
 .template-tile:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: $color-bg-hover;
 }
 
 .template-tile.is-selected {
@@ -98,7 +98,7 @@
   width: 32px;
   height: 32px;
   margin-bottom: 0.5rem;
-  color: rgba(0, 0, 0, 0.6);
+  color: $color-text-hint;
 }
 
 .template-tile.is-selected .template-icon {

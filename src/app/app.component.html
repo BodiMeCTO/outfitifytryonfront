@@ -41,7 +41,7 @@
           aria-label="View credits"
         >
           <mat-icon>toll</mat-icon>
-          <span class="credits-value">{{ credits() ?? '...' }}</span>
+          <span class="credits-value">{{ (credits$ | async) ?? '...' }}</span>
         </a>
 
         <button

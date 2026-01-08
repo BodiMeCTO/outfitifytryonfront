@@ -230,4 +230,10 @@
       Continue to garments
     </button>
   </div>
+  <!-- Archive Panel -->
+  <app-archive-panel
+    [isOpen]="isArchivePanelOpen()"
+    (closed)="closeArchivePanel()"
+    (itemRestored)="onArchiveItemRestored()"
+  ></app-archive-panel>
 </section>

@@ -87,8 +87,17 @@ export class OutfitifyApiService {
   }
 
   // --- Garments ---
-  listGarments(): Observable<GarmentSummaryDto[]> {
-    return this.http.get<GarmentSummaryDto[]>(this.buildUrl('/api/garments'));
+  listGarments(includeArchived: boolean = false): Observable<GarmentSummaryDto[]> {
+    const url = includeArchived ? '/api/garments?includeArchived=true' : '/api/garments';
+    return this.http.get<GarmentSummaryDto[]>(this.buildUrl(url));
+  }
+
+  archiveGarment(id: string): Observable<void> {
+    return this.http.post<void>(this.buildUrl(`/api/garments/${id}/archive`), {});
+  }
+
+  unarchiveGarment(id: string): Observable<void> {
+    return this.http.post<void>(this.buildUrl(`/api/garments/${id}/unarchive`), {});
   }
 
   listGarmentImagePerspectives(): Observable<ImagePerspectiveDto[]> {
@@ -117,12 +126,27 @@ export class OutfitifyApiService {
   }
 
   // --- User uploaded model images ---
-  listModelImages(isBackgroundVariant?: boolean): Observable<ModelImageDto[]> {
+  listModelImages(isBackgroundVariant?: boolean, includeArchived: boolean = false): Observable<ModelImageDto[]> {
     let url = '/api/model-images';
+    const params = [];
     if (isBackgroundVariant !== undefined) {
-      url += `?isBackgroundVariant=${isBackgroundVariant}`;
+      params.push(`isBackgroundVariant=${isBackgroundVariant}`);
+    }
+    if (includeArchived) {
+      params.push('includeArchived=true');
+    }
+    if (params.length > 0) {
+      url += '?' + params.join('&');
     }
     return this.http.get<ModelImageDto[]>(this.buildUrl(url));
+  }
+
+  archiveModelImage(id: string): Observable<void> {
+    return this.http.post<void>(this.buildUrl(`/api/model-images/${id}/archive`), {});
+  }
+
+  unarchiveModelImage(id: string): Observable<void> {
+    return this.http.post<void>(this.buildUrl(`/api/model-images/${id}/unarchive`), {});
   }
 
   uploadModelImage(formData: FormData): Observable<ModelImageDto> {
@@ -336,7 +360,6 @@ export interface SavedGarment {
 // Model image with background types
 export interface CreateModelImageWithBackgroundDto {
   sourceModelImageId: string;
-  backgroundImageId?: string;
   backgroundPrompt?: string;
   aspectRatio?: string;
   name?: string;

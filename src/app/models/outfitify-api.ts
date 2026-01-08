@@ -35,6 +35,8 @@ export interface BackgroundImageDto {
   environmentType?: string | null;
   isActive?: boolean | null;
   isTemplate?: boolean | null;
+  isUserUploaded?: boolean | null;
+  thumbnailUrl?: string | null;
 }
 
 export interface CreateBackgroundImageDto {
@@ -51,6 +53,7 @@ export interface UpdateBackgroundImageDto {
 
 export interface GarmentCategoryDto {
   garmentCategoryEntityId?: number;
+  garmentCategoryEntityID?: number; // Backend uses uppercase ID
   group?: string | null;
   category?: string | null;
   gender?: string | null;
@@ -169,6 +172,7 @@ export interface GarmentSummaryDto {
   category: string;          // 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'accessories'
   imageUrl?: string | null;
   sizes: string[];
+  archivedAtUtc?: string | null;
 }
 
 export interface CreateGarmentInstanceRequest {

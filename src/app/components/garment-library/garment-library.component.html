@@ -75,7 +75,13 @@
         </span>
       </mat-card-actions>
     </mat-card>
-  </section>
+    <!-- Archive Panel -->
+  <app-archive-panel
+    [isOpen]="isArchivePanelOpen()"
+    (closed)="closeArchivePanel()"
+    (itemRestored)="onArchiveItemRestored()"
+  ></app-archive-panel>
+</section>
 
   <footer class="library-actions">
     <div class="helper">

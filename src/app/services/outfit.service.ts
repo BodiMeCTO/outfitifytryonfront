@@ -56,9 +56,12 @@ export interface ModelImageDto {
   notes: string | null;
   isActive: boolean;
   createdAtUtc: string | null;
+  archivedAtUtc?: string | null;
   isBackgroundVariant?: boolean;
   sourceModelImageId?: string | null;
   backgroundPrompt?: string | null;
+  /** Indicates this is a preloaded template model image */
+  isTemplate?: boolean;
 }
 
 export interface CreateModelImageDto {
@@ -99,6 +102,7 @@ export class OutfitService {
   // modelIdSubject now holds the ModelImageId (user upload)
   private readonly modelIdSubject = new BehaviorSubject<string | null>(null);
   private readonly poseIdSubject = new BehaviorSubject<string | null>(null);
+  private readonly posePromptSubject = new BehaviorSubject<string | null>(null);
   private readonly backgroundIdSubject = new BehaviorSubject<string | null>(null);
   private readonly customBackgroundPromptSubject = new BehaviorSubject<string | null>(null);
   private readonly aspectRatioSubject = new BehaviorSubject<AspectRatioOption>('original');
@@ -741,6 +745,10 @@ uploadAndSetInspiration(
     this.aspectRatioSubject.next(ratio);
   }
 
+  setPosePrompt(prompt: string | null): void {
+    this.posePromptSubject.next(prompt);
+  }
+
   getAspectRatio(): AspectRatioOption {
     return this.aspectRatioSubject.value;
   }
@@ -1066,13 +1074,21 @@ uploadAndSetInspiration(
       garmentSizeEntityId: null
     }));
 
-    // Simplified payload - no background options (background editing is now separate)
+    // Get current pose prompt (if selected from presets)
+    const posePrompt = this.posePromptSubject.value;
+    // Get custom background prompt (if user typed one)
+    const customBackgroundPrompt = this.customBackgroundPromptSubject.value;
+    // Get aspect ratio selection
+    const aspectRatio = this.aspectRatioSubject.value;
+
+    // Build payload with all user selections
     const payload: CreateOutfitDto = {
       modelImageId: modelId,
       poseOptionId: poseId,
       backgroundOptionId: null,
-      customBackgroundPrompt: null,
-      aspectRatio: null,
+      customBackgroundPrompt: customBackgroundPrompt || null,
+      aspectRatio: aspectRatio || null,
+      posePrompt: posePrompt || null,
       outfitGarments
     };
 
@@ -1239,7 +1255,8 @@ uploadAndSetInspiration(
       remoteUrl: resolvedUrl,
       id: dto.modelImageId,
       isBackgroundVariant: dto.isBackgroundVariant ?? false,
-      name: dto.name
+      name: dto.name,
+      isTemplate: dto.isTemplate ?? false
     };
   }
 

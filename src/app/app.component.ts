@@ -4,10 +4,11 @@ import { AsyncPipe, NgIf } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { filter, map, startWith, switchMap, of, catchError, interval } from 'rxjs';
+import { filter, map, startWith, switchMap, interval } from 'rxjs';
+import { take } from 'rxjs/operators';
 
 import { AuthService } from './services/auth.service';
-import { OutfitifyApiService } from './services/outfitify-api.service';
+import { CreditsService } from './services/credits.service';
 import { LuxeDrawerComponent, DrawerNavItem } from './components/shared/luxe-drawer/luxe-drawer.component';
 import { BottomNavComponent, BottomNavItem } from './components/shared/bottom-nav/bottom-nav.component';
 
@@ -32,9 +33,9 @@ import { BottomNavComponent, BottomNavItem } from './components/shared/bottom-na
 export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
-  private readonly api = inject(OutfitifyApiService);
+  private readonly creditsService = inject(CreditsService);
 
-  readonly credits = signal<number | null>(null);
+  readonly credits$ = this.creditsService.balance$;
   readonly isDrawerOpen = signal(false);
 
   readonly isLoggedIn$ = this.auth.token$.pipe(map((token) => !!token));
@@ -62,29 +63,21 @@ export class AppComponent implements OnInit {
     this.isLoggedIn$.pipe(
       switchMap(loggedIn => {
         if (!loggedIn) {
-          return of(null);
+          this.creditsService.clear();
+          return interval(0).pipe(take(0)); // Empty observable
         }
-        // Initial load + refresh every 30 seconds
-        return interval(30000).pipe(
+        // Initial load + refresh every 60 seconds
+        return interval(60000).pipe(
           startWith(0),
-          switchMap(() => this.api.getCreditsBalance().pipe(
-            map(balance => balance.balance),
-            catchError(() => of(null))
-          ))
+          switchMap(() => this.creditsService.refresh())
         );
       })
-    ).subscribe(credits => this.credits.set(credits));
+    ).subscribe();
 
     // Also refresh on navigation
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
-    ).subscribe(() => this.refreshCredits());
-  }
-
-  refreshCredits(): void {
-    this.api.getCreditsBalance().pipe(
-      catchError(() => of({ balance: 0, reservedCredits: 0 }))
-    ).subscribe(balance => this.credits.set(balance.balance));
+    ).subscribe(() => this.creditsService.refresh().pipe(take(1)).subscribe());
   }
 
   toggleDrawer(): void {
@@ -96,7 +89,7 @@ export class AppComponent implements OnInit {
   }
 
   onLogout(): void {
-    this.credits.set(null);
+    this.creditsService.clear();
     this.auth.logout();
     this.router.navigate(['/auth/login']);
   }
