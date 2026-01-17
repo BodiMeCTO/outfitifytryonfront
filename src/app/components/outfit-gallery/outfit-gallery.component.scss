@@ -5,6 +5,13 @@
   gap: 1.5rem;
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .header h1 {
   margin: 0;
   font-size: clamp(1.5rem, 2.5vw + 1rem, 2.25rem);
@@ -13,6 +20,15 @@
 .header p {
   margin: 0.5rem 0 0;
   color: $color-text-hint;
+}
+
+.archive-btn {
+  color: $color-text-secondary;
+
+  &:hover {
+    color: $color-accent-gold;
+    background: $color-accent-gold-light;
+  }
 }
 
 .empty {
@@ -91,6 +107,41 @@
   padding: 1rem;
 }
 
+.failed-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 1rem;
+  color: #d32f2f;
+  text-align: center;
+
+  mat-icon {
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    opacity: 0.8;
+  }
+
+  .failed-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .failed-reason {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #666;
+    line-height: 1.3;
+    max-width: 100%;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+}
+
 .meta {
   display: flex;
   align-items: center;
@@ -122,6 +173,19 @@
   color: $color-accent-gold-dark; // Accessible gold for text
 }
 
+.status-badge--failed {
+  background: #ffebee;
+  color: #c62828;
+  cursor: help; // Indicate that tooltip is available
+}
+
+.status-badge--pending-retry {
+  background: #fff8e1; // Amber/yellow light background
+  color: #f57c00; // Amber/orange text
+  cursor: help; // Indicate that tooltip is available
+}
+
 .meta button {
   margin-left: auto;
 }
+

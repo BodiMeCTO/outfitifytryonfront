@@ -5,17 +5,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-
-  // Target dialog content for mobile flexbox layout
-  ::ng-deep mat-dialog-content {
-    @media (max-width: 600px) {
-      display: flex !important;
-      flex-direction: column !important;
-      flex: 1 !important;
-      min-height: 0 !important;
-      overflow: hidden !important;
-    }
-  }
 }
 
 // Dialog title with count badge
@@ -102,11 +91,10 @@ h2[mat-dialog-title] {
   // Desktop: fixed max height
   max-height: 400px;
 
-  // Mobile: take remaining space, scroll internally
-  @media (max-width: 600px) {
-    flex: 1;
-    min-height: 0;
+  // Mobile: don't constrain height, let parent scroll
+  @media (max-width: 768px) {
     max-height: none;
+    overflow-y: visible;
   }
 
   // Custom scrollbar

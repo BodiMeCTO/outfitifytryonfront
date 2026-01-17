@@ -57,14 +57,30 @@ export interface OutfitImageVariant {
   createdAt: Date;
 }
 
+// Minimal garment info for display on outfit cards
+export interface OutfitGarmentInfo {
+  id: string;
+  name: string;
+  imageUrl?: string | null;
+  category?: string | null;
+}
+
 export interface GeneratedImage {
   id: string;              // Outfit ID
   outfitImageId?: string;  // Primary OutfitImage ID (for edit operations)
   imageUrl: string;
   createdAt: Date;
-  status: 'processing' | 'ready';
+  status: 'processing' | 'ready' | 'failed' | 'pending_retry';
+  failureReason?: string | null;  // Human-readable reason when status is 'failed' or 'pending_retry'
   variants?: OutfitImageVariant[];  // All images for this outfit (original + enhanced)
   variantCount?: number;   // Quick count for badge display
+  archivedAtUtc?: string | null;  // When archived, null if active
+  // Input details for display
+  modelImageUrl?: string | null;
+  poseName?: string | null;
+  backgroundName?: string | null;
+  aspectRatio?: string | null;  // e.g., "original", "2:3", "1:1", "4:5", "3:4"
+  garments?: OutfitGarmentInfo[];
 }
 
 export interface GeneratedImageResponse {
@@ -73,7 +89,7 @@ export interface GeneratedImageResponse {
   image?: string;
   url?: string;
   createdAt?: string;
-  status?: 'processing' | 'ready' | 'completed' | 'failed';
+  status?: 'processing' | 'ready' | 'completed' | 'failed' | 'pending_retry';
 }
 
 // -----------------------
@@ -126,6 +142,14 @@ export interface OutfitImage {
   editType?: string | null;  // 'filtered', 'upscaled', 'filtered_upscaled', or null for original
 }
 
+// Garment info from backend DTO
+export interface OutfitGarmentInfoDto {
+  id: string;
+  name: string;
+  imageUrl?: string | null;
+  category?: string | null;
+}
+
 export interface OutfitDto {
   id: string;
   modelImageId: string;
@@ -134,8 +158,15 @@ export interface OutfitDto {
   generatedModelImageId?: string | null;
   creditCost?: number | null;
   status?: string | null;
+  failureReason?: string | null;
   createdAtUtc?: string | null;
   completedAtUtc?: string | null;
+  archivedAtUtc?: string | null;
+  // Input details for display
+  modelImageUrl?: string | null;
+  poseName?: string | null;
+  backgroundName?: string | null;
+  garments?: OutfitGarmentInfoDto[] | null;
   outfitImages?: OutfitImage[] | null;
 }
 
@@ -144,9 +175,13 @@ export interface CreateOutfitDto {
   poseOptionId: string;
   backgroundOptionId: string | null;
   customBackgroundPrompt?: string | null;
+  /** Name of the selected background preset for display purposes */
+  backgroundPresetName?: string | null;
   aspectRatio?: string | null;
   /** Pose change prompt from preset selection */
   posePrompt?: string | null;
+  /** Name of the selected pose preset for display purposes */
+  posePresetName?: string | null;
   outfitGarments: OutfitGarment[];
 }
 

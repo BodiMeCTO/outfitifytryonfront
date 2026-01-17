@@ -3,7 +3,8 @@ import {
   Component,
   Input,
   Output,
-  EventEmitter
+  EventEmitter,
+  HostBinding
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,6 +41,11 @@ export type LuxeButtonSize = 'sm' | 'md' | 'lg';
 
     :host {
       display: inline-flex;
+    }
+
+    :host(.full-width) {
+      display: flex;
+      width: 100%;
     }
 
     button {
@@ -206,6 +212,8 @@ export class LuxeButtonComponent {
   @Input() iconOnly = false;
 
   @Output() clicked = new EventEmitter<MouseEvent>();
+
+  @HostBinding('class.full-width') get hostFullWidth() { return this.fullWidth; }
 
   get buttonClasses(): string {
     return [

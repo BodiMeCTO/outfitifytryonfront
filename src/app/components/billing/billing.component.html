@@ -1,0 +1,182 @@
+<section class="billing-page">
+  <div class="page-nav">
+    <button mat-icon-button (click)="goBack()" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>Billing & Credits</h1>
+  </div>
+
+  <mat-progress-bar *ngIf="isLoading() || isProcessing()" mode="indeterminate"></mat-progress-bar>
+
+  <!-- Current Status Card -->
+  <mat-card appearance="outlined" class="status-card">
+    <mat-card-header>
+      <mat-card-title>Your Account</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="status-grid">
+        <div class="status-item">
+          <mat-icon>toll</mat-icon>
+          <span class="value">{{ balance() ?? '...' }}</span>
+          <span class="label">Credits Available</span>
+        </div>
+        <div class="status-item" *ngIf="currentSubscription()?.planName">
+          <mat-icon>card_membership</mat-icon>
+          <span class="value">{{ currentSubscription()?.planName }}</span>
+          <span class="label">Current Plan ({{ currentSubscription()?.isAnnual ? 'Annual' : 'Monthly' }})</span>
+        </div>
+        <div class="status-item" *ngIf="currentSubscription()?.priceAmount">
+          <mat-icon>payments</mat-icon>
+          <span class="value">${{ currentSubscription()?.priceAmount }}</span>
+          <span class="label">{{ currentSubscription()?.isAnnual ? 'per year' : 'per month' }}</span>
+        </div>
+        <div class="status-item" *ngIf="currentSubscription()?.currentPeriodStart">
+          <mat-icon>event_available</mat-icon>
+          <span class="value">{{ currentSubscription()?.currentPeriodStart | date:'mediumDate' }}</span>
+          <span class="label">Current Period Started</span>
+        </div>
+        <div class="status-item" *ngIf="currentSubscription()?.currentPeriodEnd">
+          <mat-icon>event</mat-icon>
+          <span class="value">{{ currentSubscription()?.currentPeriodEnd | date:'mediumDate' }}</span>
+          <span class="label">{{ currentSubscription()?.isAnnual ? 'Next Annual Renewal' : 'Next Billing Date' }}</span>
+        </div>
+        <div class="status-item" *ngIf="currentSubscription()?.monthlyCredits">
+          <mat-icon>add_circle</mat-icon>
+          <span class="value">{{ currentSubscription()?.monthlyCredits }}</span>
+          <span class="label">Credits per Month</span>
+        </div>
+      </div>
+    </mat-card-content>
+    <mat-card-actions *ngIf="currentSubscription()?.subscriptionId">
+      <button mat-stroked-button (click)="manageSubscription()">
+        <mat-icon>settings</mat-icon>
+        Manage Subscription
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-tab-group>
+    <!-- Subscription Plans Tab -->
+    <mat-tab label="Subscription Plans">
+      <div class="tab-content">
+        <!-- Billing Cycle Toggle -->
+        <div class="billing-toggle">
+          <button mat-button
+                  [class.active]="selectedBillingCycle() === 'monthly'"
+                  (click)="selectedBillingCycle.set('monthly')">
+            Monthly
+          </button>
+          <button mat-button
+                  [class.active]="selectedBillingCycle() === 'annual'"
+                  (click)="selectedBillingCycle.set('annual')">
+            Annual (Save up to 20%)
+          </button>
+        </div>
+
+        <div class="plans-grid">
+          <mat-card *ngFor="let plan of plans()"
+                    appearance="outlined"
+                    class="plan-card"
+                    [class.current]="currentSubscription()?.planName === plan.name">
+            <mat-card-header>
+              <mat-card-title>{{ plan.name }}</mat-card-title>
+              <mat-chip *ngIf="currentSubscription()?.planName === plan.name" class="current-badge">Current</mat-chip>
+            </mat-card-header>
+
+            <mat-card-content>
+              <div class="price">
+                <span class="amount">${{ getPlanPrice(plan) }}</span>
+                <span class="period">/{{ selectedBillingCycle() === 'annual' ? 'year' : 'month' }}</span>
+              </div>
+
+              <div class="savings" *ngIf="selectedBillingCycle() === 'annual' && getAnnualSavings(plan) > 0">
+                Save ${{ getAnnualSavings(plan) }}/year
+              </div>
+
+              <ul class="features">
+                <li>
+                  <mat-icon>check</mat-icon>
+                  {{ plan.monthlyCredits }} credits/month
+                </li>
+                <li>
+                  <mat-icon>check</mat-icon>
+                  Unused credits never expire
+                </li>
+                <li *ngIf="plan.description">
+                  <mat-icon>check</mat-icon>
+                  {{ plan.description }}
+                </li>
+              </ul>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <!-- If user has no subscription, show Subscribe button -->
+              <button mat-raised-button
+                      color="primary"
+                      *ngIf="!currentSubscription()?.subscriptionId"
+                      [disabled]="isProcessing()"
+                      (click)="selectPlan(plan)">
+                Subscribe
+              </button>
+              <!-- If user has this plan, show Current Plan (disabled) -->
+              <button mat-raised-button
+                      *ngIf="currentSubscription()?.subscriptionId && currentSubscription()?.planName === plan.name"
+                      disabled>
+                Current Plan
+              </button>
+              <!-- If user has different plan, show Change Plan (opens portal) -->
+              <button mat-stroked-button
+                      *ngIf="currentSubscription()?.subscriptionId && currentSubscription()?.planName !== plan.name"
+                      [disabled]="isProcessing()"
+                      (click)="manageSubscription()">
+                <mat-icon>swap_horiz</mat-icon>
+                Change Plan
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Credit Packages Tab -->
+    <mat-tab label="Buy Credits">
+      <div class="tab-content">
+        <p class="tab-description">
+          Need more credits? Purchase a one-time credit package. Credits never expire!
+        </p>
+
+        <div class="packages-grid">
+          <mat-card *ngFor="let pkg of packages()" appearance="outlined" class="package-card">
+            <mat-card-header>
+              <mat-card-title>{{ pkg.name }}</mat-card-title>
+            </mat-card-header>
+
+            <mat-card-content>
+              <div class="credits">
+                <span class="amount">{{ pkg.credits }}</span>
+                <span class="label">credits</span>
+              </div>
+
+              <div class="price">
+                <span class="amount">${{ pkg.price.toFixed(2) }}</span>
+              </div>
+
+              <div class="per-credit">
+                ${{ pkg.pricePerCredit.toFixed(2) }} per credit
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-raised-button
+                      color="accent"
+                      [disabled]="isProcessing()"
+                      (click)="purchasePackage(pkg)">
+                Purchase
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</section>

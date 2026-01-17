@@ -9,6 +9,10 @@
           alt="Selected model"
           class="preview-image"
         />
+        <!-- Model count badge -->
+        <span class="model-count-badge" *ngIf="(selectedModelCount$ | async)! > 1">
+          +{{ (selectedModelCount$ | async)! - 1 }} more
+        </span>
       </div>
       <ng-template #noModelPreview>
         <div class="preview-placeholder">
@@ -17,34 +21,140 @@
         </div>
       </ng-template>
 
-      <!-- Selected items summary -->
-      <div class="selection-summary">
-        <div class="summary-item" *ngIf="selectedModel$ | async">
-          <mat-icon>check_circle</mat-icon>
-          <span>Model selected</span>
+      <!-- Selection Details Panel -->
+      <div class="selection-details">
+        <!-- Selected Models Section -->
+        <div class="selection-section" *ngIf="selectedModels$ | async as models">
+          <div class="selection-section-header">
+            <span class="section-title-small">
+              <mat-icon>person</mat-icon>
+              Models ({{ models.length }}/{{ maxSelectedModels }})
+            </span>
+            <button
+              class="clear-btn-inline"
+              *ngIf="models.length > 0"
+              (click)="clearModelSelection()"
+              matTooltip="Clear models"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="selection-thumbnails" *ngIf="models.length > 0">
+            <div
+              class="selection-thumb"
+              *ngFor="let model of models; let i = index"
+              [matTooltip]="model.name || 'Model ' + (i + 1)"
+            >
+              <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
+              <span class="thumb-badge">{{ i + 1 }}</span>
+            </div>
+          </div>
+          <div class="empty-selection" *ngIf="models.length === 0">
+            <span>No models selected</span>
+          </div>
         </div>
-        <div class="summary-item" *ngIf="selectedPoseId() !== 'original'">
-          <mat-icon>check_circle</mat-icon>
-          <span>Pose: {{ selectedPoseId() }}</span>
+
+        <!-- Selected Garments Section -->
+        <div class="selection-section">
+          <div class="selection-section-header">
+            <span class="section-title-small">
+              <mat-icon>checkroom</mat-icon>
+              Garments ({{ selectedGarmentCount$ | async }})
+            </span>
+            <button
+              class="clear-btn-inline"
+              *ngIf="(selectedGarmentCount$ | async)! > 0"
+              (click)="clearAllGarments()"
+              matTooltip="Clear garments"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <ng-container *ngIf="selectedGarments$ | async as garments">
+            <!-- Tops -->
+            <div class="garment-row" *ngIf="garments.top.length > 0">
+              <span class="garment-category-label">Tops</span>
+              <div class="selection-thumbnails compact">
+                <div class="selection-thumb small" *ngFor="let g of garments.top" [matTooltip]="g.name">
+                  <img [src]="g.image" [alt]="g.name" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottoms -->
+            <div class="garment-row" *ngIf="garments.bottom.length > 0">
+              <span class="garment-category-label">Bottoms</span>
+              <div class="selection-thumbnails compact">
+                <div class="selection-thumb small" *ngFor="let g of garments.bottom" [matTooltip]="g.name">
+                  <img [src]="g.image" [alt]="g.name" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Full Body -->
+            <div class="garment-row" *ngIf="garments.fullBody.length > 0">
+              <span class="garment-category-label">Full Body</span>
+              <div class="selection-thumbnails compact">
+                <div class="selection-thumb small" *ngFor="let g of garments.fullBody" [matTooltip]="g.name">
+                  <img [src]="g.image" [alt]="g.name" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Jackets -->
+            <div class="garment-row" *ngIf="garments.jacket.length > 0">
+              <span class="garment-category-label">Jackets</span>
+              <div class="selection-thumbnails compact">
+                <div class="selection-thumb small" *ngFor="let g of garments.jacket" [matTooltip]="g.name">
+                  <img [src]="g.image" [alt]="g.name" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Accessories -->
+            <div class="garment-row" *ngIf="garments.accessories.length > 0">
+              <span class="garment-category-label">Accessories</span>
+              <div class="selection-thumbnails compact">
+                <div class="selection-thumb small" *ngFor="let g of garments.accessories" [matTooltip]="g.name">
+                  <img [src]="g.image" [alt]="g.name" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-selection" *ngIf="(selectedGarmentCount$ | async) === 0">
+              <span>No garments selected</span>
+            </div>
+          </ng-container>
         </div>
-        <div class="summary-item" *ngIf="hasBackgroundSelection()">
-          <mat-icon>check_circle</mat-icon>
-          <span>Background selected</span>
-        </div>
-        <div class="summary-item" *ngIf="selectedAspectRatio() !== 'original'">
-          <mat-icon>check_circle</mat-icon>
-          <span>{{ selectedAspectRatio() }} ratio</span>
-        </div>
-        <div class="summary-item" *ngIf="(selectedGarmentCount$ | async) as count">
-          <mat-icon>check_circle</mat-icon>
-          <span>{{ count }} garment{{ count > 1 ? 's' : '' }} selected</span>
+
+        <!-- Options Summary (Pose, Background, Ratio) -->
+        <div class="selection-section options-summary" *ngIf="selectedPoseId() !== 'original' || hasBackgroundSelection() || selectedAspectRatio() !== 'original'">
+          <div class="option-item" *ngIf="selectedPoseId() !== 'original'">
+            <mat-icon>accessibility_new</mat-icon>
+            <span>{{ selectedPoseId() }}</span>
+          </div>
+          <div class="option-item" *ngIf="hasBackgroundSelection()">
+            <mat-icon>wallpaper</mat-icon>
+            <span>{{ selectedPresetInfo?.name || 'Custom' }}</span>
+          </div>
+          <div class="option-item" *ngIf="selectedAspectRatio() !== 'original'">
+            <mat-icon>aspect_ratio</mat-icon>
+            <span>{{ selectedAspectRatio() }}</span>
+          </div>
         </div>
       </div>
 
       <!-- Credit cost indicator -->
-      <div class="credit-cost" *ngIf="(selectedGarmentCount$ | async)! > 0">
+      <div class="credit-cost" *ngIf="(selectedGarmentCount$ | async)! > 0 && (selectedModelCount$ | async)! > 0">
         <mat-icon>toll</mat-icon>
-        <span>{{ generationCreditCost }} credits</span>
+        <span>
+          {{ generationCreditCost }} credits
+          <span class="credit-breakdown" *ngIf="(selectedModelCount$ | async)! > 1">
+            ({{ generationCreditCost / (selectedModelCount$ | async)! }} x {{ selectedModelCount$ | async }})
+          </span>
+        </span>
       </div>
 
       <!-- Generate button (desktop) -->
@@ -128,10 +238,12 @@
           <div class="model-card-wrapper carousel-item" *ngFor="let model of models">
             <app-luxe-image-card
               [src]="model.previewUrl || model.remoteUrl"
-              [selected]="(selectedModel$ | async)?.id === model.id"
+              [selected]="isModelSelected(model)"
               aspectRatio="3:4"
               (cardClick)="selectModel(model)"
             ></app-luxe-image-card>
+            <!-- Selection badge showing order number -->
+            <span class="selection-badge" *ngIf="getModelSelectionBadge(model) as badge">{{ badge }}</span>
             <button
               class="card-archive-btn"
               (click)="archiveModelImage($event, model)"
@@ -155,10 +267,12 @@
           <div class="model-card-wrapper" *ngFor="let model of models">
             <app-luxe-image-card
               [src]="model.previewUrl || model.remoteUrl"
-              [selected]="(selectedModel$ | async)?.id === model.id"
+              [selected]="isModelSelected(model)"
               aspectRatio="3:4"
               (cardClick)="selectModel(model)"
             ></app-luxe-image-card>
+            <!-- Selection badge showing order number -->
+            <span class="selection-badge" *ngIf="getModelSelectionBadge(model) as badge">{{ badge }}</span>
             <button
               class="card-archive-btn"
               (click)="archiveModelImage($event, model)"
@@ -238,7 +352,7 @@
       </div>
 
       <!-- Expanded Category Content -->
-      <div class="category-expanded-content" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
+      <div class="category-expanded-content" #backgroundExpandedContent *ngIf="expandedCategory() && expandedCategory() !== 'original'">
         <!-- Preset Grid -->
         <div class="background-preset-grid">
           <button
@@ -298,6 +412,16 @@
         <h2 class="section-label-gold">Garments</h2>
         <div class="section-actions">
           <button
+            class="clear-btn-small"
+            *ngIf="(selectedGarmentCount$ | async)! > 0"
+            (click)="clearAllGarments()"
+            matTooltip="Clear all selected garments"
+            aria-label="Clear all garments"
+          >
+            <mat-icon>clear_all</mat-icon>
+            <span class="clear-label">Clear</span>
+          </button>
+          <button
             class="archive-btn-small"
             (click)="openArchivePanel()"
             matTooltip="View archived items"
@@ -318,33 +442,52 @@
 
       <!-- Garment Carousels by Category -->
       <ng-container *ngIf="garmentsByGroup$ | async as groups">
-        <div *ngFor="let group of garmentGroups" class="garment-category">
-          <ng-container *ngIf="groups[group.key]?.length">
-            <app-luxe-carousel
-              [label]="group.label"
-              [showCount]="true"
-              [itemCount]="groups[group.key].length"
-              gap="1rem"
-            >
-              <div class="garment-card-wrapper" *ngFor="let garment of groups[group.key]">
-                <app-luxe-image-card
-                  class="garment-card"
-                  [src]="garment.image"
-                  [selected]="isGarmentSelected(garment)"
-                  aspectRatio="3:4"
-                  (cardClick)="toggleGarment(garment)"
-                ></app-luxe-image-card>
+        <ng-container *ngIf="selectedGarments$ | async as selected">
+          <div *ngFor="let group of garmentGroups" class="garment-category">
+            <ng-container *ngIf="groups[group.key]?.length">
+              <!-- Category header with clear button -->
+              <div class="category-header-row">
+                <h3 class="category-label">{{ group.label }}</h3>
+                <span class="category-count">{{ groups[group.key].length }} items</span>
                 <button
-                  class="card-archive-btn"
-                  (click)="archiveGarment($event, garment)"
-                  matTooltip="Archive"
+                  class="category-clear-btn"
+                  *ngIf="(group.key === 'tops' && selected.top.length > 0) ||
+                         (group.key === 'bottoms' && selected.bottom.length > 0) ||
+                         (group.key === 'full-body' && selected.fullBody.length > 0) ||
+                         (group.key === 'jackets' && selected.jacket.length > 0) ||
+                         (group.key === 'accessories' && selected.accessories.length > 0)"
+                  (click)="clearGarmentCategory($event, group.key)"
+                  matTooltip="Clear {{ group.label | lowercase }}"
+                  [attr.aria-label]="'Clear ' + group.label"
                 >
-                  <mat-icon>archive</mat-icon>
+                  <mat-icon>close</mat-icon>
                 </button>
               </div>
-            </app-luxe-carousel>
-          </ng-container>
-        </div>
+              <app-luxe-carousel
+                [showCount]="false"
+                [itemCount]="groups[group.key].length"
+                gap="1rem"
+              >
+                <div class="garment-card-wrapper" *ngFor="let garment of groups[group.key]">
+                  <app-luxe-image-card
+                    class="garment-card"
+                    [src]="garment.image"
+                    [selected]="isGarmentSelected(garment)"
+                    aspectRatio="3:4"
+                    (cardClick)="toggleGarment(garment)"
+                  ></app-luxe-image-card>
+                  <button
+                    class="card-archive-btn"
+                    (click)="archiveGarment($event, garment)"
+                    matTooltip="Archive"
+                  >
+                    <mat-icon>archive</mat-icon>
+                  </button>
+                </div>
+              </app-luxe-carousel>
+            </ng-container>
+          </div>
+        </ng-container>
       </ng-container>
 
       <!-- Empty state when no garments -->

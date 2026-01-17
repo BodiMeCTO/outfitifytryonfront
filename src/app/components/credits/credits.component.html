@@ -26,6 +26,13 @@
       <button
         mat-raised-button
         color="primary"
+        routerLink="/billing"
+      >
+        <mat-icon>shopping_cart</mat-icon>
+        Purchase Credits
+      </button>
+      <button
+        mat-stroked-button
         (click)="grantCredits()"
         [disabled]="isGranting()"
       >

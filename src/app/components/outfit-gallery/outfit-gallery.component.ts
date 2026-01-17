@@ -1,19 +1,21 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { AsyncPipe, CommonModule, DatePipe, NgForOf, NgIf } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription, timer } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
+import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { GeneratedImage } from '../../models/outfit';
 import { SmartGarmentUploadDialogComponent } from '../smart-garment-upload-dialog/smart-garment-upload-dialog.component';
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
+import { ArchivePanelComponent } from '../archive-panel/archive-panel.component';
 
 @Component({
   selector: 'app-outfit-gallery',
@@ -28,9 +30,10 @@ import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } 
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatMenuModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTooltipModule,
+    ArchivePanelComponent
   ],
   templateUrl: './outfit-gallery.component.html',
   styleUrls: ['./outfit-gallery.component.scss'],
@@ -38,12 +41,29 @@ import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } 
 })
 export class OutfitGalleryComponent implements OnInit, OnDestroy {
   private readonly outfitService = inject(OutfitService);
+  private readonly apiService = inject(OutfitifyApiService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
 
   readonly generatedImages$ = this.outfitService.generatedImages$;
   private readonly subscription = new Subscription();
+
+  // Archive panel state
+  readonly isArchivePanelOpen = signal(false);
+
+  openArchivePanel(): void {
+    this.isArchivePanelOpen.set(true);
+  }
+
+  closeArchivePanel(): void {
+    this.isArchivePanelOpen.set(false);
+  }
+
+  onArchiveItemRestored(): void {
+    // Refresh the gallery when an item is restored
+    this.outfitService.refreshGeneratedImages().pipe(take(1)).subscribe();
+  }
 
   ngOnInit(): void {
     const poll$ = timer(0, 30000)
@@ -61,15 +81,24 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
     return image.id;
   }
 
-  remove(image: GeneratedImage): void {
-    this.outfitService.removeGeneratedImage(image.id);
-    this.snackBar.open('Outfit removed from gallery.', 'Dismiss', { duration: 2500 });
+  archive(image: GeneratedImage): void {
+    this.apiService.archiveOutfit(image.id).pipe(take(1)).subscribe({
+      next: () => {
+        this.outfitService.removeGeneratedImage(image.id);
+        this.snackBar.open('Outfit archived.', 'Dismiss', { duration: 2500 });
+      },
+      error: () => {
+        this.snackBar.open('Failed to archive outfit.', 'Dismiss', { duration: 3000 });
+      }
+    });
   }
 
   openUploadDialog(): void {
     this.dialog.open(SmartGarmentUploadDialogComponent, {
       width: '450px',
       maxWidth: '95vw',
+      maxHeight: '90vh',
+      panelClass: 'garment-upload-dialog',
       disableClose: false
     });
   }

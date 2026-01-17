@@ -5,6 +5,12 @@
   gap: 1.5rem;
   max-width: 800px;
   margin: 0 auto;
+
+  // Prevent horizontal overflow on mobile
+  @media (max-width: 600px) {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
 }
 
 /* Page navigation */
@@ -26,6 +32,8 @@
 /* Balance Card */
 .balance-card {
   text-align: center;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .balance-display {
@@ -61,6 +69,12 @@
 }
 
 /* History Card */
+.history-card {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 .history-card mat-card-content {
   padding: 0;
 }
@@ -90,13 +104,38 @@
 /* Transactions Table */
 .table-wrapper {
   width: 100%;
-  overflow-x: auto; // Enable horizontal scroll on mobile
-  -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .transactions-table {
   width: 100%;
-  min-width: 400px; // Ensure table doesn't get too squished
+
+  // More compact on mobile
+  @media (max-width: 600px) {
+    min-width: 100%;
+
+    th, td {
+      padding: 8px 6px !important;
+      font-size: 0.8rem;
+    }
+
+    // Make date column narrower
+    th:first-child,
+    td:first-child {
+      white-space: nowrap;
+      font-size: 0.75rem;
+    }
+
+    // Truncate description on mobile
+    th:nth-child(2),
+    td:nth-child(2) {
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 }
 
 .transactions-table th {

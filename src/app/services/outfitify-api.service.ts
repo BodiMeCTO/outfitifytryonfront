@@ -113,8 +113,9 @@ export class OutfitifyApiService {
   }
 
   // --- Outfits ---
-  listOutfitRequests(): Observable<OutfitDto[]> {
-    return this.http.get<OutfitDto[]>(this.buildUrl('/api/outfits'));
+  listOutfitRequests(includeArchived: boolean = false): Observable<OutfitDto[]> {
+    const url = includeArchived ? '/api/outfits?includeArchived=true' : '/api/outfits';
+    return this.http.get<OutfitDto[]>(this.buildUrl(url));
   }
 
   getOutfitRequest(id: string): Observable<OutfitDto> {
@@ -123,6 +124,14 @@ export class OutfitifyApiService {
 
   createOutfitRequest(request: CreateOutfitDto): Observable<OutfitDto> {
     return this.http.post<OutfitDto>(this.buildUrl('/api/outfits'), request);
+  }
+
+  archiveOutfit(id: string): Observable<void> {
+    return this.http.patch<void>(this.buildUrl(`/api/outfits/${id}/archive`), {});
+  }
+
+  unarchiveOutfit(id: string): Observable<void> {
+    return this.http.patch<void>(this.buildUrl(`/api/outfits/${id}/unarchive`), {});
   }
 
   // --- User uploaded model images ---

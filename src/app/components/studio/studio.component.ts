@@ -3,9 +3,11 @@ import {
   Component,
   OnInit,
   inject,
-  signal
+  signal,
+  ViewChild,
+  ElementRef
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, LowerCasePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,6 +21,7 @@ import { combineLatest } from 'rxjs';
 
 import { OutfitService } from '../../services/outfit.service';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
+import { CreditsService } from '../../services/credits.service';
 import {
   SelectedInspiration,
   Garment,
@@ -37,9 +40,8 @@ import { LuxeImageCardComponent } from '../shared/luxe-image-card/luxe-image-car
 import { LuxeCarouselComponent } from '../shared/luxe-carousel/luxe-carousel.component';
 import { GenerationProgressComponent } from '../shared/generation-progress/generation-progress.component';
 import { SmartGarmentUploadDialogComponent } from '../smart-garment-upload-dialog/smart-garment-upload-dialog.component';
-import { OnboardingTutorialComponent } from '../onboarding-tutorial/onboarding-tutorial.component';
 import { ArchivePanelComponent } from '../archive-panel/archive-panel.component';
-import { TutorialService } from '../../services/tutorial.service';
+import { WelcomeDialogComponent } from '../shared/welcome-dialog/welcome-dialog.component';
 
 // Group display config
 interface GroupConfig {
@@ -60,6 +62,7 @@ const GARMENT_GROUPS: GroupConfig[] = [
   selector: 'app-studio',
   imports: [
     CommonModule,
+    LowerCasePipe,
     FormsModule,
     MatIconModule,
     MatButtonModule,
@@ -80,30 +83,36 @@ const GARMENT_GROUPS: GroupConfig[] = [
 export class StudioComponent implements OnInit {
   private readonly outfitService = inject(OutfitService);
   private readonly apiService = inject(OutfitifyApiService);
+  private readonly creditsService = inject(CreditsService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
-  private readonly tutorialService = inject(TutorialService);
 
   // Model image state
   readonly selectedModel$ = this.outfitService.selectedInspiration$;
+  readonly selectedModels$ = this.outfitService.selectedModels$;
+  readonly selectedModelCount$ = this.outfitService.selectedModelCount$;
+  readonly maxSelectedModels = this.outfitService.getMaxSelectedModels();
   readonly userModels$ = this.outfitService.userModelImages$;
   readonly isUploadingModel = signal(false);
   readonly showTemplates = signal(this.loadShowTemplatesPreference());
 
   // Pose state
   readonly posePresets = POSE_PRESETS;
-  readonly selectedPoseId = signal<string>('original');
+  readonly selectedPoseId = signal<string>(this.outfitService.getSelectedPosePresetId());
 
   // Background prompt state (for AI-generated backgrounds)
   readonly backgroundPresets = BACKGROUND_PROMPT_PRESETS;
   readonly backgroundCategories = BACKGROUND_CATEGORIES;
   readonly aspectRatioOptions = ASPECT_RATIO_OPTIONS;
-  readonly selectedPresetId = signal<string | null>(null);
-  readonly customBackgroundPrompt = signal<string>('');
-  readonly selectedAspectRatio = signal<AspectRatioOption>('original');
-  readonly activeBackgroundCategory = signal<BackgroundCategory>('original');
+  readonly selectedPresetId = signal<string | null>(this.outfitService.getSelectedBackgroundPresetId());
+  readonly customBackgroundPrompt = signal<string>(this.outfitService.getCustomBackgroundPrompt() ?? '');
+  readonly selectedAspectRatio = signal<AspectRatioOption>(this.outfitService.getAspectRatio());
+  readonly activeBackgroundCategory = signal<BackgroundCategory>(this.getInitialBackgroundCategory());
   readonly expandedCategory = signal<BackgroundCategory | null>(null);
+
+  // ViewChild for scrolling to expanded background content on mobile
+  @ViewChild('backgroundExpandedContent') backgroundExpandedContent?: ElementRef<HTMLElement>;
 
   // Filtered model images: only show original uploads (not background variants)
   // Also filters out templates when showTemplates is false
@@ -155,10 +164,10 @@ export class StudioComponent implements OnInit {
 
   // Computed: can generate?
   readonly canGenerate$ = combineLatest([
-    this.selectedModel$,
+    this.selectedModels$,
     this.outfitService.hasCompleteGarmentSelection$
   ]).pipe(
-    map(([model, hasGarments]) => !!model && hasGarments)
+    map(([models, hasGarments]) => models.length > 0 && hasGarments)
   );
 
   // Count selected garments
@@ -174,19 +183,21 @@ export class StudioComponent implements OnInit {
 
   /**
    * Calculate credit cost for generation:
-   * - Base try-on: 2 credits
-   * - Pose change: +1 credit
-   * - Background change: +1 credit
+   * - Base try-on: 2 credits per model
+   * - Pose change: +1 credit per model
+   * - Background change: +1 credit per model
+   * Total = (base + pose + background) * modelCount
    */
   get generationCreditCost(): number {
-    let cost = 2; // Base try-on cost
+    let perModelCost = 2; // Base try-on cost
     if (this.selectedPoseId() !== 'original') {
-      cost += 1; // Pose change
+      perModelCost += 1; // Pose change
     }
     if (this.hasBackgroundSelection()) {
-      cost += 1; // Background change
+      perModelCost += 1; // Background change
     }
-    return cost;
+    const modelCount = this.outfitService.getSelectedModels().length;
+    return perModelCost * Math.max(modelCount, 1);
   }
 
   ngOnInit(): void {
@@ -206,8 +217,8 @@ export class StudioComponent implements OnInit {
         error: (err: unknown) => console.error('Failed to load garments', err)
       });
 
-    // Check for first-time user and show tutorial
-    this.checkFirstTimeUser();
+    // Check for new signup and show welcome dialog
+    this.checkNewUserWelcome();
   }
 
   // Background preset methods
@@ -248,8 +259,20 @@ export class StudioComponent implements OnInit {
       this.selectedPresetId.set(null);
       this.customBackgroundPrompt.set('');
       this.activeBackgroundCategory.set('original');
+      this.outfitService.setSelectedBackgroundPresetId(null);
+      this.outfitService.setCustomBackgroundPrompt(null);
     } else {
       this.activeBackgroundCategory.set(category);
+
+      // On mobile, scroll to the expanded content after it renders
+      if (window.innerWidth < 1024) {
+        setTimeout(() => {
+          this.backgroundExpandedContent?.nativeElement?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 100);
+      }
     }
   }
 
@@ -259,11 +282,15 @@ export class StudioComponent implements OnInit {
       // Deselect
       this.selectedPresetId.set(null);
       this.customBackgroundPrompt.set('');
+      this.outfitService.setSelectedBackgroundPresetId(null);
+      this.outfitService.setCustomBackgroundPrompt(null);
     } else {
       // Select and copy prompt to custom field for visibility
       this.selectedPresetId.set(preset.id);
       this.customBackgroundPrompt.set(preset.prompt);
       this.activeBackgroundCategory.set(preset.category);
+      this.outfitService.setSelectedBackgroundPresetId(preset.id);
+      this.outfitService.setCustomBackgroundPrompt(preset.prompt);
     }
   }
 
@@ -280,26 +307,32 @@ export class StudioComponent implements OnInit {
     this.customBackgroundPrompt.set('');
     this.expandedCategory.set('original');
     this.activeBackgroundCategory.set('original');
+    this.outfitService.setSelectedBackgroundPresetId(null);
+    this.outfitService.setCustomBackgroundPrompt(null);
   }
 
   onCustomPromptChange(value: string): void {
     this.customBackgroundPrompt.set(value);
+    this.outfitService.setCustomBackgroundPrompt(value || null);
     // Clear preset selection when user types custom prompt
     if (value && this.selectedPresetId()) {
       const selectedPreset = this.backgroundPresets.find(p => p.id === this.selectedPresetId());
       if (selectedPreset && value !== selectedPreset.prompt) {
         this.selectedPresetId.set(null);
+        this.outfitService.setSelectedBackgroundPresetId(null);
       }
     }
   }
 
   selectAspectRatio(ratio: AspectRatioOption): void {
     this.selectedAspectRatio.set(ratio);
+    this.outfitService.setAspectRatio(ratio);
   }
 
   // Pose selection methods
   selectPose(poseId: string): void {
     this.selectedPoseId.set(poseId);
+    this.outfitService.setSelectedPosePresetId(poseId);
   }
 
   isPoseSelected(poseId: string): boolean {
@@ -319,30 +352,22 @@ export class StudioComponent implements OnInit {
            !!this.customBackgroundPrompt().trim();
   }
 
-  private checkFirstTimeUser(): void {
-    // Skip if tutorial was already completed
-    if (this.tutorialService.isTutorialCompleted()) return;
+  private checkNewUserWelcome(): void {
+    const isNewUser = localStorage.getItem('outfitify_new_user');
+    if (isNewUser === 'true') {
+      // Clear the flag immediately to prevent showing again
+      localStorage.removeItem('outfitify_new_user');
 
-    // Wait for data to load, then check if user has no content
-    combineLatest([
-      this.outfitService.ensureUserModelImagesLoaded(),
-      this.outfitService.ensureGarmentsLoaded()
-    ]).pipe(take(1)).subscribe(([models, garments]) => {
-      // Show tutorial only if user has no model images AND no garments
-      if (models.length === 0 && garments.length === 0) {
-        this.openTutorialDialog();
-      }
-    });
-  }
-
-  private openTutorialDialog(): void {
-    this.dialog.open(OnboardingTutorialComponent, {
-      disableClose: true,
-      panelClass: 'tutorial-dialog-panel',
-      maxWidth: '100vw',
-      width: '100%',
-      height: '100%'
-    });
+      // Show welcome dialog with a slight delay to let the page load
+      setTimeout(() => {
+        this.dialog.open(WelcomeDialogComponent, {
+          width: '420px',
+          maxWidth: '95vw',
+          disableClose: false,
+          panelClass: 'welcome-dialog-panel'
+        });
+      }, 500);
+    }
   }
 
   // Model methods - supports multiple file upload
@@ -414,10 +439,34 @@ export class StudioComponent implements OnInit {
   }
 
   selectModel(model: SelectedInspiration): void {
-    this.outfitService.setInspiration(model);
-    if (model.id) {
-      this.outfitService.setSelectedModel({ id: model.id });
+    // Toggle selection for multi-model support
+    const wasAdded = this.outfitService.toggleModelSelection(model);
+
+    // Show feedback when max limit is reached (model wasn't added AND wasn't already selected)
+    if (!wasAdded && !this.outfitService.isModelSelected(model.id)) {
+      this.snackBar.open(
+        `Maximum ${this.outfitService.getMaxSelectedModels()} models allowed`,
+        undefined,
+        { duration: 2500 }
+      );
     }
+  }
+
+  isModelSelected(model: SelectedInspiration): boolean {
+    return this.outfitService.isModelSelected(model.id);
+  }
+
+  getModelSelectionBadge(model: SelectedInspiration): string | undefined {
+    const models = this.outfitService.getSelectedModels();
+    const index = models.findIndex(m => m.id === model.id);
+    if (index >= 0) {
+      return `${index + 1}`;
+    }
+    return undefined;
+  }
+
+  clearModelSelection(): void {
+    this.outfitService.clearModelSelection();
   }
 
   // Garment methods - use toggleSelectedGarment for multi-selection support
@@ -430,10 +479,37 @@ export class StudioComponent implements OnInit {
     return this.outfitService.isGarmentSelected(garment.group, garment.id);
   }
 
+  clearAllGarments(): void {
+    this.outfitService.clearAllGarments();
+    this.snackBar.open('All garments cleared', undefined, { duration: 2000 });
+  }
+
+  clearGarmentCategory(event: Event, group: GarmentGroup): void {
+    event.stopPropagation();
+    this.outfitService.clearGarmentCategory(group);
+  }
+
   // Generation
   generateOutfit(): void {
+    // Check if user has enough credits for all selected models
+    const totalCost = this.generationCreditCost;
+    const currentBalance = this.creditsService.balance;
+
+    if (currentBalance !== null && currentBalance < totalCost) {
+      this.snackBar.open(
+        `Insufficient credits. You need ${totalCost} credits but only have ${currentBalance}.`,
+        'Get Credits',
+        { duration: 5000 }
+      ).onAction().subscribe(() => {
+        this.router.navigate(['/billing']);
+      });
+      return;
+    }
+
     this.isGenerating.set(true);
-    this.generationProgress.set('Preparing your outfit...');
+
+    const modelCount = this.outfitService.getSelectedModels().length;
+    this.generationProgress.set(`Preparing ${modelCount > 1 ? modelCount + ' outfits' : 'your outfit'}...`);
 
     // Set pose, background prompt, and aspect ratio in the service before creating outfit
     const posePrompt = this.getSelectedPosePrompt();
@@ -445,16 +521,35 @@ export class StudioComponent implements OnInit {
     this.outfitService.setCustomBackgroundPrompt(backgroundPrompt);
     this.outfitService.setAspectRatio(aspectRatio);
 
-    this.outfitService.createOutfit().pipe(take(1)).subscribe({
-      next: () => {
-        this.generationProgress.set('Generation started!');
+    this.outfitService.createOutfits().pipe(take(1)).subscribe({
+      next: (result) => {
+        const { succeeded, failed } = result;
+
         setTimeout(() => {
           this.isGenerating.set(false);
           this.generationProgress.set(null);
-          this.snackBar.open('Outfit generation started!', 'Nice!', {
-            duration: 3500
-          });
-          this.router.navigate(['/generated-gallery']);
+
+          if (failed.length === 0) {
+            this.snackBar.open(
+              `${succeeded.length} outfit${succeeded.length > 1 ? 's' : ''} generation started!`,
+              'Nice!',
+              { duration: 3500 }
+            );
+          } else if (succeeded.length > 0) {
+            this.snackBar.open(
+              `${succeeded.length} started, ${failed.length} failed`,
+              'View',
+              { duration: 5000 }
+            );
+          } else {
+            this.snackBar.open('All generations failed. Please try again.', 'Dismiss', {
+              duration: 4000
+            });
+          }
+
+          if (succeeded.length > 0) {
+            this.router.navigate(['/generated-gallery']);
+          }
         }, 1000);
       },
       error: () => {
@@ -566,5 +661,16 @@ export class StudioComponent implements OnInit {
 
   private saveShowTemplatesPreference(value: boolean): void {
     localStorage.setItem('studio.showTemplates', String(value));
+  }
+
+  private getInitialBackgroundCategory(): BackgroundCategory {
+    const presetId = this.outfitService.getSelectedBackgroundPresetId();
+    if (presetId) {
+      const preset = this.backgroundPresets.find(p => p.id === presetId);
+      if (preset) {
+        return preset.category;
+      }
+    }
+    return 'original';
   }
 }

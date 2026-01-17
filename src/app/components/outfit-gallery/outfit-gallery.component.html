@@ -1,6 +1,15 @@
 <section class="section-card outfit-gallery">
   <header class="header">
     <h1>Generated outfits</h1>
+    <button
+      mat-icon-button
+      class="archive-btn"
+      (click)="openArchivePanel()"
+      matTooltip="View archived items"
+      aria-label="View archived items"
+    >
+      <mat-icon>inventory_2</mat-icon>
+    </button>
   </header>
 
   <!-- Empty state (no outfits yet) -->
@@ -18,56 +27,57 @@
     >
       <figure (click)="viewImage(image, i)" tabindex="0" role="button" aria-label="View generated outfit">
         <img *ngIf="image.status === 'ready'" [src]="image.imageUrl" alt="Generated outfit" />
-        <img *ngIf="image.status !== 'ready'" src="/assets/images/outfit-loading.gif" alt="Creating outfit..." class="loading-gif" />
+        <img *ngIf="image.status === 'processing' || image.status === 'pending_retry'" src="/assets/images/outfit-loading.gif" alt="Creating outfit..." class="loading-gif" />
+        <div *ngIf="image.status === 'failed'" class="failed-placeholder">
+          <mat-icon>error_outline</mat-icon>
+          <span class="failed-title">Generation failed</span>
+          <span class="failed-reason" *ngIf="image.failureReason">{{ image.failureReason }}</span>
+        </div>
         <!-- Variants badge -->
         <span class="variants-badge" *ngIf="image.variantCount && image.variantCount > 1">
           <mat-icon>layers</mat-icon>
           {{ image.variantCount }}
         </span>
       </figure>
+
       <mat-card-content>
         <div class="meta">
           <span>{{ image.createdAt | date: 'short' }}</span>
           <span
             class="status-badge"
             [class.status-badge--ready]="image.status === 'ready'"
+            [class.status-badge--failed]="image.status === 'failed'"
+            [class.status-badge--pending-retry]="image.status === 'pending_retry'"
+            [matTooltip]="image.status === 'failed' ? image.failureReason : (image.status === 'pending_retry' ? 'Server busy - will complete soon' : '')"
           >
-            <mat-icon>{{ image.status === 'ready' ? 'check_circle' : 'timelapse' }}</mat-icon>
-            {{ image.status === 'ready' ? 'Ready' : 'Processing' }}
+            <mat-icon>{{
+              image.status === 'ready' ? 'check_circle' :
+              (image.status === 'failed' ? 'error' :
+              (image.status === 'pending_retry' ? 'schedule' : 'timelapse'))
+            }}</mat-icon>
+            {{
+              image.status === 'ready' ? 'Ready' :
+              (image.status === 'failed' ? 'Failed' :
+              (image.status === 'pending_retry' ? 'Queued' : 'Processing'))
+            }}
           </span>
           <button
             mat-icon-button
-            [matMenuTriggerFor]="imageActions"
-            [matMenuTriggerData]="{ image: image, index: i }"
-            aria-label="More actions"
+            (click)="archive(image); $event.stopPropagation()"
+            aria-label="Archive outfit"
+            matTooltip="Archive"
           >
-            <mat-icon>more_vert</mat-icon>
+            <mat-icon>archive</mat-icon>
           </button>
         </div>
       </mat-card-content>
-      <mat-card-actions>
-        <button mat-button color="primary" (click)="viewImage(image, i)">
-          Review
-          <mat-icon>open_in_new</mat-icon>
-        </button>
-      </mat-card-actions>
     </mat-card>
   </div>
-
-  <mat-menu #imageActions="matMenu">
-    <ng-template matMenuContent let-data="matMenuTriggerData">
-      <button mat-menu-item (click)="viewImage(data.image, data.index)">
-        <mat-icon>open_in_new</mat-icon>
-        Review
-      </button>
-      <button mat-menu-item (click)="openEditDialog(data.image)" [disabled]="data.image.status !== 'ready'">
-        <mat-icon>tune</mat-icon>
-        Enhance
-      </button>
-      <button mat-menu-item (click)="remove(data.image)">
-        <mat-icon>delete</mat-icon>
-        Delete outfit
-      </button>
-    </ng-template>
-  </mat-menu>
 </section>
+
+<!-- Archive Panel -->
+<app-archive-panel
+  [isOpen]="isArchivePanelOpen()"
+  (closed)="closeArchivePanel()"
+  (itemRestored)="onArchiveItemRestored()"
+></app-archive-panel>

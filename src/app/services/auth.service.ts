@@ -18,19 +18,25 @@ export class AuthService {
   constructor(private readonly api: OutfitifyApiService) {
     // On app start, restore token from localStorage if it exists
     const saved = localStorage.getItem('access_token')?.trim();
-    const savedEmail = localStorage.getItem('user_email');
-    if (saved) {
+    const savedEmail = localStorage.getItem('user_email')?.trim();
+
+    // Validate token is not empty or invalid
+    const isValidToken = saved && saved.length > 0 && saved !== 'null' && saved !== 'undefined';
+    const isValidEmail = savedEmail && savedEmail.length > 0 && savedEmail !== 'null' && savedEmail !== 'undefined';
+
+    if (isValidToken && isValidEmail) {
       this.tokenSubject.next(saved);
-      if (savedEmail) {
-        this.emailSubject.next(savedEmail);
-        this.refreshCurrentUser().subscribe({
-          error: (err) => console.error('Unable to load current user', err)
-        });
-      } else {
-        // No stored email means we cannot call the email-based profile endpoint; force re-login.
-        console.warn('Access token found without stored email. Clearing session and requiring login.');
-        this.logout();
-      }
+      this.emailSubject.next(savedEmail);
+      this.refreshCurrentUser().subscribe({
+        error: (err) => console.error('Unable to load current user', err)
+      });
+    } else if (isValidToken && !isValidEmail) {
+      // No stored email means we cannot call the email-based profile endpoint; force re-login.
+      console.warn('Access token found without stored email. Clearing session and requiring login.');
+      this.logout();
+    } else {
+      // No valid token - ensure clean state
+      this.logout();
     }
   }
 
@@ -38,6 +44,18 @@ export class AuthService {
    * Call the backend /Token endpoint using password grant.
    */
   login(username: string, password: string): Observable<UserProfile | null> {
+    // Clear any previous session state before logging in
+    const previousEmail = this.emailSubject.value;
+    if (previousEmail && previousEmail !== username) {
+      console.log(`[Auth] Switching user from ${previousEmail} to ${username}`);
+      // Clear previous state to prevent stale data
+      this.tokenSubject.next(null);
+      this.userSubject.next(null);
+      this.emailSubject.next(null);
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_email');
+    }
+
     const payload = {
       grant_type: 'password',
       username,
@@ -48,7 +66,8 @@ export class AuthService {
 
     return this.api.exchangePassword(payload).pipe(
       tap((res) => {
-        // Store token
+        // Store token and email for the new user
+        console.log(`[Auth] Login successful for ${username}`);
         this.setToken(res.access_token);
         this.setEmail(username);
       }),
@@ -76,11 +95,17 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return this.tokenSubject.value ?? localStorage.getItem('access_token');
+    const token = this.tokenSubject.value ?? localStorage.getItem('access_token');
+    // Return null if token is empty, whitespace-only, or the literal string 'null'/'undefined'
+    if (!token || !token.trim() || token === 'null' || token === 'undefined') {
+      return null;
+    }
+    return token.trim();
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    return !!token && token.length > 0;
   }
 
   refreshCurrentUser(): Observable<UserProfile | null> {

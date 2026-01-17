@@ -23,6 +23,52 @@
       </div>
     </div>
 
+    <!-- Input details - what was used to create this outfit -->
+    <div class="input-details" *ngIf="current.modelImageUrl || current.poseName || current.backgroundName || (current.garments && current.garments.length > 0)">
+      <div class="input-header">
+        <mat-icon>info_outline</mat-icon>
+        <span>Created with</span>
+      </div>
+      <div class="input-content">
+        <!-- Model thumbnail -->
+        <img
+          *ngIf="current.modelImageUrl"
+          [src]="current.modelImageUrl"
+          alt="Model"
+          class="input-model-thumb"
+          matTooltip="Model image"
+        />
+        <!-- Details column -->
+        <div class="input-info">
+          <!-- Settings tags -->
+          <div class="input-settings" *ngIf="current.poseName || current.backgroundName || current.aspectRatio">
+            <span *ngIf="current.poseName" class="input-tag">
+              <mat-icon>accessibility_new</mat-icon>
+              {{ current.poseName }}
+            </span>
+            <span *ngIf="current.backgroundName" class="input-tag">
+              <mat-icon>wallpaper</mat-icon>
+              {{ current.backgroundName }}
+            </span>
+            <span *ngIf="current.aspectRatio && current.aspectRatio !== 'original'" class="input-tag">
+              <mat-icon>aspect_ratio</mat-icon>
+              {{ current.aspectRatio }}
+            </span>
+          </div>
+          <!-- Garments row -->
+          <div class="input-garments" *ngIf="current.garments && current.garments.length > 0">
+            <img
+              *ngFor="let garment of current.garments"
+              [src]="garment.imageUrl"
+              [alt]="garment.name"
+              class="input-garment-thumb"
+              [matTooltip]="garment.name + (garment.category ? ' (' + garment.category + ')' : '')"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="controls">
       <button class="nav-btn" (click)="navigate(-1)" aria-label="Previous image">
         <mat-icon>chevron_left</mat-icon>

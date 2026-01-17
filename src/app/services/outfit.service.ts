@@ -4,17 +4,20 @@ import {
   BehaviorSubject,
   Observable,
   combineLatest,
+  from,
   of,
   throwError
 } from 'rxjs';
 import {
   catchError,
+  concatMap,
   distinctUntilChanged,
   filter,
   map,
   tap,
   switchMap,
-  take
+  take,
+  toArray
 } from 'rxjs/operators';
 
 import {
@@ -28,7 +31,9 @@ import {
   CreateOutfitDto,
   OutfitDto,
   OutfitGarment,
-  AspectRatioOption
+  AspectRatioOption,
+  BACKGROUND_PROMPT_PRESETS,
+  POSE_PRESETS
 } from '../models/outfit';
 
 import {
@@ -74,11 +79,17 @@ export interface CreateModelImageDto {
 export class OutfitService {
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
+  // Maximum models allowed for multi-selection
+  private readonly MAX_SELECTED_MODELS = 5;
+
   // --- Core selection state ---
 
   private readonly inspirationSubject = new BehaviorSubject<SelectedInspiration | null>(
     null
   );
+
+  // Multi-model selection
+  private readonly selectedModelsSubject = new BehaviorSubject<SelectedInspiration[]>([]);
 
   // All model images the user has uploaded
   private readonly userModelImagesSubject = new BehaviorSubject<SelectedInspiration[]>(
@@ -108,6 +119,10 @@ export class OutfitService {
   private readonly aspectRatioSubject = new BehaviorSubject<AspectRatioOption>('original');
   private readonly backgroundOptionsSubject = new BehaviorSubject<CatalogueOption[]>([]);
   private backgroundOptionsLoaded = false;
+
+  // UI state persistence for studio (pose preset, background preset)
+  private readonly selectedPosePresetIdSubject = new BehaviorSubject<string>('original');
+  private readonly selectedBackgroundPresetIdSubject = new BehaviorSubject<string | null>(null);
 
   // --- Gallery state ---
 
@@ -178,16 +193,42 @@ export class OutfitService {
   }
 
   private applyUserContext(user: UserProfile | null): void {
-    const clientChanged = this.currentUser?.clientId !== user?.clientId;
+    const previousUser = this.currentUser;
+    const clientChanged = previousUser?.clientId !== user?.clientId;
+    const userChanged = previousUser?.id !== user?.id;
     this.currentUser = user;
 
-    if (!user) {
+    // Clear all user-specific state when user changes or logs out
+    if (!user || userChanged) {
+      // Clear selections
       this.modelIdSubject.next(null);
       this.poseIdSubject.next(null);
       this.backgroundIdSubject.next(null);
       this.backgroundOptionsLoaded = false;
       this.backgroundOptionsSubject.next([]);
-      return;
+
+      // Clear generated images and gallery
+      this.generatedImagesSubject.next([]);
+      this.galleryIndexSubject.next(0);
+
+      // Clear selected models and garments
+      this.selectedModelsSubject.next([]);
+      this.topGarmentsSubject.next([]);
+      this.bottomGarmentsSubject.next([]);
+      this.fullBodyGarmentsSubject.next([]);
+      this.jacketGarmentsSubject.next([]);
+      this.accessoriesGarmentsSubject.next([]);
+
+      // Clear UI state
+      this.selectedPosePresetIdSubject.next('original');
+      this.selectedBackgroundPresetIdSubject.next(null);
+      this.customBackgroundPromptSubject.next(null);
+      this.posePromptSubject.next(null);
+      this.aspectRatioSubject.next('original');
+
+      if (!user) {
+        return;
+      }
     }
 
     if (user.modelImageId) {
@@ -198,7 +239,8 @@ export class OutfitService {
       this.poseIdSubject.next(user.poseOptionId);
     }
 
-    if (clientChanged) {
+    if (clientChanged && !userChanged) {
+      // Client changed but not full user change - just clear client-specific data
       this.backgroundIdSubject.next(null);
       this.backgroundOptionsLoaded = false;
       this.backgroundOptionsSubject.next([]);
@@ -245,6 +287,13 @@ export class OutfitService {
 
   readonly selectedInspiration$ = this.inspirationSubject.asObservable();
 
+  // Multi-model selection
+  readonly selectedModels$ = this.selectedModelsSubject.asObservable();
+  readonly selectedModelCount$ = this.selectedModelsSubject.pipe(
+    map(models => models.length),
+    distinctUntilChanged()
+  );
+
   // Saved model images for current user
   readonly userModelImages$ = this.userModelImagesSubject.asObservable();
 
@@ -266,6 +315,10 @@ export class OutfitService {
   readonly customBackgroundPrompt$ = this.customBackgroundPromptSubject.asObservable();
   readonly selectedAspectRatio$ = this.aspectRatioSubject.asObservable();
   readonly backgroundOptions$ = this.backgroundOptionsSubject.asObservable();
+
+  // UI state persistence for studio
+  readonly selectedPosePresetId$ = this.selectedPosePresetIdSubject.asObservable();
+  readonly selectedBackgroundPresetId$ = this.selectedBackgroundPresetIdSubject.asObservable();
 
   readonly selectedBackground$ = combineLatest([
     this.selectedBackgroundId$,
@@ -329,29 +382,31 @@ export class OutfitService {
     distinctUntilChanged()
   );
 
-  // Credits cost calculation: 2 (base) + 1 (if pose changed) + 1 (if background changed) = max 4
+  // Credits cost calculation: (2 base + 1 pose + 1 background) * modelCount
   readonly estimatedCreditsCost$ = combineLatest([
     this.posePromptSubject,
     this.selectedBackgroundId$,
-    this.customBackgroundPrompt$
+    this.customBackgroundPrompt$,
+    this.selectedModelCount$
   ]).pipe(
-    map(([posePrompt, backgroundId, customPrompt]) => {
-      // Flat generation cost
-      let cost = 2;
+    map(([posePrompt, backgroundId, customPrompt, modelCount]) => {
+      // Per-model cost
+      let perModelCost = 2;
 
       // +1 if pose is changed
       const hasPoseChange = !!posePrompt;
       if (hasPoseChange) {
-        cost += 1;
+        perModelCost += 1;
       }
 
       // +1 if background is changed (either preset or custom prompt)
       const hasBackgroundChange = !!backgroundId || !!customPrompt;
       if (hasBackgroundChange) {
-        cost += 1;
+        perModelCost += 1;
       }
 
-      return cost;
+      // Total = per-model cost * number of models (minimum 1)
+      return perModelCost * Math.max(modelCount, 1);
     }),
     distinctUntilChanged()
   );
@@ -392,6 +447,83 @@ export class OutfitService {
 
   setInspiration(selection: SelectedInspiration | null): void {
     this.inspirationSubject.next(selection);
+  }
+
+  // -----------------------------
+  // Multi-model selection
+  // -----------------------------
+
+  /**
+   * Toggles a model's selection state for multi-model mode.
+   * Returns true if model was added, false if removed or limit reached.
+   */
+  toggleModelSelection(model: SelectedInspiration): boolean {
+    const current = this.selectedModelsSubject.value;
+    const existingIndex = current.findIndex(m => m.id === model.id);
+
+    if (existingIndex >= 0) {
+      // Remove model
+      const updated = current.filter((_, i) => i !== existingIndex);
+      this.selectedModelsSubject.next(updated);
+
+      // Update single inspiration for backward compatibility
+      if (updated.length > 0) {
+        this.inspirationSubject.next(updated[0]);
+        this.modelIdSubject.next(updated[0].id ?? null);
+      } else {
+        this.inspirationSubject.next(null);
+        this.modelIdSubject.next(null);
+      }
+
+      return false;
+    } else {
+      // Check if max limit reached
+      if (current.length >= this.MAX_SELECTED_MODELS) {
+        console.warn(`[OutfitService] Max ${this.MAX_SELECTED_MODELS} models allowed`);
+        return false;
+      }
+
+      // Add model
+      const updated = [...current, model];
+      this.selectedModelsSubject.next(updated);
+
+      // Update single inspiration to first selected model
+      this.inspirationSubject.next(updated[0]);
+      this.modelIdSubject.next(updated[0].id ?? null);
+
+      return true;
+    }
+  }
+
+  /**
+   * Checks if a model is currently selected.
+   */
+  isModelSelected(modelId: string | undefined): boolean {
+    if (!modelId) return false;
+    return this.selectedModelsSubject.value.some(m => m.id === modelId);
+  }
+
+  /**
+   * Clears all selected models.
+   */
+  clearModelSelection(): void {
+    this.selectedModelsSubject.next([]);
+    this.inspirationSubject.next(null);
+    this.modelIdSubject.next(null);
+  }
+
+  /**
+   * Gets the maximum number of models allowed.
+   */
+  getMaxSelectedModels(): number {
+    return this.MAX_SELECTED_MODELS;
+  }
+
+  /**
+   * Gets the current selected models array.
+   */
+  getSelectedModels(): SelectedInspiration[] {
+    return this.selectedModelsSubject.value;
   }
 
   // -----------------------------
@@ -713,6 +845,52 @@ uploadAndSetInspiration(
     }
   }
 
+  /**
+   * Clears all selected garments across all categories.
+   * Resets both garment selections and their associated sizes.
+   */
+  clearAllGarments(): void {
+    this.topGarmentsSubject.next([]);
+    this.bottomGarmentsSubject.next([]);
+    this.fullBodyGarmentsSubject.next([]);
+    this.jacketGarmentsSubject.next([]);
+    this.accessoriesGarmentsSubject.next([]);
+
+    this.topSizesSubject.next({});
+    this.bottomSizesSubject.next({});
+    this.fullBodySizesSubject.next({});
+    this.jacketSizesSubject.next({});
+    this.accessoriesSizesSubject.next({});
+  }
+
+  /**
+   * Clears selected garments for a specific category.
+   */
+  clearGarmentCategory(group: GarmentGroup): void {
+    switch (group) {
+      case 'tops':
+        this.topGarmentsSubject.next([]);
+        this.topSizesSubject.next({});
+        break;
+      case 'bottoms':
+        this.bottomGarmentsSubject.next([]);
+        this.bottomSizesSubject.next({});
+        break;
+      case 'full-body':
+        this.fullBodyGarmentsSubject.next([]);
+        this.fullBodySizesSubject.next({});
+        break;
+      case 'jackets':
+        this.jacketGarmentsSubject.next([]);
+        this.jacketSizesSubject.next({});
+        break;
+      case 'accessories':
+        this.accessoriesGarmentsSubject.next([]);
+        this.accessoriesSizesSubject.next({});
+        break;
+    }
+  }
+
   // For Shopify / admin where model/pose/background are explicit choices
   setSelectedModel(option: { id: string } | null): void {
     this.modelIdSubject.next(option?.id ?? null);
@@ -748,6 +926,27 @@ uploadAndSetInspiration(
 
   getAspectRatio(): AspectRatioOption {
     return this.aspectRatioSubject.value;
+  }
+
+  // UI state persistence for studio
+  setSelectedPosePresetId(presetId: string): void {
+    this.selectedPosePresetIdSubject.next(presetId);
+  }
+
+  getSelectedPosePresetId(): string {
+    return this.selectedPosePresetIdSubject.value;
+  }
+
+  setSelectedBackgroundPresetId(presetId: string | null): void {
+    this.selectedBackgroundPresetIdSubject.next(presetId);
+  }
+
+  getSelectedBackgroundPresetId(): string | null {
+    return this.selectedBackgroundPresetIdSubject.value;
+  }
+
+  getCustomBackgroundPrompt(): string | null {
+    return this.customBackgroundPromptSubject.value;
   }
 
   ensureBackgroundOptionsLoaded(): Observable<CatalogueOption[]> {
@@ -1078,14 +1277,30 @@ uploadAndSetInspiration(
     // Get aspect ratio selection
     const aspectRatio = this.aspectRatioSubject.value;
 
+    // Get pose preset name for display purposes
+    const posePresetId = this.selectedPosePresetIdSubject.value;
+    const posePreset = posePresetId && posePresetId !== 'original'
+      ? POSE_PRESETS.find(p => p.id === posePresetId)
+      : null;
+    const posePresetName = posePreset?.name || null;
+
+    // Get background preset name for display purposes
+    const backgroundPresetId = this.selectedBackgroundPresetIdSubject.value;
+    const backgroundPreset = backgroundPresetId
+      ? BACKGROUND_PROMPT_PRESETS.find(p => p.id === backgroundPresetId)
+      : null;
+    const backgroundPresetName = backgroundPreset?.name || null;
+
     // Build payload with all user selections
     const payload: CreateOutfitDto = {
       modelImageId: modelId,
       poseOptionId: poseId,
       backgroundOptionId: null,
       customBackgroundPrompt: customBackgroundPrompt || null,
+      backgroundPresetName: backgroundPresetName,
       aspectRatio: aspectRatio || null,
       posePrompt: posePrompt || null,
+      posePresetName: posePresetName,
       outfitGarments
     };
 
@@ -1103,6 +1318,140 @@ uploadAndSetInspiration(
           throwError(() => this.createApiUnavailableError('creating an outfit', error))
         )
       );
+  }
+
+  /**
+   * Creates outfit requests for all selected models.
+   * Returns an Observable that emits results with succeeded and failed arrays.
+   */
+  createOutfits(): Observable<{ succeeded: GeneratedImage[]; failed: string[] }> {
+    const selectedModels = this.selectedModelsSubject.value;
+
+    if (selectedModels.length === 0) {
+      return throwError(() => new Error('No models selected.'));
+    }
+
+    const allGarments = [
+      ...this.topGarmentsSubject.value,
+      ...this.bottomGarmentsSubject.value,
+      ...this.fullBodyGarmentsSubject.value,
+      ...this.jacketGarmentsSubject.value,
+      ...this.accessoriesGarmentsSubject.value
+    ];
+
+    if (allGarments.length === 0) {
+      return throwError(() => new Error('Please select at least one garment.'));
+    }
+
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      return throwError(() => error);
+    }
+
+    // Get pose
+    const poseId = this.getActivePoseOptionId();
+    if (!poseId) {
+      return this.outfitifyApi.listPoses().pipe(
+        take(1),
+        switchMap((poses: CatalogueOption[]) => {
+          const firstPose = poses[0];
+          if (!firstPose?.id) {
+            return throwError(() => new Error('No poses available.'));
+          }
+          this.poseIdSubject.next(firstPose.id);
+          return this.doCreateOutfitsForModels(selectedModels, firstPose.id, allGarments);
+        })
+      );
+    }
+
+    return this.doCreateOutfitsForModels(selectedModels, poseId, allGarments);
+  }
+
+  private doCreateOutfitsForModels(
+    models: SelectedInspiration[],
+    poseId: string,
+    allGarments: Garment[]
+  ): Observable<{ succeeded: GeneratedImage[]; failed: string[] }> {
+    const outfitGarments: OutfitGarment[] = allGarments.map((garment) => ({
+      garmentEntityId: garment.id,
+      garmentSizeEntityId: null
+    }));
+
+    const posePrompt = this.posePromptSubject.value;
+    const customBackgroundPrompt = this.customBackgroundPromptSubject.value;
+    const aspectRatio = this.aspectRatioSubject.value;
+
+    // Get pose preset name for display purposes
+    const posePresetId = this.selectedPosePresetIdSubject.value;
+    const posePreset = posePresetId && posePresetId !== 'original'
+      ? POSE_PRESETS.find(p => p.id === posePresetId)
+      : null;
+    const posePresetName = posePreset?.name || null;
+
+    // Get background preset name for display purposes
+    const backgroundPresetId = this.selectedBackgroundPresetIdSubject.value;
+    const backgroundPreset = backgroundPresetId
+      ? BACKGROUND_PROMPT_PRESETS.find(p => p.id === backgroundPresetId)
+      : null;
+    const backgroundPresetName = backgroundPreset?.name || null;
+
+    // Execute sequentially to prevent race conditions with credit balance
+    // Using from() + concatMap ensures each request completes before the next starts
+    return from(models).pipe(
+      concatMap(model => {
+        if (!model.id) {
+          return of({ success: false as const, error: 'Model has no ID', modelName: model.name });
+        }
+
+        const payload: CreateOutfitDto = {
+          modelImageId: model.id,
+          poseOptionId: poseId,
+          backgroundOptionId: null,
+          customBackgroundPrompt: customBackgroundPrompt || null,
+          backgroundPresetName: backgroundPresetName,
+          aspectRatio: aspectRatio || null,
+          posePrompt: posePrompt || null,
+          posePresetName: posePresetName,
+          outfitGarments
+        };
+
+        return this.outfitifyApi.createOutfitRequest(payload).pipe(
+          map((response: OutfitDto) => ({
+            success: true as const,
+            image: this.mapOutfitDto(response)
+          })),
+          catchError(() => of({
+            success: false as const,
+            error: `Failed for model ${model.name || model.id}`,
+            modelName: model.name
+          }))
+        );
+      }),
+      toArray(),
+      map(results => {
+        const succeeded: GeneratedImage[] = [];
+        const failed: string[] = [];
+
+        results.forEach(result => {
+          if (result.success) {
+            succeeded.push(result.image);
+          } else {
+            failed.push(result.error);
+          }
+        });
+
+        // Add successful images to gallery
+        if (succeeded.length > 0) {
+          const existingImages = this.generatedImagesSubject.value;
+          const newIds = new Set(succeeded.map(img => img.id));
+          const filtered = existingImages.filter(img => !newIds.has(img.id));
+          this.generatedImagesSubject.next([...succeeded, ...filtered]);
+        }
+
+        return { succeeded, failed };
+      })
+    );
   }
 
   refreshGeneratedImages(): Observable<GeneratedImage[]> {
@@ -1210,9 +1559,17 @@ uploadAndSetInspiration(
 
   private mapOutfitDto(response: OutfitDto): GeneratedImage {
     const isReady = response.status === 'ready' || response.status === 'completed';
-    const defaultImage = isReady
-      ? 'assets/generated/placeholder-ready-1.svg'
-      : 'assets/generated/placeholder-processing.svg';
+    const isFailed = response.status === 'permanently_failed' || response.status === 'failed';
+    const isPendingRetry = response.status === 'pending_retry';
+
+    let defaultImage: string;
+    if (isReady) {
+      defaultImage = 'assets/generated/placeholder-ready-1.svg';
+    } else if (isFailed) {
+      defaultImage = 'assets/generated/placeholder-failed.svg';
+    } else {
+      defaultImage = 'assets/generated/placeholder-processing.svg';
+    }
 
     let primaryImageUrl = defaultImage;
     let outfitImageId: string | undefined;
@@ -1233,14 +1590,39 @@ uploadAndSetInspiration(
       outfitImageId = primaryImage.id;
     }
 
+    // Determine display status
+    let displayStatus: 'processing' | 'ready' | 'failed' | 'pending_retry';
+    if (isReady) {
+      displayStatus = 'ready';
+    } else if (isFailed) {
+      displayStatus = 'failed';
+    } else if (isPendingRetry) {
+      displayStatus = 'pending_retry';
+    } else {
+      displayStatus = 'processing';
+    }
+
     return {
       id: response.id,
       outfitImageId,
       imageUrl: primaryImageUrl,
       createdAt: response.createdAtUtc ? new Date(response.createdAtUtc) : new Date(),
-      status: isReady ? 'ready' : 'processing',
+      status: displayStatus,
+      failureReason: response.failureReason,
       variants,
-      variantCount: variants.length
+      variantCount: variants.length,
+      archivedAtUtc: response.archivedAtUtc,
+      // Input details for display
+      modelImageUrl: response.modelImageUrl ? this.resolveAssetUrl(response.modelImageUrl) : null,
+      poseName: response.poseName,
+      backgroundName: response.backgroundName,
+      aspectRatio: response.aspectRatio,
+      garments: response.garments?.map(g => ({
+        id: g.id,
+        name: g.name,
+        imageUrl: g.imageUrl ? this.resolveAssetUrl(g.imageUrl) : null,
+        category: g.category
+      }))
     };
   }
 

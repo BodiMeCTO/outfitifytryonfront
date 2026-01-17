@@ -92,7 +92,7 @@ export interface ProductImageDto {
 
 export interface OutfitRequestDto {
   id: string;
-  status: 'processing' | 'ready' | 'failed' | 'completed';
+  status: 'processing' | 'ready' | 'failed' | 'completed' | 'pending_retry' | 'permanently_failed';
   createdAt?: string;
   imageUrl?: string;
   image?: string;

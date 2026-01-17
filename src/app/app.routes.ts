@@ -72,6 +72,27 @@ export const routes: Routes = [
             .then((m) => m.CreditsComponent),
         title: 'Credits'
       },
+      {
+        path: 'billing',
+        loadComponent: () =>
+          import('./components/billing/billing.component')
+            .then((m) => m.BillingComponent),
+        title: 'Billing & Credits'
+      },
+      {
+        path: 'billing/success',
+        loadComponent: () =>
+          import('./components/billing/billing-success.component')
+            .then((m) => m.BillingSuccessComponent),
+        title: 'Payment Successful'
+      },
+      {
+        path: 'billing/cancel',
+        loadComponent: () =>
+          import('./components/billing/billing-cancel.component')
+            .then((m) => m.BillingCancelComponent),
+        title: 'Payment Cancelled'
+      },
       // Legacy routes (redirect to studio)
       {
         path: 'user-image-upload',

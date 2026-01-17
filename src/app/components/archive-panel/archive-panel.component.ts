@@ -23,6 +23,7 @@ import { take } from 'rxjs/operators';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { ModelImageDto, OutfitService } from '../../services/outfit.service';
 import { GarmentSummaryDto } from '../../models/outfitify-api';
+import { environment } from '../../../environments/environment';
 
 interface ArchivedModelImage {
   modelImageId: string;
@@ -36,6 +37,13 @@ interface ArchivedGarment {
   name: string;
   imageUrl: string;
   category: string;
+  archivedAtUtc: string;
+}
+
+interface ArchivedOutfit {
+  id: string;
+  imageUrl: string;
+  createdAt: string;
   archivedAtUtc: string;
 }
 
@@ -163,6 +171,53 @@ interface ArchivedGarment {
                   mat-icon-button
                   class="unarchive-button"
                   (click)="unarchiveGarment(item)"
+                  [disabled]="isUnarchiving()"
+                  aria-label="Restore"
+                >
+                  <mat-icon>unarchive</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Outfits Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">photo_library</mat-icon>
+            <span class="tab-label">Outfits</span>
+            <span class="tab-badge" *ngIf="archivedOutfits().length > 0">
+              {{ archivedOutfits().length }}
+            </span>
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="loading-container" *ngIf="isLoadingOutfits()">
+              <mat-spinner diameter="32"></mat-spinner>
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoadingOutfits() && archivedOutfits().length === 0">
+              <mat-icon class="empty-icon">inventory_2</mat-icon>
+              <p class="empty-text">No archived outfits</p>
+            </div>
+
+            <div class="archive-grid" *ngIf="!isLoadingOutfits() && archivedOutfits().length > 0">
+              <div
+                class="archive-item"
+                *ngFor="let item of archivedOutfits()"
+              >
+                <div class="item-image">
+                  <img [src]="item.imageUrl" alt="Archived outfit" />
+                </div>
+                <div class="item-info">
+                  <span class="item-name">Generated Outfit</span>
+                  <span class="item-date">Created: {{ formatDate(item.createdAt) }}</span>
+                  <span class="item-date">Archived: {{ formatDate(item.archivedAtUtc) }}</span>
+                </div>
+                <button
+                  mat-icon-button
+                  class="unarchive-button"
+                  (click)="unarchiveOutfit(item)"
                   [disabled]="isUnarchiving()"
                   aria-label="Restore"
                 >
@@ -435,8 +490,10 @@ export class ArchivePanelComponent implements OnInit, OnChanges {
 
   readonly archivedModelImages = signal<ArchivedModelImage[]>([]);
   readonly archivedGarments = signal<ArchivedGarment[]>([]);
+  readonly archivedOutfits = signal<ArchivedOutfit[]>([]);
   readonly isLoadingModelImages = signal(false);
   readonly isLoadingGarments = signal(false);
+  readonly isLoadingOutfits = signal(false);
   readonly isUnarchiving = signal(false);
 
   @HostListener('document:keydown.escape')
@@ -464,6 +521,7 @@ export class ArchivePanelComponent implements OnInit, OnChanges {
   loadArchivedItems(): void {
     this.loadArchivedModelImages();
     this.loadArchivedGarments();
+    this.loadArchivedOutfits();
   }
 
   private loadArchivedModelImages(): void {
@@ -475,7 +533,7 @@ export class ArchivePanelComponent implements OnInit, OnChanges {
           .map(item => ({
             modelImageId: item.modelImageId,
             name: item.name || 'Unnamed',
-            imageUrl: item.imageUrl || '',
+            imageUrl: this.resolveAssetUrl(item.imageUrl),
             archivedAtUtc: item.archivedAtUtc!
           }));
         this.archivedModelImages.set(archived);
@@ -500,7 +558,7 @@ export class ArchivePanelComponent implements OnInit, OnChanges {
             return {
               id: item.id || rawItem.garmentEntityId || rawItem.GarmentEntityId,
               name: item.name || rawItem.Name || 'Unnamed',
-              imageUrl: item.imageUrl || rawItem.ImageUrl || '',
+              imageUrl: this.resolveAssetUrl(item.imageUrl || rawItem.ImageUrl),
               category: item.category || rawItem.group || rawItem.Group || 'Unknown',
               archivedAtUtc: item.archivedAtUtc || rawItem.ArchivedAtUtc
             };
@@ -511,6 +569,35 @@ export class ArchivePanelComponent implements OnInit, OnChanges {
       error: () => {
         this.isLoadingGarments.set(false);
         this.snackBar.open('Failed to load archived garments', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  private loadArchivedOutfits(): void {
+    this.isLoadingOutfits.set(true);
+    this.apiService.listOutfitRequests(true).pipe(take(1)).subscribe({
+      next: (items) => {
+        const archived = items
+          .filter(item => item.archivedAtUtc)
+          .map(item => {
+            // Get the primary image URL from outfitImages and resolve it
+            let imageUrl = '';
+            if (item.outfitImages && item.outfitImages.length > 0) {
+              imageUrl = this.resolveAssetUrl(item.outfitImages[0].assetUrl);
+            }
+            return {
+              id: item.id,
+              imageUrl,
+              createdAt: item.createdAtUtc || '',
+              archivedAtUtc: item.archivedAtUtc!
+            };
+          });
+        this.archivedOutfits.set(archived);
+        this.isLoadingOutfits.set(false);
+      },
+      error: () => {
+        this.isLoadingOutfits.set(false);
+        this.snackBar.open('Failed to load archived outfits', 'Dismiss', { duration: 3000 });
       }
     });
   }
@@ -551,6 +638,24 @@ export class ArchivePanelComponent implements OnInit, OnChanges {
     });
   }
 
+  unarchiveOutfit(item: ArchivedOutfit): void {
+    this.isUnarchiving.set(true);
+    this.apiService.unarchiveOutfit(item.id).pipe(take(1)).subscribe({
+      next: () => {
+        this.archivedOutfits.update(items => items.filter(i => i.id !== item.id));
+        this.snackBar.open('Outfit restored', 'Dismiss', { duration: 3000 });
+        this.isUnarchiving.set(false);
+        this.itemRestored.emit();
+        // Refresh generated images in the outfit service
+        this.outfitService.refreshGeneratedImages().pipe(take(1)).subscribe();
+      },
+      error: () => {
+        this.isUnarchiving.set(false);
+        this.snackBar.open('Failed to restore outfit', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -558,5 +663,20 @@ export class ArchivePanelComponent implements OnInit, OnChanges {
       day: 'numeric',
       year: 'numeric'
     });
+  }
+
+  /**
+   * Resolves a URL by prepending the API base URL for relative paths.
+   */
+  private resolveAssetUrl(url: string | null | undefined): string {
+    if (!url) {
+      return '';
+    }
+    // If the URL starts with /, prepend the API base URL
+    if (url.startsWith('/')) {
+      const baseUrl = environment.apiBaseUrl.replace(/\/$/, '');
+      return `${baseUrl}${url}`;
+    }
+    return url;
   }
 }

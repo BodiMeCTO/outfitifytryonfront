@@ -321,6 +321,8 @@ export class GarmentLibraryComponent implements OnInit {
     const dialogRef = this.dialog.open(SmartGarmentUploadDialogComponent, {
       width: '450px',
       maxWidth: '95vw',
+      maxHeight: '90vh',
+      panelClass: 'garment-upload-dialog',
       disableClose: false
     });
 

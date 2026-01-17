@@ -91,7 +91,11 @@ export class SignupComponent {
         })
       )
       .subscribe({
-        next: () => this.router.navigateByUrl('/generated-gallery'),
+        next: () => {
+          // Set flag to show welcome dialog for new users
+          localStorage.setItem('outfitify_new_user', 'true');
+          this.router.navigateByUrl('/studio');
+        },
         error: (err) => {
           this.error = this.buildErrorMessage(err);
           this.cdr.markForCheck();

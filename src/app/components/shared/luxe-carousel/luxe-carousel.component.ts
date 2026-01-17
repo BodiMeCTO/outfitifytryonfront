@@ -5,6 +5,8 @@ import {
   ElementRef,
   ViewChild,
   AfterViewInit,
+  OnDestroy,
+  NgZone,
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -211,7 +213,7 @@ import { MatButtonModule } from '@angular/material/button';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LuxeCarouselComponent implements AfterViewInit {
+export class LuxeCarouselComponent implements AfterViewInit, OnDestroy {
   @ViewChild('track') trackRef!: ElementRef<HTMLElement>;
 
   @Input() label?: string;
@@ -229,9 +231,60 @@ export class LuxeCarouselComponent implements AfterViewInit {
   totalPages = 1;
   pages: number[] = [];
 
+  private resizeObserver?: ResizeObserver;
+  private mutationObserver?: MutationObserver;
+
+  constructor(private readonly ngZone: NgZone) {}
+
   ngAfterViewInit(): void {
     this.updateScrollState();
     this.calculatePages();
+    this.setupObservers();
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+    this.mutationObserver?.disconnect();
+  }
+
+  /**
+   * Public method to force refresh carousel state.
+   * Call this when content changes dynamically.
+   */
+  refreshState(): void {
+    requestAnimationFrame(() => {
+      this.updateScrollState();
+      this.calculatePages();
+    });
+  }
+
+  private setupObservers(): void {
+    const track = this.trackRef?.nativeElement;
+    if (!track) return;
+
+    // ResizeObserver for container size changes
+    this.resizeObserver = new ResizeObserver(() => {
+      this.ngZone.run(() => {
+        this.updateScrollState();
+        this.calculatePages();
+      });
+    });
+    this.resizeObserver.observe(track);
+
+    // MutationObserver for child element changes (items added/removed)
+    this.mutationObserver = new MutationObserver(() => {
+      this.ngZone.run(() => {
+        // Debounce rapid changes with requestAnimationFrame
+        requestAnimationFrame(() => {
+          this.updateScrollState();
+          this.calculatePages();
+        });
+      });
+    });
+    this.mutationObserver.observe(track, {
+      childList: true,
+      subtree: false
+    });
   }
 
   onScroll(): void {

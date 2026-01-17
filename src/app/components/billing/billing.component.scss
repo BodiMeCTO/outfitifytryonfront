@@ -1,0 +1,468 @@
+@use '../../../styles/tokens' as *;
+
+.billing-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $space-6;
+  background: $color-bg-secondary;
+  min-height: 100%;
+}
+
+.page-nav {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  margin-bottom: $space-6;
+
+  .back-button {
+    color: $color-text-secondary;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $color-accent-gold;
+    }
+  }
+
+  h1 {
+    margin: 0;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-light;
+    letter-spacing: $letter-spacing-tight;
+    color: $color-text-primary;
+  }
+}
+
+// Status Card - Your Account overview
+.status-card {
+  margin-bottom: $space-6;
+  background: $color-bg-primary !important;
+  border: 1px solid $color-border !important;
+  border-radius: $card-radius !important;
+
+  mat-card-header {
+    padding: $space-6 $space-6 0;
+
+    mat-card-title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-medium;
+      color: $color-text-primary;
+    }
+  }
+
+  mat-card-content {
+    padding: $space-6;
+  }
+
+  .status-grid {
+    display: flex;
+    gap: $space-8;
+    flex-wrap: wrap;
+  }
+
+  .status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 100px;
+
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+      color: $color-accent-gold;
+      margin-bottom: $space-2;
+    }
+
+    .value {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-semibold;
+      color: $color-text-primary;
+    }
+
+    .label {
+      font-size: $font-size-xs;
+      color: $color-text-muted;
+      margin-top: $space-1;
+      text-transform: uppercase;
+      letter-spacing: $letter-spacing-wide;
+    }
+  }
+
+  mat-card-actions {
+    padding: 0 $space-6 $space-6;
+
+    button {
+      border-color: $color-accent-gold !important;
+      color: $color-accent-gold !important;
+
+      mat-icon {
+        color: $color-accent-gold;
+      }
+
+      &:hover {
+        background: $color-accent-gold-light !important;
+      }
+    }
+  }
+}
+
+// Tab styling
+::ng-deep .mat-mdc-tab-group {
+  .mat-mdc-tab-header {
+    border-bottom: 1px solid $color-border;
+  }
+
+  .mat-mdc-tab:not(.mat-mdc-tab-disabled) {
+    .mdc-tab__text-label {
+      color: $color-text-secondary;
+      font-weight: $font-weight-medium;
+      letter-spacing: $letter-spacing-wide;
+      text-transform: uppercase;
+      font-size: $font-size-sm;
+    }
+
+    &.mdc-tab--active .mdc-tab__text-label {
+      color: $color-accent-gold;
+    }
+  }
+
+  .mdc-tab-indicator__content--underline {
+    border-color: $color-accent-gold !important;
+  }
+}
+
+.tab-content {
+  padding: $space-6 0;
+}
+
+.tab-description {
+  color: $color-text-muted;
+  margin-bottom: $space-6;
+  font-size: $font-size-sm;
+}
+
+// Billing cycle toggle (Monthly/Annual)
+.billing-toggle {
+  display: flex;
+  justify-content: center;
+  gap: $space-2;
+  margin-bottom: $space-6;
+  padding: $space-1;
+  background: $color-bg-tertiary;
+  border-radius: $radius-full;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid $color-border;
+
+  button {
+    border-radius: $radius-full;
+    transition: all $transition-fast;
+    font-weight: $font-weight-medium;
+    letter-spacing: $letter-spacing-wide;
+    text-transform: uppercase;
+    font-size: $font-size-xs;
+    padding: $space-2 $space-4;
+    color: $color-text-secondary;
+    background: transparent;
+    border: none;
+
+    &.active {
+      background: $color-accent-gold;
+      color: $color-text-primary;
+      box-shadow: $shadow-sm;
+    }
+
+    &:hover:not(.active) {
+      background: $color-bg-hover;
+    }
+  }
+}
+
+// Subscription Plans Grid
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $space-6;
+}
+
+.plan-card {
+  position: relative;
+  background: $color-bg-primary !important;
+  border: 1px solid $color-border !important;
+  border-radius: $card-radius !important;
+  transition: transform $transition-fast, box-shadow $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-lift;
+    border-color: $color-border-strong !important;
+  }
+
+  &.current {
+    border-color: $color-accent-gold !important;
+    border-width: 2px !important;
+  }
+
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-6 $space-6 0;
+
+    mat-card-title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-medium;
+      color: $color-text-primary;
+    }
+
+    .current-badge {
+      background: $color-accent-gold !important;
+      color: $color-text-primary !important;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
+      letter-spacing: $letter-spacing-wide;
+      text-transform: uppercase;
+    }
+  }
+
+  mat-card-content {
+    padding: $space-6;
+  }
+
+  .price {
+    margin: $space-4 0 $space-2;
+
+    .amount {
+      font-size: $font-size-3xl;
+      font-weight: $font-weight-light;
+      color: $color-text-primary;
+      letter-spacing: $letter-spacing-tight;
+    }
+
+    .period {
+      font-size: $font-size-sm;
+      color: $color-text-muted;
+    }
+  }
+
+  .savings {
+    color: $color-accent-gold;
+    font-weight: $font-weight-medium;
+    font-size: $font-size-sm;
+    margin-bottom: $space-4;
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+
+    &::before {
+      content: '★';
+      font-size: $font-size-xs;
+    }
+  }
+
+  .features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: $space-2;
+      padding: $space-2 0;
+      color: $color-text-secondary;
+      font-size: $font-size-sm;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: $color-accent-gold;
+      }
+    }
+  }
+
+  mat-card-actions {
+    padding: $space-4 $space-6 $space-6;
+
+    button {
+      width: 100%;
+
+      &.mat-mdc-raised-button {
+        background: $color-accent-gold !important;
+        color: $color-text-primary !important;
+      }
+
+      &.mat-mdc-stroked-button {
+        border-color: $color-accent-gold !important;
+        color: $color-accent-gold !important;
+
+        &:hover {
+          background: $color-accent-gold-light !important;
+        }
+      }
+    }
+  }
+}
+
+// Credit Packages Grid
+.packages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: $space-6;
+}
+
+.package-card {
+  text-align: center;
+  background: $color-bg-primary !important;
+  border: 1px solid $color-border !important;
+  border-radius: $card-radius !important;
+  transition: transform $transition-fast, box-shadow $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-lift;
+    border-color: $color-accent-gold !important;
+  }
+
+  mat-card-header {
+    justify-content: center;
+    padding: $space-6 $space-6 0;
+
+    mat-card-title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-medium;
+      color: $color-text-primary;
+    }
+  }
+
+  mat-card-content {
+    padding: $space-6;
+  }
+
+  .credits {
+    margin: $space-4 0;
+
+    .amount {
+      font-size: $font-size-3xl;
+      font-weight: $font-weight-light;
+      color: $color-accent-gold;
+      letter-spacing: $letter-spacing-tight;
+    }
+
+    .label {
+      display: block;
+      font-size: $font-size-xs;
+      color: $color-text-muted;
+      text-transform: uppercase;
+      letter-spacing: $letter-spacing-wide;
+      margin-top: $space-1;
+    }
+  }
+
+  .price {
+    margin-bottom: $space-2;
+
+    .amount {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-medium;
+      color: $color-text-primary;
+    }
+  }
+
+  .per-credit {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    margin-bottom: $space-4;
+    padding: $space-1 $space-3;
+    background: $color-bg-tertiary;
+    border-radius: $radius-full;
+    display: inline-block;
+  }
+
+  mat-card-actions {
+    padding: $space-4 $space-6 $space-6;
+
+    button {
+      width: 100%;
+      background: $color-text-primary !important;
+      color: $color-bg-primary !important;
+
+      &:hover {
+        background: $color-text-secondary !important;
+      }
+    }
+  }
+}
+
+// Progress bar styling
+::ng-deep .mat-mdc-progress-bar {
+  --mdc-linear-progress-active-indicator-color: #{$color-accent-gold};
+  --mdc-linear-progress-track-color: #{$color-accent-gold-light};
+}
+
+// Responsive adjustments
+@media (max-width: $breakpoint-md) {
+  .billing-page {
+    padding: $space-4;
+  }
+
+  .page-nav h1 {
+    font-size: $font-size-lg;
+  }
+
+  .status-card .status-grid {
+    gap: $space-6;
+    justify-content: center;
+  }
+
+  .status-card .status-item {
+    min-width: 80px;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .value {
+      font-size: $font-size-lg;
+    }
+  }
+
+  .plans-grid,
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-card .price .amount {
+    font-size: $font-size-2xl;
+  }
+
+  .package-card .credits .amount {
+    font-size: $font-size-2xl;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .status-card .status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $space-4;
+  }
+
+  .status-card .status-item {
+    min-width: unset;
+  }
+
+  .billing-toggle {
+    width: 100%;
+
+    button {
+      flex: 1;
+      padding: $space-2;
+    }
+  }
+}
