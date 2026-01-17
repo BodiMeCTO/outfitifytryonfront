@@ -71,7 +71,7 @@ export interface GarmentDto {
   id: string;
   name: string;
   description?: string | null;
-  category: 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'accessories';
+  category: 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'footwear' | 'accessories';
   imageUrl?: string | null;
   sizes: string[];
 }
@@ -105,6 +105,7 @@ export interface CreateOutfitRequest {
     bottom: string | null;
     fullBody: string | null;
     jacket: string | null;
+    footwear: string | null;
     accessories: string | null;
   };
   sizes: {
@@ -112,6 +113,7 @@ export interface CreateOutfitRequest {
     bottom: string | null;
     fullBody: string | null;
     jacket: string | null;
+    footwear: string | null;
     accessories: string | null;
   };
   inspirationUrl?: string;
@@ -169,7 +171,7 @@ export interface GarmentSummaryDto {
   id: string;
   name: string;
   description?: string | null;
-  category: string;          // 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'accessories'
+  category: string;          // 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'footwear' | 'accessories'
   imageUrl?: string | null;
   sizes: string[];
   archivedAtUtc?: string | null;

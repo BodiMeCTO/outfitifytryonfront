@@ -25,9 +25,20 @@ interface PendingGarment {
   previewUrl: string;
   status: 'pending' | 'analyzing' | 'ready' | 'saving' | 'saved' | 'error';
   analysisResult: GarmentAnalysisResponse | null;
+  selectedGroup: string | null;
   selectedCategoryId: number | null;
   errorMessage: string | null;
 }
+
+// Format group names nicely for display
+const GROUP_DISPLAY_NAMES: Record<string, string> = {
+  'tops': 'Tops',
+  'bottoms': 'Bottoms',
+  'jackets': 'Jackets & Outerwear',
+  'full-body': 'Full Body',
+  'footwear': 'Footwear',
+  'accessories': 'Accessories'
+};
 
 @Component({
   selector: 'app-smart-garment-upload-dialog',
@@ -59,6 +70,20 @@ export class SmartGarmentUploadDialogComponent {
   readonly pendingGarments = signal<PendingGarment[]>([]);
   readonly garmentCategoryOptions = signal<GarmentCategoryDto[]>([]);
   readonly isSavingAll = signal(false);
+
+  // Computed: unique groups from categories
+  readonly uniqueGroups = computed(() => {
+    const categories = this.garmentCategoryOptions();
+    const groups = new Set<string>();
+    categories.forEach(cat => {
+      if (cat.group) {
+        groups.add(cat.group.toLowerCase());
+      }
+    });
+    // Return in preferred order
+    const orderedGroups = ['tops', 'jackets', 'bottoms', 'full-body', 'footwear', 'accessories'];
+    return orderedGroups.filter(g => groups.has(g));
+  });
 
   // Computed states
   readonly hasGarments = computed(() => this.pendingGarments().length > 0);
@@ -98,9 +123,22 @@ export class SmartGarmentUploadDialogComponent {
   }
 
   categoryLabel(category: GarmentCategoryDto): string {
-    const group = category.group || 'Category';
-    const specific = category.category;
-    return specific && specific !== group ? `${specific} • ${group}` : group;
+    // Just show the specific category name, no group suffix needed since we have group dropdown
+    return category.category || 'Unknown';
+  }
+
+  // Get display name for a group
+  getGroupDisplayName(group: string): string {
+    return GROUP_DISPLAY_NAMES[group.toLowerCase()] || group;
+  }
+
+  // Get categories filtered by group
+  getCategoriesForGroup(group: string | null): GarmentCategoryDto[] {
+    if (!group) return [];
+    const normalizedGroup = group.toLowerCase();
+    return this.garmentCategoryOptions().filter(
+      cat => cat.group?.toLowerCase() === normalizedGroup
+    );
   }
 
   // Handle multiple file selection
@@ -132,6 +170,7 @@ export class SmartGarmentUploadDialogComponent {
           previewUrl,
           status: 'pending',
           analysisResult: null,
+          selectedGroup: null,
           selectedCategoryId: null,
           errorMessage: null
         };
@@ -159,6 +198,7 @@ export class SmartGarmentUploadDialogComponent {
           this.updateGarment(garmentId, {
             status: 'ready',
             analysisResult: result,
+            selectedGroup: result.suggestedGroup ?? null,
             selectedCategoryId: result.suggestedCategoryId ?? null
           });
         } else {
@@ -180,6 +220,17 @@ export class SmartGarmentUploadDialogComponent {
     this.pendingGarments.update(list =>
       list.map(g => g.id === garmentId ? { ...g, ...updates } : g)
     );
+  }
+
+  // Update group for a garment (resets category)
+  updateGroup(garmentId: string, group: string | null): void {
+    // When group changes, reset category to first in group or null
+    const categories = this.getCategoriesForGroup(group);
+    const firstCategoryId = categories.length > 0 ? this.categoryId(categories[0]) : null;
+    this.updateGarment(garmentId, {
+      selectedGroup: group,
+      selectedCategoryId: firstCategoryId
+    });
   }
 
   // Update category for a garment

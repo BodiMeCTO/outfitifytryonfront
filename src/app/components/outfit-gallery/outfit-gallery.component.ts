@@ -95,7 +95,7 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
 
   openUploadDialog(): void {
     this.dialog.open(SmartGarmentUploadDialogComponent, {
-      width: '450px',
+      width: '700px',
       maxWidth: '95vw',
       maxHeight: '90vh',
       panelClass: 'garment-upload-dialog',

@@ -101,12 +101,14 @@ export class OutfitService {
   private readonly bottomGarmentsSubject = new BehaviorSubject<Garment[]>([]);
   private readonly fullBodyGarmentsSubject = new BehaviorSubject<Garment[]>([]);
   private readonly jacketGarmentsSubject = new BehaviorSubject<Garment[]>([]);
+  private readonly footwearGarmentsSubject = new BehaviorSubject<Garment[]>([]);
   private readonly accessoriesGarmentsSubject = new BehaviorSubject<Garment[]>([]);
 
   private readonly topSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
   private readonly bottomSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
   private readonly fullBodySizesSubject = new BehaviorSubject<Record<string, string | null>>({});
   private readonly jacketSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
+  private readonly footwearSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
   private readonly accessoriesSizesSubject = new BehaviorSubject<Record<string, string | null>>({});
 
   // Model image / pose / background
@@ -217,6 +219,7 @@ export class OutfitService {
       this.bottomGarmentsSubject.next([]);
       this.fullBodyGarmentsSubject.next([]);
       this.jacketGarmentsSubject.next([]);
+      this.footwearGarmentsSubject.next([]);
       this.accessoriesGarmentsSubject.next([]);
 
       // Clear UI state
@@ -301,12 +304,14 @@ export class OutfitService {
   readonly selectedBottom$ = this.bottomGarmentsSubject.asObservable();
   readonly selectedFullBody$ = this.fullBodyGarmentsSubject.asObservable();
   readonly selectedJacket$ = this.jacketGarmentsSubject.asObservable();
+  readonly selectedFootwear$ = this.footwearGarmentsSubject.asObservable();
   readonly selectedAccessories$ = this.accessoriesGarmentsSubject.asObservable();
 
   readonly selectedTopSize$ = this.topSizesSubject.asObservable();
   readonly selectedBottomSize$ = this.bottomSizesSubject.asObservable();
   readonly selectedFullBodySize$ = this.fullBodySizesSubject.asObservable();
   readonly selectedJacketSize$ = this.jacketSizesSubject.asObservable();
+  readonly selectedFootwearSize$ = this.footwearSizesSubject.asObservable();
   readonly selectedAccessoriesSize$ = this.accessoriesSizesSubject.asObservable();
 
   readonly selectedModelId$ = this.modelIdSubject.asObservable();
@@ -335,13 +340,15 @@ export class OutfitService {
     this.selectedBottom$,
     this.selectedFullBody$,
     this.selectedJacket$,
+    this.selectedFootwear$,
     this.selectedAccessories$
   ]).pipe(
-    map(([top, bottom, fullBody, jacket, accessories]) => ({
+    map(([top, bottom, fullBody, jacket, footwear, accessories]) => ({
       top,
       bottom,
       fullBody,
       jacket,
+      footwear,
       accessories
     }))
   );
@@ -351,13 +358,15 @@ export class OutfitService {
     this.selectedBottomSize$,
     this.selectedFullBodySize$,
     this.selectedJacketSize$,
+    this.selectedFootwearSize$,
     this.selectedAccessoriesSize$
   ]).pipe(
-    map(([top, bottom, fullBody, jacket, accessories]) => ({
+    map(([top, bottom, fullBody, jacket, footwear, accessories]) => ({
       top,
       bottom,
       fullBody,
       jacket,
+      footwear,
       accessories
     }))
   );
@@ -375,6 +384,7 @@ export class OutfitService {
         garments.bottom.length +
         garments.fullBody.length +
         garments.jacket.length +
+        garments.footwear.length +
         garments.accessories.length;
 
       return totalGarments > 0;
@@ -564,14 +574,7 @@ export class OutfitService {
         tap((images: SelectedInspiration[]) => {
           this.userModelImagesSubject.next(images);
           this.userModelImagesLoaded = true;
-
-          // Auto-select the first model image if no model is currently selected
-          const currentModelId = this.modelIdSubject.value;
-          if (!currentModelId && images.length > 0 && images[0].id) {
-            console.log('[OutfitService] Auto-selecting first model image:', images[0].id);
-            this.modelIdSubject.next(images[0].id);
-            this.setInspiration(images[0]);
-          }
+          // No auto-selection - user must click to select a model
         }),
         catchError((error: unknown) => {
           console.error(
@@ -590,66 +593,73 @@ export class OutfitService {
   // Upload /api/model-images/upload
   // -----------------------------
 
-uploadAndSetInspiration(
-  file: File,
-  previewUrl: string
-): Observable<SelectedInspiration> {
-  try {
-    this.getApiBaseUrlOrThrow();
-  } catch (error) {
-    console.error('Failed to upload model image', error);
+  /**
+   * Upload a model image without auto-selecting it.
+   * The image will be added to the saved photos list but not selected.
+   */
+  uploadModelImage(
+    file: File,
+    previewUrl: string
+  ): Observable<SelectedInspiration> {
+    try {
+      this.getApiBaseUrlOrThrow();
+    } catch (error) {
+      console.error('Failed to upload model image', error);
+      throw error;
+    }
 
-    const selection: SelectedInspiration = {
-      file,
-      previewUrl,
-      source: 'upload'
-    };
-    this.setInspiration(selection);
-    return of(selection);
+    const formData = new FormData();
+    formData.append('fileData', file, file.name);
+    formData.append('Name', file.name);
+
+    const poseOptionId = this.poseIdSubject.value;
+    if (poseOptionId) {
+      formData.append('PoseOptionId', poseOptionId);
+    }
+
+    return this.outfitifyApi
+      .uploadModelImage(formData)
+      .pipe(
+        map((response: ModelImageDto) => {
+          const resolvedUrl = this.resolveAssetUrl(response.imageUrl);
+          const selection: SelectedInspiration = {
+            file,
+            previewUrl,
+            source: 'upload',
+            remoteUrl: resolvedUrl,
+            id: response.modelImageId
+          };
+          return selection;
+        }),
+        tap((selection) => {
+          // Add to saved photos list but don't select
+          if (selection.id) {
+            const current = this.userModelImagesSubject.value;
+            const exists = current.some((img) => img.id === selection.id);
+            if (!exists) {
+              this.userModelImagesSubject.next([...current, selection]);
+            }
+          }
+        })
+      );
   }
 
-  const formData = new FormData();
-  formData.append('fileData', file, file.name);
-
-  // Must match CreateModelImageDto property names
-  formData.append('Name', file.name);
-
-  // PoseOptionId is optional - include if available
-  const poseOptionId = this.poseIdSubject.value;
-  if (poseOptionId) {
-    formData.append('PoseOptionId', poseOptionId);
-  }
-
-  return this.outfitifyApi
-    .uploadModelImage(formData)
-    .pipe(
-      map((response: ModelImageDto) => {
-        const resolvedUrl = this.resolveAssetUrl(response.imageUrl);
-        const selection: SelectedInspiration = {
-          file,
-          previewUrl,
-          source: 'upload',
-          remoteUrl: resolvedUrl,
-          id: response.modelImageId
-        };
-
-        this.modelIdSubject.next(response.modelImageId);
-        return selection;
-      }),
+  /**
+   * @deprecated Use uploadModelImage() instead and let user select manually
+   */
+  uploadAndSetInspiration(
+    file: File,
+    previewUrl: string
+  ): Observable<SelectedInspiration> {
+    return this.uploadModelImage(file, previewUrl).pipe(
       tap((selection) => {
         this.setInspiration(selection);
-
         if (selection.id) {
-          const current = this.userModelImagesSubject.value;
-          const exists = current.some((img) => img.id === selection.id);
-          if (!exists) {
-            this.userModelImagesSubject.next([...current, selection]);
-          }
+          this.modelIdSubject.next(selection.id);
         }
       }),
       catchError((error: unknown) => {
         console.error('Failed to upload model image', error);
-
         const selection: SelectedInspiration = {
           file,
           previewUrl,
@@ -659,7 +669,7 @@ uploadAndSetInspiration(
         return of(selection);
       })
     );
-}
+  }
 
 
   // -----------------------------
@@ -672,6 +682,7 @@ uploadAndSetInspiration(
     'bottoms': 2,
     'full-body': 1,
     'jackets': 2,
+    'footwear': 1,
     'accessories': 3
   };
 
@@ -695,6 +706,10 @@ uploadAndSetInspiration(
       case 'jackets':
         garmentsSubject = this.jacketGarmentsSubject;
         sizesSubject = this.jacketSizesSubject;
+        break;
+      case 'footwear':
+        garmentsSubject = this.footwearGarmentsSubject;
+        sizesSubject = this.footwearSizesSubject;
         break;
       case 'accessories':
         garmentsSubject = this.accessoriesGarmentsSubject;
@@ -758,6 +773,9 @@ uploadAndSetInspiration(
       case 'jackets':
         sizesSubject = this.jacketSizesSubject;
         break;
+      case 'footwear':
+        sizesSubject = this.footwearSizesSubject;
+        break;
       case 'accessories':
         sizesSubject = this.accessoriesSizesSubject;
         break;
@@ -789,6 +807,9 @@ uploadAndSetInspiration(
         break;
       case 'jackets':
         garmentsSubject = this.jacketGarmentsSubject;
+        break;
+      case 'footwear':
+        garmentsSubject = this.footwearGarmentsSubject;
         break;
       case 'accessories':
         garmentsSubject = this.accessoriesGarmentsSubject;
@@ -822,6 +843,10 @@ uploadAndSetInspiration(
         garmentsSubject = this.jacketGarmentsSubject;
         sizesSubject = this.jacketSizesSubject;
         break;
+      case 'footwear':
+        garmentsSubject = this.footwearGarmentsSubject;
+        sizesSubject = this.footwearSizesSubject;
+        break;
       case 'accessories':
         garmentsSubject = this.accessoriesGarmentsSubject;
         sizesSubject = this.accessoriesSizesSubject;
@@ -854,12 +879,14 @@ uploadAndSetInspiration(
     this.bottomGarmentsSubject.next([]);
     this.fullBodyGarmentsSubject.next([]);
     this.jacketGarmentsSubject.next([]);
+    this.footwearGarmentsSubject.next([]);
     this.accessoriesGarmentsSubject.next([]);
 
     this.topSizesSubject.next({});
     this.bottomSizesSubject.next({});
     this.fullBodySizesSubject.next({});
     this.jacketSizesSubject.next({});
+    this.footwearSizesSubject.next({});
     this.accessoriesSizesSubject.next({});
   }
 
@@ -883,6 +910,10 @@ uploadAndSetInspiration(
       case 'jackets':
         this.jacketGarmentsSubject.next([]);
         this.jacketSizesSubject.next({});
+        break;
+      case 'footwear':
+        this.footwearGarmentsSubject.next([]);
+        this.footwearSizesSubject.next({});
         break;
       case 'accessories':
         this.accessoriesGarmentsSubject.next([]);
@@ -1219,6 +1250,7 @@ uploadAndSetInspiration(
       ...this.bottomGarmentsSubject.value,
       ...this.fullBodyGarmentsSubject.value,
       ...this.jacketGarmentsSubject.value,
+      ...this.footwearGarmentsSubject.value,
       ...this.accessoriesGarmentsSubject.value
     ];
 
@@ -1336,6 +1368,7 @@ uploadAndSetInspiration(
       ...this.bottomGarmentsSubject.value,
       ...this.fullBodyGarmentsSubject.value,
       ...this.jacketGarmentsSubject.value,
+      ...this.footwearGarmentsSubject.value,
       ...this.accessoriesGarmentsSubject.value
     ];
 
@@ -1511,7 +1544,7 @@ uploadAndSetInspiration(
   }
 
   private mapGarmentSummaryToGarment(dto: GarmentSummaryDto): Garment {
-    const fallbackGroup: GarmentGroup = 'full-body';
+    const fallbackGroup: GarmentGroup = 'accessories';
     const rawGroup =
       dto.category ??
       (dto as { group?: string | null }).group ??
@@ -1522,7 +1555,7 @@ uploadAndSetInspiration(
       typeof rawGroup === 'string'
         ? rawGroup.trim().toLowerCase().replace(/\s+/g, '-')
         : null;
-    const allowedGroups: GarmentGroup[] = ['tops', 'bottoms', 'full-body', 'jackets', 'accessories'];
+    const allowedGroups: GarmentGroup[] = ['tops', 'bottoms', 'full-body', 'jackets', 'footwear', 'accessories'];
     const group = allowedGroups.includes(normalizedGroup as GarmentGroup)
       ? (normalizedGroup as GarmentGroup)
       : fallbackGroup;

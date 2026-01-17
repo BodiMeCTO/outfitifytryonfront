@@ -61,18 +61,34 @@
               <span class="status-text error">{{ garment.errorMessage }}</span>
             }
 
-            <!-- Category Selector (when ready) -->
+            <!-- Group & Category Selectors (when ready) -->
             @if (garment.status === 'ready') {
-              <mat-form-field appearance="outline" class="category-select">
-                <mat-label>Category</mat-label>
-                <mat-select
-                  [value]="garment.selectedCategoryId"
-                  (selectionChange)="updateCategory(garment.id, $event.value)">
-                  @for (cat of garmentCategoryOptions(); track categoryId(cat)) {
-                    <mat-option [value]="categoryId(cat)">{{ categoryLabel(cat) }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <div class="category-selectors">
+                <!-- Group Dropdown -->
+                <mat-form-field appearance="outline" class="group-select">
+                  <mat-label>Group</mat-label>
+                  <mat-select
+                    [value]="garment.selectedGroup"
+                    (selectionChange)="updateGroup(garment.id, $event.value)">
+                    @for (group of uniqueGroups(); track group) {
+                      <mat-option [value]="group">{{ getGroupDisplayName(group) }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <!-- Category Dropdown (filtered by group) -->
+                <mat-form-field appearance="outline" class="category-select">
+                  <mat-label>Category</mat-label>
+                  <mat-select
+                    [value]="garment.selectedCategoryId"
+                    (selectionChange)="updateCategory(garment.id, $event.value)"
+                    [disabled]="!garment.selectedGroup">
+                    @for (cat of getCategoriesForGroup(garment.selectedGroup); track categoryId(cat)) {
+                      <mat-option [value]="categoryId(cat)">{{ categoryLabel(cat) }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
             }
           </div>
 

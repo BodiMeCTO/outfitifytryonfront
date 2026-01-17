@@ -104,7 +104,7 @@
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
   }
 
   &:hover {
@@ -178,8 +178,8 @@
   width: 48px;
   height: 64px;
   border-radius: 6px;
-  object-fit: cover;
-  object-position: top center;
+  object-fit: contain;
+  object-position: center;
   border: 2px solid $color-accent-gold-light;
   background: $color-bg-tertiary;
   flex-shrink: 0;

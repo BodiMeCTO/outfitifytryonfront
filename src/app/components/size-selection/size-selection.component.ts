@@ -18,6 +18,7 @@ type GarmentSelectionState = {
   bottom: Garment[];
   fullBody: Garment[];
   jacket: Garment[];
+  footwear: Garment[];
   accessories: Garment[];
 };
 
@@ -26,6 +27,7 @@ type SizeSelectionState = {
   bottom: Record<string, string | null>;
   fullBody: Record<string, string | null>;
   jacket: Record<string, string | null>;
+  footwear: Record<string, string | null>;
   accessories: Record<string, string | null>;
 };
 
@@ -39,6 +41,7 @@ const EMPTY_SELECTION: GarmentSelectionState = {
   bottom: [],
   fullBody: [],
   jacket: [],
+  footwear: [],
   accessories: []
 };
 
@@ -47,6 +50,7 @@ const EMPTY_SIZE_SELECTION: SizeSelectionState = {
   bottom: {},
   fullBody: {},
   jacket: {},
+  footwear: {},
   accessories: {}
 };
 

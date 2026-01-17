@@ -2,24 +2,32 @@
   <!-- Preview Panel (sticky on desktop) -->
   <aside class="preview-panel">
     <div class="preview-content">
-      <!-- Model preview -->
-      <div class="preview-image-wrapper" *ngIf="selectedModel$ | async as model; else noModelPreview">
-        <img
-          [src]="model.previewUrl || model.remoteUrl"
-          alt="Selected model"
-          class="preview-image"
-        />
-        <!-- Model count badge -->
-        <span class="model-count-badge" *ngIf="(selectedModelCount$ | async)! > 1">
-          +{{ (selectedModelCount$ | async)! - 1 }} more
-        </span>
-      </div>
-      <ng-template #noModelPreview>
+      <!-- Model preview - only show if model has valid URL -->
+      @if (selectedModel$ | async; as model) {
+        @if (model.previewUrl || model.remoteUrl) {
+          <div class="preview-image-wrapper">
+            <img
+              [src]="model.previewUrl || model.remoteUrl"
+              alt="Selected model"
+              class="preview-image"
+            />
+            <!-- Model count badge -->
+            <span class="model-count-badge" *ngIf="(selectedModelCount$ | async)! > 1">
+              +{{ (selectedModelCount$ | async)! - 1 }} more
+            </span>
+          </div>
+        } @else {
+          <div class="preview-placeholder">
+            <mat-icon>person_outline</mat-icon>
+            <p>Select a model to preview</p>
+          </div>
+        }
+      } @else {
         <div class="preview-placeholder">
           <mat-icon>person_outline</mat-icon>
           <p>Select a model to preview</p>
         </div>
-      </ng-template>
+      }
 
       <!-- Selection Details Panel -->
       <div class="selection-details">
@@ -107,6 +115,16 @@
               <span class="garment-category-label">Jackets</span>
               <div class="selection-thumbnails compact">
                 <div class="selection-thumb small" *ngFor="let g of garments.jacket" [matTooltip]="g.name">
+                  <img [src]="g.image" [alt]="g.name" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Footwear -->
+            <div class="garment-row" *ngIf="garments.footwear.length > 0">
+              <span class="garment-category-label">Footwear</span>
+              <div class="selection-thumbnails compact">
+                <div class="selection-thumb small" *ngFor="let g of garments.footwear" [matTooltip]="g.name">
                   <img [src]="g.image" [alt]="g.name" />
                 </div>
               </div>
@@ -455,6 +473,7 @@
                          (group.key === 'bottoms' && selected.bottom.length > 0) ||
                          (group.key === 'full-body' && selected.fullBody.length > 0) ||
                          (group.key === 'jackets' && selected.jacket.length > 0) ||
+                         (group.key === 'footwear' && selected.footwear.length > 0) ||
                          (group.key === 'accessories' && selected.accessories.length > 0)"
                   (click)="clearGarmentCategory($event, group.key)"
                   matTooltip="Clear {{ group.label | lowercase }}"

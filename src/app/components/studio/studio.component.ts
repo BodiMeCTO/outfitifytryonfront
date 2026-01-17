@@ -54,6 +54,7 @@ const GARMENT_GROUPS: GroupConfig[] = [
   { key: 'bottoms', label: 'Bottoms' },
   { key: 'full-body', label: 'Full Body' },
   { key: 'jackets', label: 'Jackets' },
+  { key: 'footwear', label: 'Footwear' },
   { key: 'accessories', label: 'Accessories' }
 ];
 
@@ -140,6 +141,7 @@ export class StudioComponent implements OnInit {
         'bottoms': [],
         'full-body': [],
         'jackets': [],
+        'footwear': [],
         'accessories': []
       };
       garments.forEach(g => {
@@ -177,6 +179,7 @@ export class StudioComponent implements OnInit {
       garments.bottom.length +
       garments.fullBody.length +
       garments.jacket.length +
+      garments.footwear.length +
       garments.accessories.length
     )
   );
@@ -392,13 +395,13 @@ export class StudioComponent implements OnInit {
     let completedCount = 0;
     let errorCount = 0;
 
-    // Upload each file
+    // Upload each file (without auto-selecting)
     imageFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = () => {
         const previewUrl = reader.result as string;
         this.outfitService
-          .uploadAndSetInspiration(file, previewUrl)
+          .uploadModelImage(file, previewUrl)
           .pipe(take(1))
           .subscribe({
             next: () => {
@@ -424,8 +427,8 @@ export class StudioComponent implements OnInit {
       const successCount = total - errors;
       if (errors === 0) {
         this.snackBar.open(
-          total === 1 ? 'Photo uploaded successfully.' : `${successCount} photos uploaded successfully.`,
-          undefined,
+          total === 1 ? 'Photo uploaded. Click to select.' : `${successCount} photos uploaded. Click to select.`,
+          'OK',
           { duration: 2500 }
         );
       } else {
@@ -565,7 +568,7 @@ export class StudioComponent implements OnInit {
   // Garment upload dialog
   openGarmentUploadDialog(): void {
     const dialogRef = this.dialog.open(SmartGarmentUploadDialogComponent, {
-      width: '450px',
+      width: '700px',
       maxWidth: '95vw',
       maxHeight: '90vh',
       panelClass: 'garment-upload-dialog',

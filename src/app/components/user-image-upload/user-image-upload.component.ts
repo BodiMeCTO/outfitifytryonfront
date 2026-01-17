@@ -131,21 +131,14 @@ export class UserImageUploadComponent implements OnInit {
       const previewUrl = reader.result as string;
       this.isUploading.set(true);
       this.outfitService
-        .uploadAndSetInspiration(file, previewUrl)
+        .uploadModelImage(file, previewUrl)
         .pipe(take(1))
         .subscribe({
-          next: (selection: SelectedInspiration) => {
+          next: () => {
             this.isUploading.set(false);
-            this.snackBar.open('Image of the person uploaded successfully.', 'Great!', {
+            this.snackBar.open('Photo uploaded. Click on it to select.', 'OK', {
               duration: 2500
             });
-            if (!selection.remoteUrl) {
-              this.snackBar.open(
-                'OutfitifyAPI accepted your image but did not return a URL; your local photo will be used.',
-                'OK',
-                { duration: 4000 }
-              );
-            }
           },
           error: (err: unknown) => {
             this.isUploading.set(false);

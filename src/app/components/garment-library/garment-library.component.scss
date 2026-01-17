@@ -141,8 +141,9 @@
 .garment__image {
   width: 100%;
   aspect-ratio: 4 / 5;
-  object-fit: cover;
-  background: $color-accent-gold-light;
+  object-fit: contain;
+  object-position: center;
+  background: $color-bg-tertiary;
   flex-shrink: 0;
   max-height: 350px; // Prevent excessively tall images on large screens
 }

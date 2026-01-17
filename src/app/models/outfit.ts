@@ -9,6 +9,7 @@ export type GarmentGroup =
   | 'bottoms'
   | 'full-body'
   | 'jackets'
+  | 'footwear'
   | 'accessories';
 
 export interface Garment {
@@ -103,6 +104,7 @@ export interface OutfitRequest {
     bottom: Garment[];
     fullBody: Garment[];
     jacket: Garment[];
+    footwear: Garment[];
     accessories: Garment[];
   };
   sizes: {
@@ -110,6 +112,7 @@ export interface OutfitRequest {
     bottom: Record<string, string | null>;
     fullBody: Record<string, string | null>;
     jacket: Record<string, string | null>;
+    footwear: Record<string, string | null>;
     accessories: Record<string, string | null>;
   };
 }

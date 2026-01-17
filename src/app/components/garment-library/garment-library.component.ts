@@ -63,6 +63,7 @@ export class GarmentLibraryComponent implements OnInit {
     { value: 'tops' as const, label: 'Tops' },
     { value: 'bottoms' as const, label: 'Bottoms' },
     { value: 'full-body' as const, label: 'Full body' },
+    { value: 'footwear' as const, label: 'Footwear' },
     { value: 'accessories' as const, label: 'Accessories' }
   ];
 
@@ -82,6 +83,7 @@ export class GarmentLibraryComponent implements OnInit {
   readonly selectedBottom = toSignal(this.outfitService.selectedBottom$, { initialValue: [] });
   readonly selectedFullBody = toSignal(this.outfitService.selectedFullBody$, { initialValue: [] });
   readonly selectedJacket = toSignal(this.outfitService.selectedJacket$, { initialValue: [] });
+  readonly selectedFootwear = toSignal(this.outfitService.selectedFootwear$, { initialValue: [] });
   readonly selectedAccessories = toSignal(this.outfitService.selectedAccessories$, { initialValue: [] });
 
   // Computed map of selected garment IDs by group
@@ -91,6 +93,7 @@ export class GarmentLibraryComponent implements OnInit {
       bottoms: this.selectedBottom().map(g => g.id),
       'full-body': this.selectedFullBody().map(g => g.id),
       jackets: this.selectedJacket().map(g => g.id),
+      footwear: this.selectedFootwear().map(g => g.id),
       accessories: this.selectedAccessories().map(g => g.id)
     } as Record<GarmentGroup, string[]>;
   });
@@ -311,7 +314,7 @@ export class GarmentLibraryComponent implements OnInit {
   }
 
   private toGarmentGroup(value: string | null | undefined): GarmentGroup | null {
-    const allowed: GarmentGroup[] = ['tops', 'bottoms', 'full-body', 'jackets', 'accessories'];
+    const allowed: GarmentGroup[] = ['tops', 'bottoms', 'full-body', 'jackets', 'footwear', 'accessories'];
     return allowed.includes(value as GarmentGroup) ? (value as GarmentGroup) : null;
   }
 
@@ -319,7 +322,7 @@ export class GarmentLibraryComponent implements OnInit {
 
   openUploadDialog(): void {
     const dialogRef = this.dialog.open(SmartGarmentUploadDialogComponent, {
-      width: '450px',
+      width: '700px',
       maxWidth: '95vw',
       maxHeight: '90vh',
       panelClass: 'garment-upload-dialog',

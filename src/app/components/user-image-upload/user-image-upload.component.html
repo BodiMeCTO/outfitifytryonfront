@@ -70,16 +70,20 @@
           <mat-progress-bar *ngIf="isUploading()" mode="indeterminate"></mat-progress-bar>
         </div>
 
-        <!-- CURRENT SELECTION PREVIEW -->
-        <div class="preview" *ngIf="inspiration$ | async as inspiration">
-          <img
-            [src]="inspiration.previewUrl || inspiration.remoteUrl"
-            alt="Selected user image"
-          />
-          <div class="actions">
-            <button mat-button type="button" (click)="clearSelection()">Remove</button>
-          </div>
-        </div>
+        <!-- CURRENT SELECTION PREVIEW - only show if valid URL -->
+        @if (inspiration$ | async; as inspiration) {
+          @if (inspiration.previewUrl || inspiration.remoteUrl) {
+            <div class="preview">
+              <img
+                [src]="inspiration.previewUrl || inspiration.remoteUrl"
+                alt="Selected user image"
+              />
+              <div class="actions">
+                <button mat-button type="button" (click)="clearSelection()">Remove</button>
+              </div>
+            </div>
+          }
+        }
       </mat-card-content>
     </mat-card>
 

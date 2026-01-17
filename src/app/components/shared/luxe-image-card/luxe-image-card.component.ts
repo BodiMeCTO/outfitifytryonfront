@@ -128,7 +128,7 @@ export type ImageCardAspectRatio = '3:4' | '4:3' | '1:1' | '16:9' | 'auto';
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       object-position: center;
       opacity: 0;
       transition: opacity $transition-base;
