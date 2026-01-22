@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npx ng build:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "WebFetch(domain:www.oliversweeney.com)"
     ]
   }
 }
