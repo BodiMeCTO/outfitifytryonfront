@@ -1,34 +1,7 @@
 <div class="studio-container">
   <!-- Preview Panel (sticky on desktop) -->
-  <aside class="preview-panel">
+  <aside class="preview-panel" #previewPanel>
     <div class="preview-content">
-      <!-- Model preview - only show if model has valid URL -->
-      @if (selectedModel$ | async; as model) {
-        @if (model.previewUrl || model.remoteUrl) {
-          <div class="preview-image-wrapper">
-            <img
-              [src]="model.previewUrl || model.remoteUrl"
-              alt="Selected model"
-              class="preview-image"
-            />
-            <!-- Model count badge -->
-            <span class="model-count-badge" *ngIf="(selectedModelCount$ | async)! > 1">
-              +{{ (selectedModelCount$ | async)! - 1 }} more
-            </span>
-          </div>
-        } @else {
-          <div class="preview-placeholder">
-            <mat-icon>person_outline</mat-icon>
-            <p>Select a model to preview</p>
-          </div>
-        }
-      } @else {
-        <div class="preview-placeholder">
-          <mat-icon>person_outline</mat-icon>
-          <p>Select a model to preview</p>
-        </div>
-      }
-
       <!-- Selection Details Panel -->
       <div class="selection-details">
         <!-- Selected Models Section -->
@@ -36,7 +9,7 @@
           <div class="selection-section-header">
             <span class="section-title-small">
               <mat-icon>person</mat-icon>
-              Models ({{ models.length }}/{{ maxSelectedModels }})
+              Models ({{ models.length }})
             </span>
             <button
               class="clear-btn-inline"
@@ -49,12 +22,34 @@
           </div>
           <div class="selection-thumbnails" *ngIf="models.length > 0">
             <div
-              class="selection-thumb"
+              class="selection-thumb clickable has-deselect"
               *ngFor="let model of models; let i = index"
-              [matTooltip]="model.name || 'Model ' + (i + 1)"
+              [class.is-preview]="isPreviewModel(model)"
+              [matTooltip]="'Click to preview, hover to remove'"
+              (click)="setPreviewModel(model)"
             >
               <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
               <span class="thumb-badge">{{ i + 1 }}</span>
+              <!-- Deselect overlay (#26) -->
+              <div class="deselect-overlay" (click)="deselectModelFromPreview(model, $event)" matTooltip="Remove from selection">
+                <mat-icon>close</mat-icon>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recently Deselected - Quick Reselect (#24) -->
+          <div class="recent-history" *ngIf="recentlyDeselectedModels().length > 0">
+            <span class="history-label">Recent:</span>
+            <div class="history-thumbs">
+              <div
+                class="history-thumb"
+                *ngFor="let model of recentlyDeselectedModels()"
+                (click)="reselectModel(model)"
+                matTooltip="Click to reselect"
+              >
+                <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
+                <mat-icon class="add-icon">add</mat-icon>
+              </div>
             </div>
           </div>
           <div class="empty-selection" *ngIf="models.length === 0">
@@ -307,10 +302,20 @@
           </button>
         </div>
 
-        <!-- Empty state -->
-        <div class="empty-hint" *ngIf="models.length === 0">
+        <!-- Empty state - Enhanced with guidance (#2, #9, #28) -->
+        <div class="empty-hint enhanced" *ngIf="models.length === 0">
           <mat-icon>person_outline</mat-icon>
-          <p>Upload a model image to get started</p>
+          <h4>Upload Your Photos</h4>
+          <p>Full body photos work best. You can upload multiple images at once.</p>
+          <ul class="upload-tips">
+            <li>Clear, well-lit photos</li>
+            <li>Standing full-body shots</li>
+            <li>Multiple angles welcome</li>
+          </ul>
+          <button class="upload-card compact" (click)="modelUploadInput.click()">
+            <mat-icon>add_photo_alternate</mat-icon>
+            <span>Upload Photos</span>
+          </button>
         </div>
       </ng-container>
     </section>
@@ -509,10 +514,16 @@
         </ng-container>
       </ng-container>
 
-      <!-- Empty state when no garments -->
+      <!-- Empty state when no garments - Enhanced with guidance (#2, #9, #28) -->
       <div class="empty-garments" *ngIf="(garments$ | async)?.length === 0">
         <mat-icon>checkroom</mat-icon>
-        <p>No garments yet. Add your first garment to get started!</p>
+        <h4>Add Your Garments</h4>
+        <p>Upload photos of clothing items you want to try on virtually.</p>
+        <ul class="upload-tips">
+          <li>Flat lay photos work best</li>
+          <li>Plain backgrounds preferred</li>
+          <li>Upload multiple items at once</li>
+        </ul>
         <app-luxe-button
           variant="primary"
           icon="add_photo_alternate"

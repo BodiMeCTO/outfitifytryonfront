@@ -48,7 +48,8 @@ export class BillingComponent implements OnInit {
   readonly packages = signal<CreditPackageDto[]>([]);
   readonly currentSubscription = signal<CurrentSubscriptionDto | null>(null);
   readonly balance = signal<number | null>(null);
-  readonly selectedBillingCycle = signal<'monthly' | 'annual'>('monthly');
+  // Default to annual billing for better value (#31)
+  readonly selectedBillingCycle = signal<'monthly' | 'annual'>('annual');
 
   ngOnInit(): void {
     this.loadData();

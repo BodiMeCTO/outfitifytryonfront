@@ -7,8 +7,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subscription, timer } from 'rxjs';
-import { switchMap, take } from 'rxjs/operators';
+import { switchMap, take, pairwise, startWith } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
@@ -33,6 +34,7 @@ import { ArchivePanelComponent } from '../archive-panel/archive-panel.component'
     MatDialogModule,
     MatSnackBarModule,
     MatTooltipModule,
+    MatProgressSpinnerModule,
     ArchivePanelComponent
   ],
   templateUrl: './outfit-gallery.component.html',
@@ -52,6 +54,16 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
   // Archive panel state
   readonly isArchivePanelOpen = signal(false);
 
+  // Track processing images for banner (#13) and notifications (#22)
+  private processingImageIds = new Set<string>();
+
+  /**
+   * Check if there are any images currently processing (#13)
+   */
+  hasProcessingImages(): boolean {
+    return this.processingImageIds.size > 0;
+  }
+
   openArchivePanel(): void {
     this.isArchivePanelOpen.set(true);
   }
@@ -66,10 +78,46 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Poll for updates
     const poll$ = timer(0, 30000)
       .pipe(switchMap(() => this.outfitService.refreshGeneratedImages()))
       .subscribe();
     this.subscription.add(poll$);
+
+    // Track processing images and notify when complete (#22)
+    const notify$ = this.generatedImages$.pipe(
+      startWith([] as GeneratedImage[]),
+      pairwise()
+    ).subscribe(([previousImages, currentImages]) => {
+      // Update processing set
+      const newProcessingIds = new Set<string>();
+      currentImages.forEach(img => {
+        if (img.status === 'processing' || img.status === 'pending_retry') {
+          newProcessingIds.add(img.id);
+        }
+      });
+
+      // Check for newly completed images (was processing, now ready)
+      this.processingImageIds.forEach(id => {
+        const currentImage = currentImages.find(img => img.id === id);
+        if (currentImage && currentImage.status === 'ready') {
+          // Image just completed - show notification
+          this.snackBar.open('🎉 Your outfit is ready!', 'View', {
+            duration: 5000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom'
+          }).onAction().subscribe(() => {
+            const index = currentImages.findIndex(img => img.id === id);
+            if (index >= 0) {
+              this.viewImage(currentImage, index);
+            }
+          });
+        }
+      });
+
+      this.processingImageIds = newProcessingIds;
+    });
+    this.subscription.add(notify$);
   }
 
   viewImage(image: GeneratedImage, index: number): void {

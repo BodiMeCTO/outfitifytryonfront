@@ -53,12 +53,14 @@
   border-radius: $radius-md;
   overflow: hidden;
   background: $color-bg-tertiary;
+  // Mobile: constrain height to prevent cut-off
+  max-height: 45vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   @include lg {
     max-height: 50vh; // Constrain image height on desktop
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 }
 
@@ -67,6 +69,8 @@
   height: auto;
   display: block;
   object-fit: contain;
+  // Mobile: ensure image fits within constrained wrapper
+  max-height: 45vh;
 
   @include lg {
     max-height: 50vh; // Match wrapper constraint
@@ -221,6 +225,122 @@
   &:hover {
     border-color: $color-accent-gold;
     transform: scale(1.05);
+  }
+
+  // Clickable thumbnails for changing preview
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      border-color: $color-accent-gold;
+      box-shadow: 0 2px 8px rgba($color-accent-gold, 0.3);
+    }
+  }
+
+  // Currently shown in main preview
+  &.is-preview {
+    border-color: $color-accent-gold;
+    border-width: 2px;
+    box-shadow: 0 0 0 2px rgba($color-accent-gold, 0.2);
+  }
+
+  // Deselect overlay (#26)
+  &.has-deselect {
+    .deselect-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      cursor: pointer;
+
+      mat-icon {
+        color: white;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    &:hover .deselect-overlay {
+      opacity: 1;
+    }
+  }
+}
+
+// Selection history for recently deselected items (#24)
+.recent-history {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 0;
+  border-top: 1px dashed $color-border;
+  margin-top: $space-2;
+
+  .history-label {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+
+  .history-thumbs {
+    display: flex;
+    gap: $space-1;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+.history-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 48px;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  border: 1px dashed $color-border;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all $transition-fast;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: grayscale(50%);
+  }
+
+  .add-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &:hover {
+    opacity: 1;
+    border-color: $color-accent-gold;
+
+    img {
+      filter: grayscale(0);
+    }
+
+    .add-icon {
+      opacity: 1;
+    }
   }
 }
 
@@ -557,6 +677,62 @@
     font-size: $font-size-sm;
     max-width: 260px;
     margin: 0;
+  }
+
+  // Enhanced empty state styling (#2, #9, #28)
+  &.enhanced {
+    gap: $space-4;
+    padding: $space-10 $space-6;
+    background: linear-gradient(145deg, $color-bg-secondary, rgba($color-accent-gold, 0.03));
+    border: 1px dashed rgba($color-accent-gold, 0.3);
+    border-radius: $radius-lg;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: $color-accent-gold;
+      opacity: 0.6;
+    }
+
+    h4 {
+      margin: 0;
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $color-text-primary;
+    }
+
+    p {
+      font-size: $font-size-sm;
+      max-width: 300px;
+      color: $color-text-secondary;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Upload tips list styling
+.upload-tips {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+
+    &::before {
+      content: '✓';
+      color: $color-accent-gold;
+      font-weight: $font-weight-semibold;
+    }
   }
 }
 
@@ -956,7 +1132,7 @@
   @include focus-ring;
 }
 
-// Empty garments state
+// Empty garments state - Enhanced (#2, #9, #28)
 .empty-garments {
   display: flex;
   flex-direction: column;
@@ -966,17 +1142,35 @@
   padding: $space-10 $space-6;
   text-align: center;
   color: $color-text-muted;
+  background: linear-gradient(145deg, $color-bg-secondary, rgba($color-accent-gold, 0.03));
+  border: 1px dashed rgba($color-accent-gold, 0.3);
+  border-radius: $radius-lg;
 
   mat-icon {
     font-size: 48px;
     width: 48px;
     height: 48px;
-    opacity: 0.4;
+    color: $color-accent-gold;
+    opacity: 0.6;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
   }
 
   p {
     font-size: $font-size-sm;
-    max-width: 280px;
+    max-width: 300px;
+    color: $color-text-secondary;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .upload-tips {
+    margin-bottom: $space-2;
   }
 }
 
@@ -1497,6 +1691,20 @@
   display: flex;
   flex-wrap: wrap;
   gap: $space-3;
+}
+
+// Mobile fix for Add Garment button (#19)
+// Ensure proper touch target on mobile for small luxe-buttons in section headers
+.section-actions {
+  app-luxe-button {
+    @media (max-width: 1023px) {
+      ::ng-deep button {
+        min-height: $touch-target-min;
+        min-width: 120px;
+        padding: 0 $space-4;
+      }
+    }
+  }
 }
 
 .pose-tile {

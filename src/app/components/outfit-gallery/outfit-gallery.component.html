@@ -1,38 +1,78 @@
 <section class="section-card outfit-gallery">
   <header class="header">
     <h1>Generated outfits</h1>
-    <button
-      mat-icon-button
-      class="archive-btn"
-      (click)="openArchivePanel()"
-      matTooltip="View archived items"
-      aria-label="View archived items"
-    >
-      <mat-icon>inventory_2</mat-icon>
-    </button>
+    <div class="header-actions">
+      <!-- Create New Outfit button (#13) -->
+      <button
+        mat-stroked-button
+        class="create-btn"
+        routerLink="/studio"
+        matTooltip="Create a new outfit"
+      >
+        <mat-icon>add</mat-icon>
+        Create New
+      </button>
+      <button
+        mat-icon-button
+        class="archive-btn"
+        (click)="openArchivePanel()"
+        matTooltip="View archived items"
+        aria-label="View archived items"
+      >
+        <mat-icon>inventory_2</mat-icon>
+      </button>
+    </div>
   </header>
 
-  <!-- Empty state (no outfits yet) -->
+  <!-- Processing info banner (#13) -->
+  <div class="processing-banner" *ngIf="hasProcessingImages()">
+    <mat-icon>schedule</mat-icon>
+    <span>Generation can take up to a minute. Feel free to <a routerLink="/studio">create another</a> while you wait!</span>
+  </div>
+
+  <!-- Empty state (no outfits yet) - Enhanced (#13) -->
   <div class="empty" *ngIf="(generatedImages$ | async)?.length === 0">
-    <mat-icon>hourglass_empty</mat-icon>
-    <p>No generated outfits yet. Start by uploading a user image and choosing your garments.</p>
+    <mat-icon>auto_awesome</mat-icon>
+    <h3>No outfits yet</h3>
+    <p>Start by selecting a model and garments, then generate your first virtual try-on!</p>
+    <button mat-raised-button color="primary" routerLink="/studio">
+      <mat-icon>brush</mat-icon>
+      Go to Studio
+    </button>
   </div>
 
   <!-- Gallery grid -->
   <div class="grid" *ngIf="(generatedImages$ | async) as images">
     <mat-card
       class="gallery-item"
+      [class.clickable]="image.status === 'ready'"
       appearance="outlined"
       *ngFor="let image of images; index as i; trackBy: trackById"
     >
       <figure (click)="viewImage(image, i)" tabindex="0" role="button" aria-label="View generated outfit">
         <img *ngIf="image.status === 'ready'" [src]="image.imageUrl" alt="Generated outfit" />
-        <img *ngIf="image.status === 'processing' || image.status === 'pending_retry'" src="/assets/images/outfit-loading.gif" alt="Creating outfit..." class="loading-gif" />
+
+        <!-- Processing state with progress indicator (#21) -->
+        <div *ngIf="image.status === 'processing' || image.status === 'pending_retry'" class="processing-placeholder">
+          <div class="processing-spinner">
+            <mat-spinner diameter="48"></mat-spinner>
+          </div>
+          <span class="processing-stage">{{ image.status === 'pending_retry' ? 'Queued...' : 'Generating...' }}</span>
+          <span class="processing-hint">This may take up to a minute</span>
+        </div>
+
         <div *ngIf="image.status === 'failed'" class="failed-placeholder">
           <mat-icon>error_outline</mat-icon>
           <span class="failed-title">Generation failed</span>
           <span class="failed-reason" *ngIf="image.failureReason">{{ image.failureReason }}</span>
         </div>
+
+        <!-- Click to view overlay (#23) -->
+        <div class="hover-overlay" *ngIf="image.status === 'ready'">
+          <mat-icon>visibility</mat-icon>
+          <span>Click to view</span>
+        </div>
+
         <!-- Variants badge -->
         <span class="variants-badge" *ngIf="image.variantCount && image.variantCount > 1">
           <mat-icon>layers</mat-icon>

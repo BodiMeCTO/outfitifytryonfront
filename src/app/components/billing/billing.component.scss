@@ -142,7 +142,7 @@
   font-size: $font-size-sm;
 }
 
-// Billing cycle toggle (Monthly/Annual)
+// Billing cycle toggle (Monthly/Annual) - #31 improved styling
 .billing-toggle {
   display: flex;
   justify-content: center;
@@ -157,6 +157,9 @@
   border: 1px solid $color-border;
 
   button {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
     border-radius: $radius-full;
     transition: all $transition-fast;
     font-weight: $font-weight-medium;
@@ -168,10 +171,20 @@
     background: transparent;
     border: none;
 
+    .recommended-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+
     &.active {
       background: $color-accent-gold;
       color: $color-text-primary;
       box-shadow: $shadow-sm;
+
+      .recommended-icon {
+        color: $color-text-primary;
+      }
     }
 
     &:hover:not(.active) {
@@ -307,7 +320,24 @@
   }
 }
 
-// Credit Packages Grid
+// Pay-as-you-go header (#32)
+.payg-header {
+  text-align: center;
+  margin-bottom: $space-6;
+
+  h3 {
+    margin: 0 0 $space-2;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+  }
+
+  .tab-description {
+    margin-bottom: 0;
+  }
+}
+
+// Credit Packages Grid (#32 - improved mobile display)
 .packages-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -315,6 +345,7 @@
 }
 
 .package-card {
+  position: relative;
   text-align: center;
   background: $color-bg-primary !important;
   border: 1px solid $color-border !important;
@@ -325,6 +356,33 @@
     transform: translateY(-4px);
     box-shadow: $shadow-lift;
     border-color: $color-accent-gold !important;
+  }
+
+  // Popular package styling (#32)
+  &.popular {
+    border-color: $color-accent-gold !important;
+    border-width: 2px !important;
+
+    .package-badge {
+      display: block;
+    }
+  }
+
+  .package-badge {
+    display: none;
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: $color-accent-gold;
+    color: $color-text-primary;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    padding: $space-1 $space-3;
+    border-radius: $radius-full;
+    text-transform: uppercase;
+    letter-spacing: $letter-spacing-wide;
+    white-space: nowrap;
   }
 
   mat-card-header {
@@ -382,16 +440,45 @@
     display: inline-block;
   }
 
+  // Package info text (#32)
+  .package-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-1;
+    margin-top: $space-3;
+    padding: $space-2;
+    background: rgba($color-accent-gold, 0.1);
+    border-radius: $radius-sm;
+    font-size: $font-size-xs;
+    color: $color-accent-gold-dark;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      color: $color-accent-gold;
+    }
+  }
+
   mat-card-actions {
     padding: $space-4 $space-6 $space-6;
 
     button {
       width: 100%;
-      background: $color-text-primary !important;
-      color: $color-bg-primary !important;
 
-      &:hover {
-        background: $color-text-secondary !important;
+      &[color="primary"] {
+        background: $color-accent-gold !important;
+        color: $color-text-primary !important;
+      }
+
+      &[color="accent"] {
+        background: $color-text-primary !important;
+        color: $color-bg-primary !important;
+
+        &:hover {
+          background: $color-text-secondary !important;
+        }
       }
     }
   }

@@ -82,6 +82,9 @@ export class OutfitService {
   // Maximum models allowed for multi-selection
   private readonly MAX_SELECTED_MODELS = 5;
 
+  // LocalStorage key for tracking first visit
+  private readonly FIRST_VISIT_KEY = 'outfitify_first_visit';
+
   // --- Core selection state ---
 
   private readonly inspirationSubject = new BehaviorSubject<SelectedInspiration | null>(
@@ -536,6 +539,23 @@ export class OutfitService {
     return this.selectedModelsSubject.value;
   }
 
+  /**
+   * Sets which model is shown as the primary preview (must be one of the selected models).
+   */
+  setPreviewModel(model: SelectedInspiration): void {
+    const selectedModels = this.selectedModelsSubject.value;
+    if (selectedModels.some(m => m.id === model.id)) {
+      this.inspirationSubject.next(model);
+    }
+  }
+
+  /**
+   * Gets the current preview model.
+   */
+  getPreviewModel(): SelectedInspiration | null {
+    return this.inspirationSubject.value;
+  }
+
   // -----------------------------
   // User model images (/api/model-images)
   // -----------------------------
@@ -574,7 +594,9 @@ export class OutfitService {
         tap((images: SelectedInspiration[]) => {
           this.userModelImagesSubject.next(images);
           this.userModelImagesLoaded = true;
-          // No auto-selection - user must click to select a model
+
+          // Auto-select first template model on first visit (#1, #3)
+          this.autoSelectDefaultModelOnFirstVisit(images);
         }),
         catchError((error: unknown) => {
           console.error(
@@ -587,6 +609,34 @@ export class OutfitService {
           );
         })
       );
+  }
+
+  /**
+   * Auto-selects the first template model on the user's first visit.
+   * Uses localStorage to track whether auto-selection has already occurred.
+   */
+  private autoSelectDefaultModelOnFirstVisit(images: SelectedInspiration[]): void {
+    // Skip if already has selection
+    if (this.selectedModelsSubject.value.length > 0) {
+      return;
+    }
+
+    // Check if this is first visit
+    const hasVisited = localStorage.getItem(this.FIRST_VISIT_KEY);
+    if (hasVisited) {
+      return;
+    }
+
+    // Find first template model
+    const templateModel = images.find(img => img.isTemplate);
+    if (templateModel) {
+      // Auto-select the template model
+      this.toggleModelSelection(templateModel);
+      console.log('[OutfitService] Auto-selected default template model:', templateModel.name || templateModel.id);
+    }
+
+    // Mark as visited (even if no template found, so we don't keep trying)
+    localStorage.setItem(this.FIRST_VISIT_KEY, 'true');
   }
 
   // -----------------------------

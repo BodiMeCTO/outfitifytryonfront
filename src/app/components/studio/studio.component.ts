@@ -114,6 +114,7 @@ export class StudioComponent implements OnInit {
 
   // ViewChild for scrolling to expanded background content on mobile
   @ViewChild('backgroundExpandedContent') backgroundExpandedContent?: ElementRef<HTMLElement>;
+  @ViewChild('previewPanel') previewPanel?: ElementRef<HTMLElement>;
 
   // Filtered model images: only show original uploads (not background variants)
   // Also filters out templates when showTemplates is false
@@ -163,6 +164,10 @@ export class StudioComponent implements OnInit {
 
   // Archive state
   readonly isArchivePanelOpen = signal(false);
+
+  // Selection history for recently deselected items (#24)
+  readonly recentlyDeselectedModels = signal<SelectedInspiration[]>([]);
+  private readonly MAX_RECENT_ITEMS = 5;
 
   // Computed: can generate?
   readonly canGenerate$ = combineLatest([
@@ -267,15 +272,14 @@ export class StudioComponent implements OnInit {
     } else {
       this.activeBackgroundCategory.set(category);
 
-      // On mobile, scroll to the expanded content after it renders
-      if (window.innerWidth < 1024) {
-        setTimeout(() => {
-          this.backgroundExpandedContent?.nativeElement?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }, 100);
-      }
+      // Scroll to the expanded content after it renders
+      setTimeout(() => {
+        const isMobile = window.innerWidth < 1024;
+        this.backgroundExpandedContent?.nativeElement?.scrollIntoView({
+          behavior: 'smooth',
+          block: isMobile ? 'start' : 'nearest'
+        });
+      }, 100);
     }
   }
 
@@ -442,17 +446,78 @@ export class StudioComponent implements OnInit {
   }
 
   selectModel(model: SelectedInspiration): void {
+    // Check if model is currently selected (we're about to deselect it)
+    const wasSelected = this.outfitService.isModelSelected(model.id);
+
     // Toggle selection for multi-model support
     const wasAdded = this.outfitService.toggleModelSelection(model);
 
+    // Track deselected model in recent history (#24)
+    if (wasSelected && !wasAdded) {
+      this.addToRecentlyDeselected(model);
+    }
+
     // Show feedback when max limit is reached (model wasn't added AND wasn't already selected)
-    if (!wasAdded && !this.outfitService.isModelSelected(model.id)) {
+    if (!wasAdded && !wasSelected) {
       this.snackBar.open(
-        `Maximum ${this.outfitService.getMaxSelectedModels()} models allowed`,
+        'Maximum number of models reached',
         undefined,
         { duration: 2500 }
       );
     }
+
+    // On mobile, scroll to preview panel when model is selected
+    if (wasAdded && window.innerWidth < 1024) {
+      setTimeout(() => {
+        this.previewPanel?.nativeElement?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    }
+  }
+
+  /**
+   * Deselect a model from the preview panel (#26)
+   */
+  deselectModelFromPreview(model: SelectedInspiration, event?: Event): void {
+    event?.stopPropagation();
+    if (this.outfitService.isModelSelected(model.id)) {
+      this.outfitService.toggleModelSelection(model);
+      this.addToRecentlyDeselected(model);
+    }
+  }
+
+  /**
+   * Add a model to the recently deselected list (#24)
+   */
+  private addToRecentlyDeselected(model: SelectedInspiration): void {
+    const current = this.recentlyDeselectedModels();
+    // Don't add if already in list
+    if (current.some(m => m.id === model.id)) {
+      return;
+    }
+    // Add to front of list, keep only MAX_RECENT_ITEMS
+    const updated = [model, ...current].slice(0, this.MAX_RECENT_ITEMS);
+    this.recentlyDeselectedModels.set(updated);
+  }
+
+  /**
+   * Re-select a model from the recently deselected list (#24)
+   */
+  reselectModel(model: SelectedInspiration): void {
+    // Remove from recently deselected
+    const current = this.recentlyDeselectedModels();
+    this.recentlyDeselectedModels.set(current.filter(m => m.id !== model.id));
+    // Re-select the model
+    this.outfitService.toggleModelSelection(model);
+  }
+
+  /**
+   * Clear the recently deselected list (#24)
+   */
+  clearRecentlyDeselected(): void {
+    this.recentlyDeselectedModels.set([]);
   }
 
   isModelSelected(model: SelectedInspiration): boolean {
@@ -470,6 +535,15 @@ export class StudioComponent implements OnInit {
 
   clearModelSelection(): void {
     this.outfitService.clearModelSelection();
+  }
+
+  setPreviewModel(model: SelectedInspiration): void {
+    this.outfitService.setPreviewModel(model);
+  }
+
+  isPreviewModel(model: SelectedInspiration): boolean {
+    const currentPreview = this.outfitService.getPreviewModel();
+    return currentPreview?.id === model.id;
   }
 
   // Garment methods - use toggleSelectedGarment for multi-selection support

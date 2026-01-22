@@ -26,10 +26,25 @@ import { MatIconModule } from '@angular/material/icon';
         <p class="gift-message">
           You've been gifted <strong>25 trial credits</strong> to get started!
         </p>
-        <p class="info-message">
-          Each outfit generation uses 1 credit. Use your trial credits to explore
-          our virtual try-on features.
-        </p>
+
+        <!-- How it works - 3 step explanation (#11) -->
+        <div class="how-it-works">
+          <h3>How it works:</h3>
+          <ol class="steps-list">
+            <li>
+              <span class="step-icon"><mat-icon>person</mat-icon></span>
+              <span class="step-text">Upload a photo of yourself</span>
+            </li>
+            <li>
+              <span class="step-icon"><mat-icon>checkroom</mat-icon></span>
+              <span class="step-text">Add garments you want to try</span>
+            </li>
+            <li>
+              <span class="step-icon"><mat-icon>auto_awesome</mat-icon></span>
+              <span class="step-text">Generate your virtual try-on</span>
+            </li>
+          </ol>
+        </div>
       </mat-dialog-content>
 
       <mat-dialog-actions align="center">
@@ -86,6 +101,72 @@ import { MatIconModule } from '@angular/material/icon';
       font-size: 14px;
       color: var(--mat-sys-on-surface-variant);
       margin-bottom: 8px;
+    }
+
+    /* How it works section (#11) */
+    .how-it-works {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(var(--mat-sys-primary-rgb), 0.05);
+      border-radius: 12px;
+      text-align: left;
+
+      h3 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--mat-sys-on-surface-variant);
+      }
+    }
+
+    .steps-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: step-counter;
+
+      li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(var(--mat-sys-outline-rgb), 0.1);
+
+        &:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        &:first-child {
+          padding-top: 0;
+        }
+      }
+    }
+
+    .step-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--mat-sys-primary);
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: var(--mat-sys-on-primary);
+      }
+    }
+
+    .step-text {
+      font-size: 14px;
+      color: var(--mat-sys-on-surface);
+      font-weight: 500;
     }
 
     mat-dialog-actions {

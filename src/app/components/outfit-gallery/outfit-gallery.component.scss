@@ -10,6 +10,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .header h1 {
@@ -22,6 +23,26 @@
   color: $color-text-hint;
 }
 
+// Header actions group (#13)
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.create-btn {
+  color: $color-accent-gold-dark;
+  border-color: $color-accent-gold;
+
+  mat-icon {
+    margin-right: 0.25rem;
+  }
+
+  &:hover {
+    background: $color-accent-gold-light;
+  }
+}
+
 .archive-btn {
   color: $color-text-secondary;
 
@@ -31,12 +52,72 @@
   }
 }
 
-.empty {
-  display: grid;
-  justify-items: center;
+// Processing info banner (#13)
+.processing-banner {
+  display: flex;
+  align-items: center;
   gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba($color-accent-gold, 0.1);
+  border: 1px solid rgba($color-accent-gold, 0.3);
+  border-radius: 8px;
+  color: $color-accent-gold-dark;
+  font-size: 0.875rem;
+
+  mat-icon {
+    color: $color-accent-gold;
+    flex-shrink: 0;
+  }
+
+  a {
+    color: $color-accent-gold-dark;
+    font-weight: 600;
+    text-decoration: underline;
+
+    &:hover {
+      color: $color-accent-gold;
+    }
+  }
+}
+
+// Enhanced empty state (#13)
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 1.5rem;
   text-align: center;
   color: $color-text-hint;
+  background: linear-gradient(145deg, $color-bg-secondary, rgba($color-accent-gold, 0.03));
+  border: 1px dashed rgba($color-accent-gold, 0.3);
+  border-radius: 12px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: $color-accent-gold;
+    opacity: 0.6;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  p {
+    margin: 0;
+    max-width: 300px;
+    line-height: 1.5;
+  }
+
+  button {
+    margin-top: 0.5rem;
+  }
 }
 
 .grid {
@@ -98,6 +179,7 @@
   display: block;
 }
 
+// Legacy loading gif (kept for backwards compatibility)
 .gallery-item img.loading-gif {
   width: auto;
   height: auto;
@@ -105,6 +187,72 @@
   max-height: 200px;
   object-fit: contain;
   padding: 1rem;
+}
+
+// Processing placeholder with spinner (#21)
+.processing-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  min-height: 200px;
+
+  .processing-spinner {
+    position: relative;
+  }
+
+  .processing-stage {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $color-accent-gold-dark;
+  }
+
+  .processing-hint {
+    font-size: 0.75rem;
+    color: $color-text-hint;
+  }
+}
+
+// Hover overlay for clickable items (#23)
+.hover-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: white;
+  }
+
+  span {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Show overlay on hover for clickable items
+.gallery-item.clickable figure:hover .hover-overlay {
+  opacity: 1;
+}
+
+// Add pointer cursor for clickable items
+.gallery-item.clickable figure {
+  cursor: pointer;
 }
 
 .failed-placeholder {
