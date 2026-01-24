@@ -49,7 +49,8 @@ export class AppComponent implements OnInit {
   readonly navItems: DrawerNavItem[] = [
     { label: 'Studio', route: '/studio', icon: 'auto_awesome' },
     { label: 'Gallery', route: '/generated-gallery', icon: 'collections' },
-    { label: 'Credits', route: '/credits', icon: 'toll' }
+    { label: 'Credits', route: '/credits', icon: 'toll' },
+    { label: 'Account', route: '/account', icon: 'person' }
   ];
 
   readonly bottomNavItems: BottomNavItem[] = [
@@ -74,9 +75,10 @@ export class AppComponent implements OnInit {
       })
     ).subscribe();
 
-    // Also refresh on navigation
+    // Also refresh on navigation (only when logged in)
     this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      filter(() => !!this.auth.getToken()) // Only refresh if logged in
     ).subscribe(() => this.creditsService.refresh().pipe(take(1)).subscribe());
   }
 

@@ -1,0 +1,103 @@
+<div class="account-page">
+  <!-- Header -->
+  <header class="account-header">
+    <button mat-icon-button class="back-btn" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>Account</h1>
+  </header>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading()">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Account Content -->
+  <div class="account-content" *ngIf="!isLoading()">
+    <!-- User Info Card -->
+    <mat-card class="account-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="avatar-icon">person</mat-icon>
+        <mat-card-title>Profile</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-row">
+          <span class="info-label">Email</span>
+          <span class="info-value">{{ email$ | async }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Subscription Card -->
+    <mat-card class="account-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="avatar-icon subscription-icon">workspace_premium</mat-icon>
+        <mat-card-title>Subscription</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-row">
+          <span class="info-label">Plan</span>
+          <span class="info-value plan-badge" [class.free]="!subscription()?.planName">
+            {{ getSubscriptionStatusLabel() }}
+          </span>
+        </div>
+        <div class="info-row" *ngIf="subscription()?.planName">
+          <span class="info-label">Billing Cycle</span>
+          <span class="info-value">{{ getSubscriptionBillingCycle() }}</span>
+        </div>
+        <div class="info-row" *ngIf="getNextBillingDate()">
+          <span class="info-label">Next Billing</span>
+          <span class="info-value">{{ getNextBillingDate() }}</span>
+        </div>
+        <div class="info-row" *ngIf="subscription()?.monthlyCredits">
+          <span class="info-label">Monthly Credits</span>
+          <span class="info-value">{{ subscription()?.monthlyCredits }}</span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button routerLink="/billing" *ngIf="!subscription()?.planName">
+          <mat-icon>upgrade</mat-icon>
+          Upgrade Plan
+        </button>
+        <button mat-stroked-button (click)="manageSubscription()" *ngIf="subscription()?.planName">
+          <mat-icon>settings</mat-icon>
+          Manage Subscription
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Credits Card -->
+    <mat-card class="account-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="avatar-icon credits-icon">toll</mat-icon>
+        <mat-card-title>Credits</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="credits-balance">
+          <span class="balance-value">{{ balance() ?? 0 }}</span>
+          <span class="balance-label">Available Credits</span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button routerLink="/billing">
+          <mat-icon>add_circle</mat-icon>
+          Buy Credits
+        </button>
+        <button mat-stroked-button routerLink="/credits">
+          <mat-icon>history</mat-icon>
+          View History
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Sign Out -->
+    <mat-card class="account-card logout-card">
+      <mat-card-content>
+        <button mat-flat-button color="warn" class="logout-btn" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          Sign Out
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

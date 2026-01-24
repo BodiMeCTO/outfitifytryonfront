@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -26,7 +25,6 @@ import {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTabsModule,
     MatProgressBarModule,
     MatChipsModule,
     MatSnackBarModule
@@ -48,8 +46,8 @@ export class BillingComponent implements OnInit {
   readonly packages = signal<CreditPackageDto[]>([]);
   readonly currentSubscription = signal<CurrentSubscriptionDto | null>(null);
   readonly balance = signal<number | null>(null);
-  // Default to annual billing for better value (#31)
-  readonly selectedBillingCycle = signal<'monthly' | 'annual'>('annual');
+  // Default to annual billing for better value
+  readonly selectedBillingType = signal<'annual' | 'monthly' | 'payg'>('annual');
 
   ngOnInit(): void {
     this.loadData();
@@ -80,7 +78,7 @@ export class BillingComponent implements OnInit {
 
   selectPlan(plan: SubscriptionPlanWithStripeDto): void {
     this.isProcessing.set(true);
-    const isAnnual = this.selectedBillingCycle() === 'annual';
+    const isAnnual = this.selectedBillingType() === 'annual';
 
     this.stripeService.createSubscriptionCheckout({ planId: plan.id, isAnnual }).subscribe({
       next: (session) => {
@@ -119,18 +117,6 @@ export class BillingComponent implements OnInit {
         this.isProcessing.set(false);
       }
     });
-  }
-
-  toggleBillingCycle(): void {
-    this.selectedBillingCycle.set(
-      this.selectedBillingCycle() === 'monthly' ? 'annual' : 'monthly'
-    );
-  }
-
-  getPlanPrice(plan: SubscriptionPlanWithStripeDto): number {
-    return this.selectedBillingCycle() === 'annual'
-      ? plan.annualPrice
-      : plan.monthlyPrice;
   }
 
   getAnnualSavings(plan: SubscriptionPlanWithStripeDto): number {

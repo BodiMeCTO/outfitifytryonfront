@@ -73,6 +73,13 @@ export const routes: Routes = [
         title: 'Credits'
       },
       {
+        path: 'account',
+        loadComponent: () =>
+          import('./components/account/account.component')
+            .then((m) => m.AccountComponent),
+        title: 'Account'
+      },
+      {
         path: 'billing',
         loadComponent: () =>
           import('./components/billing/billing.component')

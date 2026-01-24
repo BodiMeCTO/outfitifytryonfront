@@ -138,6 +138,23 @@ export interface CreditsLedgerEntryDto {
   balanceAfter: number;
   description?: string;
   createdAt?: string;
+  outfitDetails?: OutfitDetailsDto;
+}
+
+export interface OutfitDetailsDto {
+  outfitId: string;
+  modelImageUrl?: string | null;
+  poseName?: string | null;
+  backgroundName?: string | null;
+  aspectRatio?: string | null;
+  outfitImageUrl?: string | null;
+  garments: OutfitGarmentInfoDto[];
+}
+
+export interface OutfitGarmentInfoDto {
+  name?: string | null;
+  imageUrl?: string | null;
+  category?: string | null;
 }
 
 export interface SubscriptionPlanDto {
@@ -214,4 +231,17 @@ export interface EditOutfitImageResponseDto {
   assetUrl: string;
   resolution: string;
   creditCost: number;
+}
+
+// --- Tutorial State ---
+export interface TutorialStateDto {
+  tutorialCompleted: boolean;
+  tutorialStep: string | null;
+  hasCreatedFirstOutfit: boolean;
+}
+
+export interface UpdateTutorialStateDto {
+  tutorialCompleted?: boolean;
+  tutorialStep?: string | null;
+  hasCreatedFirstOutfit?: boolean;
 }

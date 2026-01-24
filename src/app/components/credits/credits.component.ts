@@ -7,7 +7,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { take } from 'rxjs/operators';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { CreditsService } from '../../services/credits.service';
@@ -24,11 +26,19 @@ import { CreditsLedgerEntryDto } from '../../models/outfitify-api';
     MatIconModule,
     MatSnackBarModule,
     MatProgressBarModule,
-    MatTableModule
+    MatTableModule,
+    MatTooltipModule
   ],
   templateUrl: './credits.component.html',
   styleUrls: ['./credits.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  animations: [
+    trigger('detailExpand', [
+      state('collapsed', style({ height: '0px', minHeight: '0', opacity: 0 })),
+      state('expanded', style({ height: '*', opacity: 1 })),
+      transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)'))
+    ])
+  ]
 })
 export class CreditsComponent {
   private readonly api = inject(OutfitifyApiService);
@@ -41,6 +51,7 @@ export class CreditsComponent {
   readonly transactions = signal<CreditsLedgerEntryDto[]>([]);
   readonly isLoading = signal(true);
   readonly isGranting = signal(false);
+  readonly expandedRows = new Set<string>();
 
   readonly displayedColumns = ['date', 'description', 'amount', 'balance'];
 
@@ -99,5 +110,13 @@ export class CreditsComponent {
         this.snackBar.open('Failed to grant credits.', 'Dismiss', { duration: 3000 });
       }
     });
+  }
+
+  toggleExpand(id: string): void {
+    if (this.expandedRows.has(id)) {
+      this.expandedRows.delete(id);
+    } else {
+      this.expandedRows.add(id);
+    }
   }
 }

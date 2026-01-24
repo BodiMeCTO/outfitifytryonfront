@@ -60,7 +60,7 @@
       </div>
 
       <div class="table-wrapper" *ngIf="!isLoading() && transactions().length > 0">
-      <table mat-table [dataSource]="transactions()" class="transactions-table">
+      <table mat-table [dataSource]="transactions()" class="transactions-table" multiTemplateDataRows>
         <!-- Date Column -->
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Date</th>
@@ -70,7 +70,20 @@
         <!-- Description Column -->
         <ng-container matColumnDef="description">
           <th mat-header-cell *matHeaderCellDef>Description</th>
-          <td mat-cell *matCellDef="let txn">{{ txn.description || 'Credit transaction' }}</td>
+          <td mat-cell *matCellDef="let txn">
+            <div class="description-cell">
+              <span>{{ txn.description || 'Credit transaction' }}</span>
+              <button
+                *ngIf="txn.outfitDetails"
+                mat-icon-button
+                class="expand-btn"
+                (click)="toggleExpand(txn.id); $event.stopPropagation()"
+                [attr.aria-label]="expandedRows.has(txn.id) ? 'Collapse details' : 'Expand details'"
+              >
+                <mat-icon>{{ expandedRows.has(txn.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+              </button>
+            </div>
+          </td>
         </ng-container>
 
         <!-- Amount Column -->
@@ -87,8 +100,69 @@
           <td mat-cell *matCellDef="let txn">{{ txn.balanceAfter }}</td>
         </ng-container>
 
+        <!-- Expanded Detail Row -->
+        <ng-container matColumnDef="expandedDetail">
+          <td mat-cell *matCellDef="let txn" [attr.colspan]="displayedColumns.length">
+            <div class="outfit-details-container" [@detailExpand]="expandedRows.has(txn.id) ? 'expanded' : 'collapsed'">
+              <div class="outfit-details" *ngIf="txn.outfitDetails">
+                <!-- Generated outfit thumbnail -->
+                <div class="outfit-result-thumb" *ngIf="txn.outfitDetails.outfitImageUrl">
+                  <img [src]="txn.outfitDetails.outfitImageUrl" alt="Generated outfit" loading="lazy">
+                </div>
+
+                <!-- Input details - matching image-review style -->
+                <div class="input-details">
+                  <div class="input-header">
+                    <mat-icon>info_outline</mat-icon>
+                    <span>Created with</span>
+                  </div>
+                  <div class="input-content">
+                    <!-- Model thumbnail -->
+                    <img
+                      *ngIf="txn.outfitDetails.modelImageUrl"
+                      [src]="txn.outfitDetails.modelImageUrl"
+                      alt="Model"
+                      class="input-model-thumb"
+                      matTooltip="Model image"
+                    />
+                    <!-- Details column -->
+                    <div class="input-info">
+                      <!-- Settings tags -->
+                      <div class="input-settings" *ngIf="txn.outfitDetails.poseName || txn.outfitDetails.backgroundName || txn.outfitDetails.aspectRatio">
+                        <span *ngIf="txn.outfitDetails.poseName" class="input-tag">
+                          <mat-icon>accessibility_new</mat-icon>
+                          {{ txn.outfitDetails.poseName }}
+                        </span>
+                        <span *ngIf="txn.outfitDetails.backgroundName" class="input-tag">
+                          <mat-icon>wallpaper</mat-icon>
+                          {{ txn.outfitDetails.backgroundName }}
+                        </span>
+                        <span *ngIf="txn.outfitDetails.aspectRatio && txn.outfitDetails.aspectRatio !== 'original'" class="input-tag">
+                          <mat-icon>aspect_ratio</mat-icon>
+                          {{ txn.outfitDetails.aspectRatio }}
+                        </span>
+                      </div>
+                      <!-- Garments row -->
+                      <div class="input-garments" *ngIf="txn.outfitDetails.garments && txn.outfitDetails.garments.length > 0">
+                        <img
+                          *ngFor="let garment of txn.outfitDetails.garments"
+                          [src]="garment.imageUrl"
+                          [alt]="garment.name"
+                          class="input-garment-thumb"
+                          [matTooltip]="garment.name + (garment.category ? ' (' + garment.category + ')' : '')"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="transaction-row" [class.expanded]="expandedRows.has(row.id)" (click)="row.outfitDetails && toggleExpand(row.id)"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
       </table>
       </div>
     </mat-card-content>

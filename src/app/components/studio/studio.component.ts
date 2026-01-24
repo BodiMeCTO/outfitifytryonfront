@@ -5,7 +5,8 @@ import {
   inject,
   signal,
   ViewChild,
-  ElementRef
+  ElementRef,
+  effect
 } from '@angular/core';
 import { CommonModule, LowerCasePipe } from '@angular/common';
 import { Router } from '@angular/router';
@@ -107,6 +108,35 @@ export class StudioComponent implements OnInit {
     this.mobileActiveSection.set(section);
   }
 
+  // Handle mobile tab click with tutorial awareness
+  onMobileTabClick(section: 'model' | 'pose' | 'background' | 'ratio' | 'garments'): void {
+    this.setMobileSection(section);
+  }
+
+  // Advance mobile walkthrough and switch to appropriate tab
+  nextMobileWalkthroughStep(event: Event): void {
+    event.stopPropagation();
+    const currentStep = this.tutorialStep();
+
+    // Map tutorial steps to mobile tabs
+    const stepToTab: Record<string, 'model' | 'pose' | 'background' | 'ratio' | 'garments'> = {
+      'models-full': 'pose',
+      'pose-full': 'background',
+      'background-full': 'ratio',
+      'aspect-ratio-full': 'garments',
+      'garments-full': 'garments' // Final step, stays on garments
+    };
+
+    // Advance the tutorial
+    this.tutorialService.nextWalkthroughStep();
+
+    // Switch to the next tab (unless it's the final step)
+    const nextTab = stepToTab[currentStep];
+    if (nextTab && currentStep !== 'garments-full') {
+      this.setMobileSection(nextTab);
+    }
+  }
+
   // Switch garment sub-category
   setMobileGarmentCategory(category: 'all' | 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'footwear' | 'accessories'): void {
     this.mobileGarmentCategory.set(category);
@@ -137,6 +167,11 @@ export class StudioComponent implements OnInit {
     this.tutorialService.skipWalkthrough();
   }
 
+  // Navigate to gallery
+  goToGallery(): void {
+    this.router.navigate(['/generated-gallery']);
+  }
+
   // Model image state
   readonly selectedModel$ = this.outfitService.selectedInspiration$;
   readonly selectedModels$ = this.outfitService.selectedModels$;
@@ -163,6 +198,79 @@ export class StudioComponent implements OnInit {
   // ViewChild for scrolling to expanded background content on mobile
   @ViewChild('backgroundExpandedContent') backgroundExpandedContent?: ElementRef<HTMLElement>;
   @ViewChild('previewPanel') previewPanel?: ElementRef<HTMLElement>;
+
+  // ViewChild references for tutorial auto-scroll
+  @ViewChild('modelSection') modelSection?: ElementRef<HTMLElement>;
+  @ViewChild('poseSection') poseSection?: ElementRef<HTMLElement>;
+  @ViewChild('backgroundSection') backgroundSection?: ElementRef<HTMLElement>;
+  @ViewChild('aspectRatioSection') aspectRatioSection?: ElementRef<HTMLElement>;
+  @ViewChild('garmentsSection') garmentsSection?: ElementRef<HTMLElement>;
+
+  constructor() {
+    // Auto-scroll/switch to highlighted section during tutorial
+    effect(() => {
+      const step = this.tutorialStep();
+      if (!step) return;
+
+      // Map tutorial steps to mobile tabs
+      const stepToTab: Record<string, 'model' | 'pose' | 'background' | 'ratio' | 'garments'> = {
+        'model': 'model',
+        'garment': 'garments',
+        'models-full': 'model',
+        'pose-full': 'pose',
+        'background-full': 'background',
+        'aspect-ratio-full': 'ratio',
+        'garments-full': 'garments'
+      };
+
+      // Wait for DOM to update
+      setTimeout(() => {
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+          // Switch to the appropriate tab on mobile
+          const tab = stepToTab[step];
+          if (tab) {
+            this.mobileActiveSection.set(tab);
+          }
+        } else if (step.endsWith('-full')) {
+          // Scroll to section on desktop (only for full walkthrough)
+          this.scrollToTutorialSection(step);
+        }
+      }, 150);
+    });
+  }
+
+  /**
+   * Scroll to the section being highlighted in the tutorial walkthrough
+   */
+  private scrollToTutorialSection(step: string): void {
+    let targetElement: ElementRef<HTMLElement> | undefined;
+
+    switch (step) {
+      case 'models-full':
+        targetElement = this.modelSection;
+        break;
+      case 'pose-full':
+        targetElement = this.poseSection;
+        break;
+      case 'background-full':
+        targetElement = this.backgroundSection;
+        break;
+      case 'aspect-ratio-full':
+        targetElement = this.aspectRatioSection;
+        break;
+      case 'garments-full':
+        targetElement = this.garmentsSection;
+        break;
+    }
+
+    if (targetElement?.nativeElement) {
+      targetElement.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }
 
   // Filtered model images: only show original uploads (not background variants)
   // Also filters out templates when showTemplates is false
@@ -257,6 +365,9 @@ export class StudioComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Clear all selections when navigating to studio
+    this.clearAllSelections();
+
     // Load model images
     this.outfitService
       .ensureUserModelImagesLoaded()
@@ -280,6 +391,36 @@ export class StudioComponent implements OnInit {
     if (this.isFullWalkthrough()) {
       this.showAdvancedOptions.set(true);
     }
+  }
+
+  /**
+   * Clear all selections when entering the studio
+   */
+  private clearAllSelections(): void {
+    // Clear model selection
+    this.outfitService.clearModelSelection();
+
+    // Clear garment selection
+    this.outfitService.clearAllGarments();
+
+    // Reset pose to original
+    this.selectedPoseId.set('original');
+    this.outfitService.setSelectedPosePresetId('original');
+
+    // Clear background selection
+    this.selectedPresetId.set(null);
+    this.customBackgroundPrompt.set('');
+    this.expandedCategory.set('original');
+    this.activeBackgroundCategory.set('original');
+    this.outfitService.setSelectedBackgroundPresetId(null);
+    this.outfitService.setCustomBackgroundPrompt(null);
+
+    // Reset aspect ratio to original
+    this.selectedAspectRatio.set('original');
+    this.outfitService.setAspectRatio('original');
+
+    // Clear recently deselected models
+    this.recentlyDeselectedModels.set([]);
   }
 
   // Background preset methods
@@ -389,6 +530,11 @@ export class StudioComponent implements OnInit {
     this.outfitService.setAspectRatio(ratio);
   }
 
+  clearAspectRatio(): void {
+    this.selectedAspectRatio.set('original');
+    this.outfitService.setAspectRatio('original');
+  }
+
   // Pose selection methods
   selectPose(poseId: string): void {
     this.selectedPoseId.set(poseId);
@@ -451,8 +597,9 @@ export class StudioComponent implements OnInit {
     this.isUploadingModel.set(true);
     let completedCount = 0;
     let errorCount = 0;
+    let lastUploadedModel: SelectedInspiration | null = null;
 
-    // Upload each file (without auto-selecting)
+    // Upload each file and track the last successful upload for auto-selection
     imageFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -461,14 +608,15 @@ export class StudioComponent implements OnInit {
           .uploadModelImage(file, previewUrl)
           .pipe(take(1))
           .subscribe({
-            next: () => {
+            next: (uploadedModel) => {
               completedCount++;
-              this.checkUploadCompletion(imageFiles.length, completedCount, errorCount);
+              lastUploadedModel = uploadedModel;
+              this.checkUploadCompletion(imageFiles.length, completedCount, errorCount, lastUploadedModel);
             },
             error: () => {
               errorCount++;
               completedCount++;
-              this.checkUploadCompletion(imageFiles.length, completedCount, errorCount);
+              this.checkUploadCompletion(imageFiles.length, completedCount, errorCount, lastUploadedModel);
             }
           });
       };
@@ -478,13 +626,19 @@ export class StudioComponent implements OnInit {
     input.value = '';
   }
 
-  private checkUploadCompletion(total: number, completed: number, errors: number): void {
+  private checkUploadCompletion(total: number, completed: number, errors: number, lastUploadedModel: SelectedInspiration | null): void {
     if (completed === total) {
       this.isUploadingModel.set(false);
       const successCount = total - errors;
+
+      // Auto-select the last successfully uploaded model
+      if (lastUploadedModel) {
+        this.outfitService.toggleModelSelection(lastUploadedModel);
+      }
+
       if (errors === 0) {
         this.snackBar.open(
-          total === 1 ? 'Photo uploaded. Click to select.' : `${successCount} photos uploaded. Click to select.`,
+          total === 1 ? 'Photo uploaded and selected!' : `${successCount} photos uploaded. Last one selected.`,
           'OK',
           { duration: 2500 }
         );

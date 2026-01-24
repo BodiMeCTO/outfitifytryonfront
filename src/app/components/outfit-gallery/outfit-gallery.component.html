@@ -2,15 +2,15 @@
   <header class="header">
     <h1>Generated outfits</h1>
     <div class="header-actions">
-      <!-- Create New Outfit button (#13) -->
+      <!-- Back to Studio button - always visible -->
       <button
         mat-stroked-button
-        class="create-btn"
-        routerLink="/studio"
-        matTooltip="Create a new outfit"
+        class="back-to-studio-btn"
+        (click)="goToStudio()"
+        matTooltip="Return to Studio"
       >
-        <mat-icon>add</mat-icon>
-        Create New
+        <mat-icon>arrow_back</mat-icon>
+        Back to Studio
       </button>
       <button
         mat-icon-button
@@ -61,7 +61,7 @@
     <mat-icon>auto_awesome</mat-icon>
     <h3>No outfits yet</h3>
     <p>Start by selecting a model and garments, then generate your first virtual try-on!</p>
-    <button mat-raised-button color="primary" routerLink="/studio">
+    <button mat-raised-button color="primary" (click)="goToStudio()">
       <mat-icon>brush</mat-icon>
       Go to Studio
     </button>
@@ -97,6 +97,12 @@
         <div class="hover-overlay" *ngIf="image.status === 'ready'">
           <mat-icon>visibility</mat-icon>
           <span>Click to view</span>
+        </div>
+
+        <!-- Tap for details hint - always visible on ready images -->
+        <div class="tap-hint" *ngIf="image.status === 'ready'">
+          <mat-icon>touch_app</mat-icon>
+          <span>Tap for details</span>
         </div>
 
         <!-- Variants badge -->
@@ -138,6 +144,16 @@
         </div>
       </mat-card-content>
     </mat-card>
+
+    <!-- Create another outfit card - always visible at the end -->
+    <div class="create-outfit-card" (click)="goToStudio()" tabindex="0" role="button" aria-label="Create another outfit">
+      <div class="create-outfit-content">
+        <div class="create-outfit-icon">
+          <mat-icon>add</mat-icon>
+        </div>
+        <span class="create-outfit-text">Create another outfit</span>
+      </div>
+    </div>
   </div>
 </section>
 

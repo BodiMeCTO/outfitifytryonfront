@@ -21,7 +21,9 @@ import {
   GarmentImageDto,
   UpdateBackgroundImageDto,
   EditOutfitImageDto,
-  EditOutfitImageResponseDto
+  EditOutfitImageResponseDto,
+  TutorialStateDto,
+  UpdateTutorialStateDto
 } from '../models/outfitify-api';
 import { CreateOutfitDto, OutfitDto } from '../models/outfit';
 import { CreateModelImageDto, ModelImageDto } from './outfit.service';
@@ -52,6 +54,15 @@ export class OutfitifyApiService {
   getUserModelProfileByEmail(email: string): Observable<ModelProfileDto> {
     const encodedEmail = encodeURIComponent(email);
     return this.http.get<ModelProfileDto>(this.buildUrl(`/api/users/${encodedEmail}/model-profile`));
+  }
+
+  // --- Tutorial State ---
+  getTutorialState(): Observable<TutorialStateDto> {
+    return this.http.get<TutorialStateDto>(this.buildUrl('/api/users/me/tutorial-state'));
+  }
+
+  updateTutorialState(payload: UpdateTutorialStateDto): Observable<TutorialStateDto> {
+    return this.http.put<TutorialStateDto>(this.buildUrl('/api/users/me/tutorial-state'), payload);
   }
 
   // --- Catalogue ---

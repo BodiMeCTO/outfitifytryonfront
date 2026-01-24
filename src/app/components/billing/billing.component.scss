@@ -107,89 +107,136 @@
   }
 }
 
-// Tab styling
-::ng-deep .mat-mdc-tab-group {
-  .mat-mdc-tab-header {
-    border-bottom: 1px solid $color-border;
-  }
-
-  .mat-mdc-tab:not(.mat-mdc-tab-disabled) {
-    .mdc-tab__text-label {
-      color: $color-text-secondary;
-      font-weight: $font-weight-medium;
-      letter-spacing: $letter-spacing-wide;
-      text-transform: uppercase;
-      font-size: $font-size-sm;
-    }
-
-    &.mdc-tab--active .mdc-tab__text-label {
-      color: $color-accent-gold;
-    }
-  }
-
-  .mdc-tab-indicator__content--underline {
-    border-color: $color-accent-gold !important;
-  }
-}
-
-.tab-content {
-  padding: $space-6 0;
-}
-
-.tab-description {
-  color: $color-text-muted;
-  margin-bottom: $space-6;
-  font-size: $font-size-sm;
-}
-
-// Billing cycle toggle (Monthly/Annual) - #31 improved styling
-.billing-toggle {
+// Billing Type Selector - 3 options: Annual, Monthly, Pay as you go
+.billing-type-selector {
   display: flex;
   justify-content: center;
   gap: $space-2;
   margin-bottom: $space-6;
   padding: $space-1;
   background: $color-bg-tertiary;
-  border-radius: $radius-full;
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
+  border-radius: $radius-lg;
   border: 1px solid $color-border;
 
-  button {
-    display: flex;
-    align-items: center;
-    gap: $space-1;
-    border-radius: $radius-full;
-    transition: all $transition-fast;
-    font-weight: $font-weight-medium;
-    letter-spacing: $letter-spacing-wide;
-    text-transform: uppercase;
-    font-size: $font-size-xs;
-    padding: $space-2 $space-4;
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    padding: $space-2;
+  }
+}
+
+.billing-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-1;
+  padding: $space-4 $space-6;
+  min-width: 140px;
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+  background: transparent;
+  border: 2px solid transparent;
+  cursor: pointer;
+  position: relative;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: $space-3 $space-4;
+    min-width: unset;
+    width: 100%;
+  }
+
+  .btn-label {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
     color: $color-text-secondary;
-    background: transparent;
-    border: none;
+    transition: color $transition-fast;
+  }
 
-    .recommended-icon {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
+  .btn-sublabel {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    transition: color $transition-fast;
+
+    @media (max-width: $breakpoint-sm) {
+      margin-left: auto;
     }
+  }
 
-    &.active {
-      background: $color-accent-gold;
+  .best-value-icon {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: $color-accent-gold;
+
+    @media (max-width: $breakpoint-sm) {
+      position: static;
+      margin-right: $space-2;
+    }
+  }
+
+  &:hover:not(.active) {
+    background: $color-bg-hover;
+    border-color: $color-border;
+
+    .btn-label {
       color: $color-text-primary;
-      box-shadow: $shadow-sm;
+    }
+  }
 
-      .recommended-icon {
-        color: $color-text-primary;
-      }
+  &.active {
+    background: $color-bg-primary;
+    border-color: $color-accent-gold;
+    box-shadow: $shadow-sm;
+
+    .btn-label {
+      color: $color-accent-gold-dark;
     }
 
-    &:hover:not(.active) {
-      background: $color-bg-hover;
+    .btn-sublabel {
+      color: $color-accent-gold;
     }
+  }
+}
+
+// Billing Content Section
+.billing-content {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-header {
+  text-align: center;
+  margin-bottom: $space-6;
+
+  h3 {
+    margin: 0 0 $space-2;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+  }
+
+  .content-description {
+    color: $color-text-muted;
+    font-size: $font-size-sm;
+    margin: 0;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -320,22 +367,6 @@
   }
 }
 
-// Pay-as-you-go header (#32)
-.payg-header {
-  text-align: center;
-  margin-bottom: $space-6;
-
-  h3 {
-    margin: 0 0 $space-2;
-    font-size: $font-size-xl;
-    font-weight: $font-weight-medium;
-    color: $color-text-primary;
-  }
-
-  .tab-description {
-    margin-bottom: 0;
-  }
-}
 
 // Credit Packages Grid (#32 - improved mobile display)
 .packages-grid {
@@ -542,14 +573,5 @@
 
   .status-card .status-item {
     min-width: unset;
-  }
-
-  .billing-toggle {
-    width: 100%;
-
-    button {
-      flex: 1;
-      padding: $space-2;
-    }
   }
 }

@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { AsyncPipe, CommonModule, DatePipe, NgForOf, NgIf } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -28,7 +28,6 @@ import { ArchivePanelComponent } from '../archive-panel/archive-panel.component'
     NgForOf,
     AsyncPipe,
     DatePipe,
-    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -49,6 +48,7 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly generatedImages$ = this.outfitService.generatedImages$;
   private readonly subscription = new Subscription();
@@ -62,10 +62,13 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
   // Track processing images for banner (#13) and notifications (#22)
   private processingImageIds = new Set<string>();
 
-  // Navigate to studio - starts walkthrough if in tutorial, otherwise just navigates
+  // Navigate to studio - completes gallery-return step if in tutorial
   goToStudio(): void {
+    // If in tutorial gallery-return step, advance to full walkthrough
     if (this.tutorialService.isGalleryReturnStep()) {
       this.tutorialService.startFullWalkthrough();
+      // Trigger change detection to immediately hide the tutorial banner
+      this.cdr.markForCheck();
     }
     this.router.navigate(['/studio']);
   }
