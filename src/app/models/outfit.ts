@@ -19,6 +19,8 @@ export interface Garment {
   group: GarmentGroup;
   image: string;
   sizes?: string[];
+  /** Indicates this is a preloaded template garment */
+  isTemplate?: boolean;
 }
 
 // -----------------------

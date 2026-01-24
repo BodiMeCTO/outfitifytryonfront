@@ -1629,7 +1629,8 @@ export class OutfitService {
       description: dto.description ?? '',
       group,
       image: this.resolveAssetUrl(dto.imageUrl, 'assets/generated/placeholder-ready-1.svg'),
-      sizes: dto.sizes ?? []
+      sizes: dto.sizes ?? [],
+      isTemplate: (dto as any).isTemplate ?? false
     } as Garment & Record<string, any>;
 
     // Attach any discovered category/entity id on the runtime object for debugging
