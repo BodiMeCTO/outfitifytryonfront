@@ -24,10 +24,36 @@
     </div>
   </header>
 
-  <!-- Processing info banner (#13) -->
-  <div class="processing-banner" *ngIf="hasProcessingImages()">
-    <mat-icon>schedule</mat-icon>
-    <span>Generation can take up to a minute. Feel free to <a routerLink="/studio">create another</a> while you wait!</span>
+  <!-- Studio Return Banner - Shows during tutorial OR when processing images -->
+  <div
+    class="studio-return-banner"
+    [class.tutorial-highlight]="isGalleryReturnStep()"
+    *ngIf="isGalleryReturnStep() || hasProcessingImages()"
+  >
+    <!-- Tutorial message (only during tutorial) -->
+    <div class="tutorial-return-content" *ngIf="isGalleryReturnStep()">
+      <div class="tutorial-return-icon">
+        <mat-icon>celebration</mat-icon>
+      </div>
+      <div class="tutorial-return-text">
+        <h3>Great job! Your first outfit is being created</h3>
+        <p>While you wait, let's explore all the features in the Studio</p>
+      </div>
+    </div>
+    <!-- Normal message (when not in tutorial but processing) -->
+    <div class="studio-return-content" *ngIf="!isGalleryReturnStep() && hasProcessingImages()">
+      <mat-icon>schedule</mat-icon>
+      <span>Generation can take up to a minute. Create another outfit while you wait!</span>
+    </div>
+    <!-- Studio button -->
+    <button
+      class="studio-btn"
+      [class.tutorial-studio-btn]="isGalleryReturnStep()"
+      (click)="goToStudio()"
+    >
+      <mat-icon>brush</mat-icon>
+      <span>{{ isGalleryReturnStep() ? 'Back to Studio' : 'Go to Studio' }}</span>
+    </button>
   </div>
 
   <!-- Empty state (no outfits yet) - Enhanced (#13) -->

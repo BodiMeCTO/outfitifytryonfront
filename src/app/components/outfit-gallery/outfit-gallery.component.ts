@@ -13,6 +13,7 @@ import { switchMap, take, pairwise, startWith } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
+import { TutorialService } from '../../services/tutorial.service';
 import { GeneratedImage } from '../../models/outfit';
 import { SmartGarmentUploadDialogComponent } from '../smart-garment-upload-dialog/smart-garment-upload-dialog.component';
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
@@ -44,6 +45,7 @@ import { ArchivePanelComponent } from '../archive-panel/archive-panel.component'
 export class OutfitGalleryComponent implements OnInit, OnDestroy {
   private readonly outfitService = inject(OutfitService);
   private readonly apiService = inject(OutfitifyApiService);
+  private readonly tutorialService = inject(TutorialService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
@@ -54,8 +56,19 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
   // Archive panel state
   readonly isArchivePanelOpen = signal(false);
 
+  // Tutorial state - show return to studio prompt
+  readonly isGalleryReturnStep = this.tutorialService.isGalleryReturnStep;
+
   // Track processing images for banner (#13) and notifications (#22)
   private processingImageIds = new Set<string>();
+
+  // Navigate to studio - starts walkthrough if in tutorial, otherwise just navigates
+  goToStudio(): void {
+    if (this.tutorialService.isGalleryReturnStep()) {
+      this.tutorialService.startFullWalkthrough();
+    }
+    this.router.navigate(['/studio']);
+  }
 
   /**
    * Check if there are any images currently processing (#13)

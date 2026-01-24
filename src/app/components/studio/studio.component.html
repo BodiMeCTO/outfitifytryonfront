@@ -197,8 +197,40 @@
 
   <!-- Workflow Sections -->
   <main class="workflow-sections">
+    <!-- Walkthrough Header (shows during full walkthrough) -->
+    <div class="walkthrough-header" *ngIf="isFullWalkthrough()">
+      <div class="walkthrough-progress">
+        <span class="walkthrough-title">Studio Tour</span>
+        <span class="walkthrough-step">Step {{ getWalkthroughStepNumber() }} of {{ getTotalWalkthroughSteps() }}</span>
+      </div>
+      <button class="walkthrough-skip-btn" (click)="skipWalkthrough()">
+        Skip Tour
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
     <!-- Model Images Section -->
-    <section class="workflow-section">
+    <section class="workflow-section"
+      [class.tutorial-highlight]="(isTutorialActive() && tutorialStep() === 'model') || tutorialStep() === 'models-full'">
+      <!-- Simplified flow: Pick a model -->
+      <div class="tutorial-step-badge" *ngIf="isTutorialActive() && tutorialStep() === 'model'">
+        <span class="step-number">1</span>
+        <span class="step-text">Start here: Pick a model photo</span>
+      </div>
+      <!-- Full walkthrough: Explain model features -->
+      <div class="walkthrough-tooltip" *ngIf="tutorialStep() === 'models-full'">
+        <div class="tooltip-content">
+          <mat-icon class="tooltip-icon">photo_camera</mat-icon>
+          <div class="tooltip-text">
+            <h4>Upload Your Own Photos</h4>
+            <p>Use the <strong>upload button</strong> to add your own photos, or choose from our <strong>template models</strong>. Full-body shots work best!</p>
+          </div>
+        </div>
+        <button class="tooltip-next-btn" (click)="nextWalkthroughStep()">
+          Got it
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
       <div class="section-header-row">
         <h2 class="section-label-gold">Model Images</h2>
         <div class="section-actions">
@@ -320,8 +352,33 @@
       </ng-container>
     </section>
 
+    <!-- Advanced Options Toggle (shown in simplified tutorial mode only) -->
+    <div class="advanced-options-toggle" *ngIf="isSimplifiedFlow() && !showAdvancedOptions()">
+      <button class="show-advanced-btn" (click)="expandAdvancedOptions()">
+        <mat-icon>tune</mat-icon>
+        <span>Show advanced options (pose, background, aspect ratio)</span>
+        <mat-icon class="expand-icon">expand_more</mat-icon>
+      </button>
+    </div>
+
     <!-- Pose Section (Optional - pre-defined poses) -->
-    <section class="workflow-section pose-section">
+    <section class="workflow-section pose-section"
+      [class.tutorial-highlight]="tutorialStep() === 'pose-full'"
+      *ngIf="showAdvancedOptions() || !isSimplifiedFlow()">
+      <!-- Full walkthrough: Explain pose options -->
+      <div class="walkthrough-tooltip" *ngIf="tutorialStep() === 'pose-full'">
+        <div class="tooltip-content">
+          <mat-icon class="tooltip-icon">accessibility_new</mat-icon>
+          <div class="tooltip-text">
+            <h4>Change the Pose</h4>
+            <p>Transform the model's pose! Choose from <strong>confident</strong>, <strong>casual</strong>, <strong>dynamic</strong>, or <strong>elegant</strong> poses to match your vision.</p>
+          </div>
+        </div>
+        <button class="tooltip-next-btn" (click)="nextWalkthroughStep()">
+          Got it
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
       <div class="section-header-row">
         <h2 class="section-label-gold">Pose <span class="optional-tag">(Optional)</span></h2>
       </div>
@@ -340,7 +397,23 @@
     </section>
 
     <!-- Background Section (Optional - AI-generated or uploaded) -->
-    <section class="workflow-section background-section">
+    <section class="workflow-section background-section"
+      [class.tutorial-highlight]="tutorialStep() === 'background-full'"
+      *ngIf="showAdvancedOptions() || !isSimplifiedFlow()">
+      <!-- Full walkthrough: Explain background options -->
+      <div class="walkthrough-tooltip" *ngIf="tutorialStep() === 'background-full'">
+        <div class="tooltip-content">
+          <mat-icon class="tooltip-icon">wallpaper</mat-icon>
+          <div class="tooltip-text">
+            <h4>Set the Scene</h4>
+            <p>Choose from <strong>150+ background presets</strong> across categories like Studio, Urban, Outdoor, and Luxury — or write your own <strong>custom description</strong>!</p>
+          </div>
+        </div>
+        <button class="tooltip-next-btn" (click)="nextWalkthroughStep()">
+          Got it
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
       <div class="section-header-row">
         <h2 class="section-label-gold">Background <span class="optional-tag">(Optional)</span></h2>
       </div>
@@ -412,7 +485,23 @@
     </section>
 
     <!-- Aspect Ratio Section -->
-    <section class="workflow-section aspect-ratio-section">
+    <section class="workflow-section aspect-ratio-section"
+      [class.tutorial-highlight]="tutorialStep() === 'aspect-ratio-full'"
+      *ngIf="showAdvancedOptions() || !isSimplifiedFlow()">
+      <!-- Full walkthrough: Explain aspect ratio options -->
+      <div class="walkthrough-tooltip" *ngIf="tutorialStep() === 'aspect-ratio-full'">
+        <div class="tooltip-content">
+          <mat-icon class="tooltip-icon">aspect_ratio</mat-icon>
+          <div class="tooltip-text">
+            <h4>Choose Your Format</h4>
+            <p>Select the perfect aspect ratio for your needs: <strong>Square</strong> for Instagram, <strong>9:16</strong> for Stories, or keep the <strong>Original</strong> dimensions.</p>
+          </div>
+        </div>
+        <button class="tooltip-next-btn" (click)="nextWalkthroughStep()">
+          Got it
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
       <div class="section-header-row">
         <h2 class="section-label-gold">Aspect Ratio</h2>
       </div>
@@ -430,7 +519,27 @@
     </section>
 
     <!-- Garments Section -->
-    <section class="workflow-section">
+    <section class="workflow-section"
+      [class.tutorial-highlight]="tutorialStep() === 'garment' || tutorialStep() === 'garments-full'">
+      <!-- Simplified flow: Pick garments -->
+      <div class="tutorial-step-badge" *ngIf="tutorialStep() === 'garment'">
+        <span class="step-number">2</span>
+        <span class="step-text">Now pick some clothes to try on</span>
+      </div>
+      <!-- Full walkthrough: Explain garment features -->
+      <div class="walkthrough-tooltip walkthrough-complete" *ngIf="tutorialStep() === 'garments-full'">
+        <div class="tooltip-content">
+          <mat-icon class="tooltip-icon">checkroom</mat-icon>
+          <div class="tooltip-text">
+            <h4>Add Your Own Garments</h4>
+            <p>Upload photos of any clothing item using the <strong>Add Garment</strong> button. Mix tops, bottoms, jackets, and accessories to create the perfect outfit!</p>
+          </div>
+        </div>
+        <button class="tooltip-next-btn tooltip-finish-btn" (click)="nextWalkthroughStep()">
+          Finish Tour
+          <mat-icon>check</mat-icon>
+        </button>
+      </div>
       <div class="section-header-row">
         <h2 class="section-label-gold">Garments</h2>
         <div class="section-actions">

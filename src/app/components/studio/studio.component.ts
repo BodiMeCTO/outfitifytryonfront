@@ -22,6 +22,7 @@ import { combineLatest } from 'rxjs';
 import { OutfitService } from '../../services/outfit.service';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { CreditsService } from '../../services/credits.service';
+import { TutorialService } from '../../services/tutorial.service';
 import {
   SelectedInspiration,
   Garment,
@@ -85,9 +86,36 @@ export class StudioComponent implements OnInit {
   private readonly outfitService = inject(OutfitService);
   private readonly apiService = inject(OutfitifyApiService);
   private readonly creditsService = inject(CreditsService);
+  private readonly tutorialService = inject(TutorialService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
+
+  // Tutorial mode state
+  readonly isTutorialActive = this.tutorialService.isTutorialActive;
+  readonly tutorialStep = this.tutorialService.tutorialStep;
+  readonly isSimplifiedFlow = this.tutorialService.isSimplifiedFlow;
+  readonly isFullWalkthrough = this.tutorialService.isFullWalkthrough;
+  readonly showAdvancedOptions = signal(this.tutorialService.hasCreatedFirstOutfit());
+
+  // Get walkthrough step info for display
+  getWalkthroughStepNumber(): number {
+    return this.tutorialService.getWalkthroughStepNumber();
+  }
+
+  getTotalWalkthroughSteps(): number {
+    return this.tutorialService.getTotalWalkthroughSteps();
+  }
+
+  // Advance to next walkthrough step
+  nextWalkthroughStep(): void {
+    this.tutorialService.nextWalkthroughStep();
+  }
+
+  // Skip the walkthrough entirely
+  skipWalkthrough(): void {
+    this.tutorialService.skipWalkthrough();
+  }
 
   // Model image state
   readonly selectedModel$ = this.outfitService.selectedInspiration$;
@@ -227,6 +255,11 @@ export class StudioComponent implements OnInit {
 
     // Check for new signup and show welcome dialog
     this.checkNewUserWelcome();
+
+    // Ensure advanced options are visible during full walkthrough
+    if (this.isFullWalkthrough()) {
+      this.showAdvancedOptions.set(true);
+    }
   }
 
   // Background preset methods
@@ -457,6 +490,14 @@ export class StudioComponent implements OnInit {
       this.addToRecentlyDeselected(model);
     }
 
+    // Update tutorial state based on selection
+    const selectedModels = this.outfitService.getSelectedModels();
+    if (selectedModels.length > 0) {
+      this.tutorialService.onModelSelected();
+    } else {
+      this.tutorialService.onModelDeselected();
+    }
+
     // Show feedback when max limit is reached (model wasn't added AND wasn't already selected)
     if (!wasAdded && !wasSelected) {
       this.snackBar.open(
@@ -485,6 +526,12 @@ export class StudioComponent implements OnInit {
     if (this.outfitService.isModelSelected(model.id)) {
       this.outfitService.toggleModelSelection(model);
       this.addToRecentlyDeselected(model);
+
+      // Update tutorial state
+      const selectedModels = this.outfitService.getSelectedModels();
+      if (selectedModels.length === 0) {
+        this.tutorialService.onModelDeselected();
+      }
     }
   }
 
@@ -535,6 +582,7 @@ export class StudioComponent implements OnInit {
 
   clearModelSelection(): void {
     this.outfitService.clearModelSelection();
+    this.tutorialService.onModelDeselected();
   }
 
   setPreviewModel(model: SelectedInspiration): void {
@@ -625,6 +673,9 @@ export class StudioComponent implements OnInit {
           }
 
           if (succeeded.length > 0) {
+            // Mark first outfit created for tutorial completion
+            this.tutorialService.markFirstOutfitCreated();
+            this.showAdvancedOptions.set(true);
             this.router.navigate(['/generated-gallery']);
           }
         }, 1000);
@@ -749,5 +800,15 @@ export class StudioComponent implements OnInit {
       }
     }
     return 'original';
+  }
+
+  // Toggle advanced options visibility (for tutorial mode)
+  toggleAdvancedOptions(): void {
+    this.showAdvancedOptions.set(!this.showAdvancedOptions());
+  }
+
+  // Expand advanced options (user wants to see them)
+  expandAdvancedOptions(): void {
+    this.showAdvancedOptions.set(true);
   }
 }
