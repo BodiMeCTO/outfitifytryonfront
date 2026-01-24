@@ -1,36 +1,37 @@
 @use '../../../styles/tokens' as *;
 
 .studio-container {
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - #{$header-height});
+  display: none; // Hidden on mobile (new mobile layout used instead)
 
   @include lg {
+    display: flex;
     flex-direction: row;
     gap: $space-8;
+    min-height: calc(100vh - #{$header-height});
   }
 }
 
-// Preview Panel
+// Preview Panel - Desktop only
 .preview-panel {
-  position: relative;
-  background: $color-bg-primary;
-  border-radius: $radius-xl;
-  border: 1px solid $color-border;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  display: none; // Hidden on mobile
 
   @include lg {
+    display: flex;
+    flex-direction: column;
     position: sticky;
     top: calc(#{$header-height} + #{$space-6});
     width: 45%;
-    max-width: 500px;
-    // Use flex to size to content, with max constraint
+    max-width: 480px;
+    min-width: 360px;
     height: auto;
     max-height: calc(100vh - #{$header-height} - #{$space-12});
-    display: flex;
-    flex-direction: column;
-    align-self: flex-start; // Prevent stretching to container height
+    background: $color-bg-primary;
+    border-radius: $radius-xl;
+    border: 2px solid $color-accent-gold;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba($color-accent-gold, 0.15),
+                0 8px 32px rgba(0, 0, 0, 0.08);
+    align-self: flex-start;
   }
 }
 
@@ -101,19 +102,62 @@
 }
 
 // ==============================================
+// Outfit Preview Header
+// ==============================================
+
+.outfit-preview-header {
+  display: none; // Hidden on mobile
+
+  @include lg {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    padding-bottom: $space-4;
+    border-bottom: 2px solid $color-accent-gold;
+    margin-bottom: $space-2;
+  }
+}
+
+.outfit-title {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: $color-accent-gold;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+}
+
+.outfit-subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  padding-left: 32px; // Align with title text
+}
+
+// ==============================================
 // Selection Details Panel
 // ==============================================
 
 .selection-details {
   display: flex;
   flex-direction: column;
-  gap: $space-4;
+  gap: $space-5;
 }
 
 .selection-section {
   display: flex;
   flex-direction: column;
-  gap: $space-2;
+  gap: $space-3;
 }
 
 .selection-section-header {
@@ -169,17 +213,23 @@
 
 .selection-thumbnails {
   display: flex;
+  flex-wrap: wrap;
   gap: $space-2;
-  overflow-x: auto;
   padding: $space-1 0;
-  scrollbar-width: none;
 
-  &::-webkit-scrollbar {
-    display: none;
+  &.large {
+    gap: $space-3;
   }
+}
 
-  &.compact {
-    gap: $space-1;
+// Garments displayed in a grid
+.garments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: $space-3;
+
+  @include lg {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
 }
 
@@ -188,33 +238,72 @@
   flex-shrink: 0;
   width: 48px;
   height: 64px;
-  border-radius: $radius-sm;
+  border-radius: $radius-md;
   overflow: hidden;
-  border: 1px solid $color-border;
+  border: 2px solid $color-border;
   transition: all $transition-fast;
   background: $color-bg-tertiary;
 
   img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
   }
 
   .thumb-badge {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 4px;
+    top: 4px;
+    left: 4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
     background: $color-accent-gold;
-    color: $color-bg-primary;
-    font-size: 10px;
+    color: white;
+    font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
     border-radius: $radius-full;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .garment-type-badge {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2px 4px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 9px;
+    font-weight: $font-weight-semibold;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  // Large thumbnails for desktop preview panel
+  &.large {
+    width: 80px;
+    height: 100px;
+    border-radius: $radius-lg;
+
+    @include lg {
+      width: 90px;
+      height: 112px;
+    }
+
+    .thumb-badge {
+      min-width: 24px;
+      height: 24px;
+      font-size: $font-size-sm;
+    }
+
+    .garment-type-badge {
+      padding: 3px 6px;
+      font-size: 10px;
+    }
   }
 
   &.small {
@@ -222,79 +311,69 @@
     height: 48px;
   }
 
-  &:hover {
-    border-color: $color-accent-gold;
-    transform: scale(1.05);
-  }
+  // Remove indicator (shown on hover)
+  .remove-indicator {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($color-error, 0.85);
+    opacity: 0;
+    transition: opacity 0.15s ease;
 
-  // Clickable thumbnails for changing preview
-  &.clickable {
-    cursor: pointer;
-
-    &:hover {
-      border-color: $color-accent-gold;
-      box-shadow: 0 2px 8px rgba($color-accent-gold, 0.3);
+    mat-icon {
+      color: white;
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
     }
   }
 
-  // Currently shown in main preview
-  &.is-preview {
+  // Clickable thumbnails
+  &.clickable {
+    cursor: pointer;
     border-color: $color-accent-gold;
-    border-width: 2px;
-    box-shadow: 0 0 0 2px rgba($color-accent-gold, 0.2);
-  }
 
-  // Deselect overlay (#26)
-  &.has-deselect {
-    .deselect-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.6);
-      opacity: 0;
-      transition: opacity 0.15s ease;
-      cursor: pointer;
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
-      mat-icon {
-        color: white;
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
+      .remove-indicator {
+        opacity: 1;
       }
     }
 
-    &:hover .deselect-overlay {
-      opacity: 1;
+    &:active {
+      transform: scale(0.98);
     }
   }
 }
 
-// Selection history for recently deselected items (#24)
-.recent-history {
+// Empty selection state
+.empty-selection {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: $space-2;
-  padding: $space-2 0;
-  border-top: 1px dashed $color-border;
-  margin-top: $space-2;
+  padding: $space-6 $space-4;
+  background: $color-bg-secondary;
+  border: 2px dashed $color-border;
+  border-radius: $radius-lg;
+  color: $color-text-muted;
+  text-align: center;
 
-  .history-label {
-    font-size: $font-size-xs;
-    color: $color-text-muted;
-    white-space: nowrap;
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    opacity: 0.5;
   }
 
-  .history-thumbs {
-    display: flex;
-    gap: $space-1;
-    overflow-x: auto;
-    scrollbar-width: none;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
+  span {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
   }
 }
 
@@ -344,54 +423,34 @@
   }
 }
 
-.garment-row {
-  display: flex;
-  flex-direction: column;
-  gap: $space-1;
-}
-
-.garment-category-label {
-  font-size: $font-size-xs;
-  color: $color-text-muted;
-  padding-left: $space-1;
-}
-
-.empty-selection {
-  padding: $space-3;
-  text-align: center;
-  font-size: $font-size-xs;
-  color: $color-text-muted;
-  background: $color-bg-secondary;
-  border-radius: $radius-md;
-  border: 1px dashed $color-border;
-
-  span {
-    opacity: 0.7;
-  }
-}
-
 .options-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $space-2;
-  padding-top: $space-2;
+  padding-top: $space-3;
   border-top: 1px solid $color-border;
 }
 
-.option-item {
+.options-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-top: $space-2;
+}
+
+.option-chip {
   display: flex;
   align-items: center;
-  gap: $space-1;
-  padding: $space-1 $space-2;
-  background: $color-bg-tertiary;
-  border-radius: $radius-full;
-  font-size: $font-size-xs;
-  color: $color-text-secondary;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+  background: $color-accent-gold-light;
+  border: 1px solid rgba($color-accent-gold, 0.3);
+  border-radius: $radius-lg;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-accent-gold-dark;
 
   mat-icon {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
     color: $color-accent-gold;
   }
 }
@@ -1766,7 +1825,7 @@
     background: $color-accent-gold;
     color: white;
     font-size: $font-size-xs;
-    font-weight: $font-weight-bold;
+    font-weight: $font-weight-semibold;
     border-radius: $radius-full;
     flex-shrink: 0;
 
@@ -1891,7 +1950,7 @@
 
 .walkthrough-title {
   font-size: $font-size-base;
-  font-weight: $font-weight-bold;
+  font-weight: $font-weight-semibold;
 
   @include md {
     font-size: $font-size-lg;
@@ -2175,4 +2234,693 @@
   }
 
   @include focus-ring;
+}
+
+// ============================================
+// NEW MOBILE STUDIO LAYOUT
+// ============================================
+
+.mobile-studio {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - #{$header-height});
+  background: $color-bg-primary;
+
+  @include lg {
+    display: none; // Hidden on desktop
+  }
+}
+
+// Selected Items Bar (sticky top)
+.mobile-selected-bar {
+  position: sticky;
+  top: $header-height;
+  z-index: $z-sticky;
+  padding: $space-3 $space-4;
+  background: $color-bg-primary;
+  border-bottom: 1px solid $color-border;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  min-height: 80px;
+}
+
+.selected-items-scroll {
+  display: flex;
+  gap: $space-2;
+  overflow-x: auto;
+  padding: $space-1 0;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.selected-item {
+  position: relative;
+  flex-shrink: 0;
+  width: 56px;
+  height: 70px;
+  border-radius: $radius-md;
+  overflow: hidden;
+  border: 2px solid $color-accent-gold;
+  background: $color-bg-tertiary;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .item-type {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2px;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    font-size: 8px;
+    font-weight: $font-weight-semibold;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .remove-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    background: $color-error;
+    border-radius: $radius-full;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      color: white;
+    }
+  }
+
+  &:active .remove-badge {
+    opacity: 1;
+  }
+}
+
+// Selected option (pose, background)
+.selected-item.selected-option {
+  width: auto;
+  min-width: 70px;
+  max-width: 100px;
+  height: 56px;
+  padding: $space-2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: $color-accent-gold-light;
+
+  .option-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: $color-accent-gold;
+  }
+
+  .option-label {
+    font-size: 9px;
+    font-weight: $font-weight-semibold;
+    color: $color-accent-gold-dark;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+}
+
+.selected-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-4;
+  color: $color-text-muted;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  span {
+    font-size: $font-size-sm;
+  }
+}
+
+// Content Area
+.mobile-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 180px; // Space for tabs + generate button
+}
+
+.mobile-section {
+  padding: $space-4;
+}
+
+.section-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-2;
+  margin-bottom: $space-4;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-2 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  background: $color-bg-secondary;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &.active {
+    background: $color-accent-gold-light;
+    border-color: $color-accent-gold;
+    color: $color-accent-gold-dark;
+  }
+
+  &.primary {
+    background: $color-accent-gold;
+    border-color: $color-accent-gold;
+    color: white;
+  }
+}
+
+// Mobile Grid (2 columns)
+.mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-3;
+}
+
+.mobile-grid-item {
+  position: relative;
+  aspect-ratio: 3/4;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  border: 2px solid $color-border;
+  background: $color-bg-tertiary;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &.selected {
+    border-color: $color-accent-gold;
+    box-shadow: 0 0 0 2px rgba($color-accent-gold, 0.3);
+  }
+
+  .selected-check {
+    position: absolute;
+    top: $space-2;
+    right: $space-2;
+    width: 28px;
+    height: 28px;
+    background: $color-accent-gold;
+    border-radius: $radius-full;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: white;
+    }
+  }
+
+  .garment-badge {
+    position: absolute;
+    bottom: $space-2;
+    left: $space-2;
+    padding: 2px 8px;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    font-size: 10px;
+    font-weight: $font-weight-semibold;
+    border-radius: $radius-sm;
+    text-transform: uppercase;
+  }
+}
+
+// Pose items
+.mobile-grid.poses {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.pose-item {
+  aspect-ratio: auto;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-4;
+  background: $color-bg-secondary;
+
+  .pose-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: $color-text-muted;
+  }
+
+  .pose-name {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+    text-align: center;
+  }
+
+  &.selected {
+    background: $color-accent-gold-light;
+
+    .pose-icon {
+      color: $color-accent-gold;
+    }
+
+    .pose-name {
+      color: $color-accent-gold-dark;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}
+
+// Background items
+.category-pills {
+  display: flex;
+  gap: $space-2;
+  overflow-x: auto;
+  padding-bottom: $space-3;
+  margin-bottom: $space-3;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.category-pill {
+  flex-shrink: 0;
+  padding: $space-2 $space-4;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: $color-bg-secondary;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+
+  &.active {
+    background: $color-accent-gold;
+    border-color: $color-accent-gold;
+    color: white;
+  }
+}
+
+.mobile-grid.backgrounds {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.bg-item {
+  aspect-ratio: auto;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-1;
+  padding: $space-3;
+  background: $color-bg-secondary;
+
+  .bg-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: $color-text-muted;
+  }
+
+  .bg-name {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  &.selected {
+    background: $color-accent-gold-light;
+
+    .bg-icon {
+      color: $color-accent-gold;
+    }
+
+    .bg-name {
+      color: $color-accent-gold-dark;
+    }
+  }
+}
+
+.original-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  padding: $space-8;
+  text-align: center;
+  color: $color-text-muted;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.5;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    margin: 0;
+  }
+}
+
+.custom-prompt-mobile {
+  margin-top: $space-4;
+  padding-top: $space-4;
+  border-top: 1px solid $color-border;
+
+  label {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+    margin-bottom: $space-2;
+  }
+
+  textarea {
+    width: 100%;
+    padding: $space-3;
+    border: 1px solid $color-border;
+    border-radius: $radius-lg;
+    background: $color-bg-secondary;
+    font-size: $font-size-sm;
+    resize: none;
+
+    &:focus {
+      outline: none;
+      border-color: $color-accent-gold;
+    }
+  }
+}
+
+// Ratio items
+.mobile-grid.ratios {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ratio-item {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-3;
+  background: $color-bg-secondary;
+
+  .ratio-preview {
+    width: 40px;
+    height: 40px;
+    border: 2px solid $color-text-muted;
+    border-radius: $radius-sm;
+    background: $color-bg-tertiary;
+
+    &[data-ratio="1:1"] {
+      width: 36px;
+      height: 36px;
+    }
+
+    &[data-ratio="2:3"] {
+      width: 28px;
+      height: 42px;
+    }
+
+    &[data-ratio="3:4"] {
+      width: 30px;
+      height: 40px;
+    }
+
+    &[data-ratio="9:16"] {
+      width: 24px;
+      height: 42px;
+    }
+  }
+
+  .ratio-label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+  }
+
+  &.selected {
+    background: $color-accent-gold-light;
+
+    .ratio-preview {
+      border-color: $color-accent-gold;
+    }
+
+    .ratio-label {
+      color: $color-accent-gold-dark;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}
+
+// Garment category tabs
+.garment-category-tabs {
+  display: flex;
+  gap: $space-1;
+  overflow-x: auto;
+  padding-bottom: $space-3;
+  margin-bottom: $space-3;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.garment-tab {
+  position: relative;
+  flex-shrink: 0;
+  padding: $space-2 $space-3;
+  border: none;
+  border-radius: $radius-lg;
+  background: $color-bg-secondary;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+
+  &.active {
+    background: $color-accent-gold;
+    color: white;
+  }
+
+  .tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    margin-left: 4px;
+    background: white;
+    color: $color-accent-gold;
+    font-size: 10px;
+    font-weight: $font-weight-semibold;
+    border-radius: $radius-full;
+  }
+}
+
+.empty-category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  padding: $space-8;
+  text-align: center;
+  color: $color-text-muted;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.4;
+  }
+
+  p {
+    margin: 0;
+    font-size: $font-size-sm;
+  }
+
+  .add-btn {
+    padding: $space-2 $space-4;
+    background: $color-accent-gold;
+    color: white;
+    border: none;
+    border-radius: $radius-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+  }
+}
+
+// Section Tabs (bottom navigation)
+.mobile-section-tabs {
+  position: fixed;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  display: flex;
+  background: $color-bg-primary;
+  border-top: 1px solid $color-border;
+  z-index: $z-fixed;
+
+  @include lg {
+    display: none;
+  }
+}
+
+.section-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: $space-2 $space-1;
+  border: none;
+  background: transparent;
+  color: $color-text-muted;
+  font-size: 10px;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  &.active {
+    color: $color-accent-gold;
+  }
+
+  .tab-count {
+    position: absolute;
+    top: 4px;
+    right: calc(50% - 18px);
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: $color-accent-gold;
+    color: white;
+    font-size: 9px;
+    font-weight: $font-weight-semibold;
+    border-radius: $radius-full;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tab-dot {
+    position: absolute;
+    top: 6px;
+    right: calc(50% - 14px);
+    width: 8px;
+    height: 8px;
+    background: $color-accent-gold;
+    border-radius: $radius-full;
+  }
+}
+
+// Generate Button (fixed bottom)
+.mobile-generate {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $space-2 $space-4;
+  @include safe-area-padding(bottom, $space-2);
+  background: $color-bg-primary;
+  border-top: 1px solid $color-border;
+  z-index: calc(#{$z-fixed} + 1);
+
+  @include lg {
+    display: none;
+  }
+
+  .generate-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-1;
+    margin-bottom: $space-2;
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: $color-accent-gold;
+    }
+  }
 }

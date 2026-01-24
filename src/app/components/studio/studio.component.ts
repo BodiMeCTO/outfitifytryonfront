@@ -98,6 +98,26 @@ export class StudioComponent implements OnInit {
   readonly isFullWalkthrough = this.tutorialService.isFullWalkthrough;
   readonly showAdvancedOptions = signal(this.tutorialService.hasCreatedFirstOutfit());
 
+  // Mobile section navigation
+  readonly mobileActiveSection = signal<'model' | 'pose' | 'background' | 'ratio' | 'garments'>('model');
+  readonly mobileGarmentCategory = signal<'all' | 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'footwear' | 'accessories'>('all');
+
+  // Switch mobile section
+  setMobileSection(section: 'model' | 'pose' | 'background' | 'ratio' | 'garments'): void {
+    this.mobileActiveSection.set(section);
+  }
+
+  // Switch garment sub-category
+  setMobileGarmentCategory(category: 'all' | 'tops' | 'bottoms' | 'full-body' | 'jackets' | 'footwear' | 'accessories'): void {
+    this.mobileGarmentCategory.set(category);
+  }
+
+  // Get garments for mobile category (excludes 'all' which is handled separately in template)
+  getMobileGarmentCategory(): GarmentGroup {
+    const cat = this.mobileGarmentCategory();
+    return cat === 'all' ? 'tops' : cat;
+  }
+
   // Get walkthrough step info for display
   getWalkthroughStepNumber(): number {
     return this.tutorialService.getWalkthroughStepNumber();

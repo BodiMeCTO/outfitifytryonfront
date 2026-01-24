@@ -2,6 +2,15 @@
   <!-- Preview Panel (sticky on desktop) -->
   <aside class="preview-panel" #previewPanel>
     <div class="preview-content">
+      <!-- Outfit Preview Header -->
+      <div class="outfit-preview-header">
+        <div class="outfit-title">
+          <mat-icon>auto_awesome</mat-icon>
+          <h2>Your Outfit</h2>
+        </div>
+        <span class="outfit-subtitle">This is what will be generated</span>
+      </div>
+
       <!-- Selection Details Panel -->
       <div class="selection-details">
         <!-- Selected Models Section -->
@@ -9,51 +18,34 @@
           <div class="selection-section-header">
             <span class="section-title-small">
               <mat-icon>person</mat-icon>
-              Models ({{ models.length }})
+              Model{{ models.length !== 1 ? 's' : '' }}
             </span>
             <button
               class="clear-btn-inline"
               *ngIf="models.length > 0"
               (click)="clearModelSelection()"
-              matTooltip="Clear models"
+              matTooltip="Clear all"
             >
               <mat-icon>close</mat-icon>
             </button>
           </div>
-          <div class="selection-thumbnails" *ngIf="models.length > 0">
+          <div class="selection-thumbnails large" *ngIf="models.length > 0">
             <div
-              class="selection-thumb clickable has-deselect"
+              class="selection-thumb large clickable"
               *ngFor="let model of models; let i = index"
-              [class.is-preview]="isPreviewModel(model)"
-              [matTooltip]="'Click to preview, hover to remove'"
-              (click)="setPreviewModel(model)"
+              [matTooltip]="'Click to remove'"
+              (click)="selectModel(model)"
             >
               <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
               <span class="thumb-badge">{{ i + 1 }}</span>
-              <!-- Deselect overlay (#26) -->
-              <div class="deselect-overlay" (click)="deselectModelFromPreview(model, $event)" matTooltip="Remove from selection">
+              <div class="remove-indicator">
                 <mat-icon>close</mat-icon>
               </div>
             </div>
           </div>
-
-          <!-- Recently Deselected - Quick Reselect (#24) -->
-          <div class="recent-history" *ngIf="recentlyDeselectedModels().length > 0">
-            <span class="history-label">Recent:</span>
-            <div class="history-thumbs">
-              <div
-                class="history-thumb"
-                *ngFor="let model of recentlyDeselectedModels()"
-                (click)="reselectModel(model)"
-                matTooltip="Click to reselect"
-              >
-                <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
-                <mat-icon class="add-icon">add</mat-icon>
-              </div>
-            </div>
-          </div>
           <div class="empty-selection" *ngIf="models.length === 0">
-            <span>No models selected</span>
+            <mat-icon>person_add</mat-icon>
+            <span>Select a model from below</span>
           </div>
         </div>
 
@@ -62,99 +54,128 @@
           <div class="selection-section-header">
             <span class="section-title-small">
               <mat-icon>checkroom</mat-icon>
-              Garments ({{ selectedGarmentCount$ | async }})
+              Garments
             </span>
             <button
               class="clear-btn-inline"
               *ngIf="(selectedGarmentCount$ | async)! > 0"
               (click)="clearAllGarments()"
-              matTooltip="Clear garments"
+              matTooltip="Clear all"
             >
               <mat-icon>close</mat-icon>
             </button>
           </div>
 
           <ng-container *ngIf="selectedGarments$ | async as garments">
-            <!-- Tops -->
-            <div class="garment-row" *ngIf="garments.top.length > 0">
-              <span class="garment-category-label">Tops</span>
-              <div class="selection-thumbnails compact">
-                <div class="selection-thumb small" *ngFor="let g of garments.top" [matTooltip]="g.name">
+            <div class="garments-grid" *ngIf="(selectedGarmentCount$ | async)! > 0">
+              <!-- All garments in a unified grid -->
+              <ng-container *ngFor="let g of garments.top">
+                <div
+                  class="selection-thumb large clickable"
+                  [matTooltip]="g.name + ' - Click to remove'"
+                  (click)="toggleGarment(g)"
+                >
                   <img [src]="g.image" [alt]="g.name" />
+                  <span class="garment-type-badge">Top</span>
+                  <div class="remove-indicator">
+                    <mat-icon>close</mat-icon>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Bottoms -->
-            <div class="garment-row" *ngIf="garments.bottom.length > 0">
-              <span class="garment-category-label">Bottoms</span>
-              <div class="selection-thumbnails compact">
-                <div class="selection-thumb small" *ngFor="let g of garments.bottom" [matTooltip]="g.name">
+              </ng-container>
+              <ng-container *ngFor="let g of garments.bottom">
+                <div
+                  class="selection-thumb large clickable"
+                  [matTooltip]="g.name + ' - Click to remove'"
+                  (click)="toggleGarment(g)"
+                >
                   <img [src]="g.image" [alt]="g.name" />
+                  <span class="garment-type-badge">Bottom</span>
+                  <div class="remove-indicator">
+                    <mat-icon>close</mat-icon>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Full Body -->
-            <div class="garment-row" *ngIf="garments.fullBody.length > 0">
-              <span class="garment-category-label">Full Body</span>
-              <div class="selection-thumbnails compact">
-                <div class="selection-thumb small" *ngFor="let g of garments.fullBody" [matTooltip]="g.name">
+              </ng-container>
+              <ng-container *ngFor="let g of garments.fullBody">
+                <div
+                  class="selection-thumb large clickable"
+                  [matTooltip]="g.name + ' - Click to remove'"
+                  (click)="toggleGarment(g)"
+                >
                   <img [src]="g.image" [alt]="g.name" />
+                  <span class="garment-type-badge">Full</span>
+                  <div class="remove-indicator">
+                    <mat-icon>close</mat-icon>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Jackets -->
-            <div class="garment-row" *ngIf="garments.jacket.length > 0">
-              <span class="garment-category-label">Jackets</span>
-              <div class="selection-thumbnails compact">
-                <div class="selection-thumb small" *ngFor="let g of garments.jacket" [matTooltip]="g.name">
+              </ng-container>
+              <ng-container *ngFor="let g of garments.jacket">
+                <div
+                  class="selection-thumb large clickable"
+                  [matTooltip]="g.name + ' - Click to remove'"
+                  (click)="toggleGarment(g)"
+                >
                   <img [src]="g.image" [alt]="g.name" />
+                  <span class="garment-type-badge">Jacket</span>
+                  <div class="remove-indicator">
+                    <mat-icon>close</mat-icon>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Footwear -->
-            <div class="garment-row" *ngIf="garments.footwear.length > 0">
-              <span class="garment-category-label">Footwear</span>
-              <div class="selection-thumbnails compact">
-                <div class="selection-thumb small" *ngFor="let g of garments.footwear" [matTooltip]="g.name">
+              </ng-container>
+              <ng-container *ngFor="let g of garments.footwear">
+                <div
+                  class="selection-thumb large clickable"
+                  [matTooltip]="g.name + ' - Click to remove'"
+                  (click)="toggleGarment(g)"
+                >
                   <img [src]="g.image" [alt]="g.name" />
+                  <span class="garment-type-badge">Shoes</span>
+                  <div class="remove-indicator">
+                    <mat-icon>close</mat-icon>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Accessories -->
-            <div class="garment-row" *ngIf="garments.accessories.length > 0">
-              <span class="garment-category-label">Accessories</span>
-              <div class="selection-thumbnails compact">
-                <div class="selection-thumb small" *ngFor="let g of garments.accessories" [matTooltip]="g.name">
+              </ng-container>
+              <ng-container *ngFor="let g of garments.accessories">
+                <div
+                  class="selection-thumb large clickable"
+                  [matTooltip]="g.name + ' - Click to remove'"
+                  (click)="toggleGarment(g)"
+                >
                   <img [src]="g.image" [alt]="g.name" />
+                  <span class="garment-type-badge">Acc</span>
+                  <div class="remove-indicator">
+                    <mat-icon>close</mat-icon>
+                  </div>
                 </div>
-              </div>
+              </ng-container>
             </div>
 
             <!-- Empty state -->
             <div class="empty-selection" *ngIf="(selectedGarmentCount$ | async) === 0">
-              <span>No garments selected</span>
+              <mat-icon>checkroom</mat-icon>
+              <span>Select garments from below</span>
             </div>
           </ng-container>
         </div>
 
         <!-- Options Summary (Pose, Background, Ratio) -->
         <div class="selection-section options-summary" *ngIf="selectedPoseId() !== 'original' || hasBackgroundSelection() || selectedAspectRatio() !== 'original'">
-          <div class="option-item" *ngIf="selectedPoseId() !== 'original'">
-            <mat-icon>accessibility_new</mat-icon>
-            <span>{{ selectedPoseId() }}</span>
-          </div>
-          <div class="option-item" *ngIf="hasBackgroundSelection()">
-            <mat-icon>wallpaper</mat-icon>
-            <span>{{ selectedPresetInfo?.name || 'Custom' }}</span>
-          </div>
-          <div class="option-item" *ngIf="selectedAspectRatio() !== 'original'">
-            <mat-icon>aspect_ratio</mat-icon>
-            <span>{{ selectedAspectRatio() }}</span>
+          <span class="section-title-small">
+            <mat-icon>tune</mat-icon>
+            Options
+          </span>
+          <div class="options-chips">
+            <div class="option-chip" *ngIf="selectedPoseId() !== 'original'">
+              <mat-icon>accessibility_new</mat-icon>
+              <span>{{ selectedPoseId() }}</span>
+            </div>
+            <div class="option-chip" *ngIf="hasBackgroundSelection()">
+              <mat-icon>wallpaper</mat-icon>
+              <span>{{ selectedPresetInfo?.name || 'Custom' }}</span>
+            </div>
+            <div class="option-chip" *ngIf="selectedAspectRatio() !== 'original'">
+              <mat-icon>aspect_ratio</mat-icon>
+              <span>{{ selectedAspectRatio() }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -645,49 +666,466 @@
 
   </main>
 
-  <!-- Mobile Footer with selection summary and generate button -->
-  <div class="mobile-footer">
-    <!-- Selection summary (icons only) -->
-    <div class="mobile-selection-summary">
-      <span class="summary-icon" [class.is-checked]="selectedModel$ | async" matTooltip="Model">
-        <mat-icon>person</mat-icon>
-        <mat-icon class="status-icon">{{ (selectedModel$ | async) ? 'check' : 'close' }}</mat-icon>
-      </span>
-      <span class="summary-icon optional" [class.is-checked]="selectedPoseId() !== 'original'" matTooltip="Pose (optional)">
-        <mat-icon>accessibility_new</mat-icon>
-        <mat-icon class="status-icon" *ngIf="selectedPoseId() !== 'original'">check</mat-icon>
-      </span>
-      <span class="summary-icon optional" [class.is-checked]="hasBackgroundSelection()" matTooltip="Background (optional)">
-        <mat-icon>wallpaper</mat-icon>
-        <mat-icon class="status-icon" *ngIf="hasBackgroundSelection()">check</mat-icon>
-      </span>
-      <span class="summary-icon" [class.is-checked]="(selectedGarmentCount$ | async)! > 0" matTooltip="Garments">
-        <mat-icon>checkroom</mat-icon>
-        <mat-icon class="status-icon">{{ (selectedGarmentCount$ | async)! > 0 ? 'check' : 'close' }}</mat-icon>
-      </span>
-      <span class="credit-cost-mobile" *ngIf="(selectedGarmentCount$ | async)! > 0">
-        <mat-icon>toll</mat-icon>
-        {{ generationCreditCost }}
-      </span>
+</div>
+
+<!-- ============================================== -->
+<!-- MOBILE STUDIO LAYOUT (hidden on desktop)      -->
+<!-- ============================================== -->
+<div class="mobile-studio">
+  <!-- Selected Items Bar (sticky top) -->
+  <div class="mobile-selected-bar">
+    <ng-container *ngIf="selectedModels$ | async as models">
+      <ng-container *ngIf="selectedGarments$ | async as garments">
+        <!-- Show selected items or empty state -->
+        <div class="selected-items-scroll" *ngIf="models.length > 0 || (selectedGarmentCount$ | async)! > 0 || selectedPoseId() !== 'original' || hasBackgroundSelection()">
+          <!-- Selected Models -->
+          <div
+            class="selected-item"
+            *ngFor="let model of models"
+            (click)="selectModel(model)"
+          >
+            <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
+            <span class="item-type">Model</span>
+            <div class="remove-badge"><mat-icon>close</mat-icon></div>
+          </div>
+
+          <!-- Selected Pose (if not original) -->
+          <div
+            class="selected-item selected-option"
+            *ngIf="selectedPoseId() !== 'original'"
+            (click)="selectPose('original')"
+          >
+            <mat-icon class="option-icon">accessibility_new</mat-icon>
+            <span class="option-label">{{ selectedPoseId() }}</span>
+            <div class="remove-badge"><mat-icon>close</mat-icon></div>
+          </div>
+
+          <!-- Selected Background (if set) -->
+          <div
+            class="selected-item selected-option"
+            *ngIf="hasBackgroundSelection()"
+            (click)="clearBackgroundSelection()"
+          >
+            <mat-icon class="option-icon">wallpaper</mat-icon>
+            <span class="option-label">{{ selectedPresetInfo?.name || 'Custom' }}</span>
+            <div class="remove-badge"><mat-icon>close</mat-icon></div>
+          </div>
+
+          <!-- Selected Garments -->
+          <ng-container *ngFor="let g of garments.top">
+            <div class="selected-item" (click)="toggleGarment(g)">
+              <img [src]="g.image" [alt]="g.name" />
+              <span class="item-type">Top</span>
+              <div class="remove-badge"><mat-icon>close</mat-icon></div>
+            </div>
+          </ng-container>
+          <ng-container *ngFor="let g of garments.bottom">
+            <div class="selected-item" (click)="toggleGarment(g)">
+              <img [src]="g.image" [alt]="g.name" />
+              <span class="item-type">Bottom</span>
+              <div class="remove-badge"><mat-icon>close</mat-icon></div>
+            </div>
+          </ng-container>
+          <ng-container *ngFor="let g of garments.fullBody">
+            <div class="selected-item" (click)="toggleGarment(g)">
+              <img [src]="g.image" [alt]="g.name" />
+              <span class="item-type">Full</span>
+              <div class="remove-badge"><mat-icon>close</mat-icon></div>
+            </div>
+          </ng-container>
+          <ng-container *ngFor="let g of garments.jacket">
+            <div class="selected-item" (click)="toggleGarment(g)">
+              <img [src]="g.image" [alt]="g.name" />
+              <span class="item-type">Jacket</span>
+              <div class="remove-badge"><mat-icon>close</mat-icon></div>
+            </div>
+          </ng-container>
+          <ng-container *ngFor="let g of garments.footwear">
+            <div class="selected-item" (click)="toggleGarment(g)">
+              <img [src]="g.image" [alt]="g.name" />
+              <span class="item-type">Shoes</span>
+              <div class="remove-badge"><mat-icon>close</mat-icon></div>
+            </div>
+          </ng-container>
+          <ng-container *ngFor="let g of garments.accessories">
+            <div class="selected-item" (click)="toggleGarment(g)">
+              <img [src]="g.image" [alt]="g.name" />
+              <span class="item-type">Acc</span>
+              <div class="remove-badge"><mat-icon>close</mat-icon></div>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Empty state -->
+        <div class="selected-empty" *ngIf="models.length === 0 && (selectedGarmentCount$ | async) === 0 && selectedPoseId() === 'original' && !hasBackgroundSelection()">
+          <mat-icon>touch_app</mat-icon>
+          <span>Tap below to build your outfit</span>
+        </div>
+      </ng-container>
+    </ng-container>
+  </div>
+
+  <!-- Content Area -->
+  <div class="mobile-content">
+    <!-- MODEL SECTION -->
+    <div class="mobile-section" *ngIf="mobileActiveSection() === 'model'">
+      <div class="section-toolbar">
+        <button
+          class="toolbar-btn"
+          [class.active]="showTemplates()"
+          (click)="toggleShowTemplates()"
+        >
+          <mat-icon>{{ showTemplates() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          Templates
+        </button>
+        <button class="toolbar-btn primary" (click)="modelUploadInput.click()">
+          <mat-icon>add_photo_alternate</mat-icon>
+          Upload
+        </button>
+      </div>
+      <div class="mobile-grid">
+        <ng-container *ngIf="originalModelImages$ | async as models">
+          <div
+            class="mobile-grid-item"
+            *ngFor="let model of models"
+            [class.selected]="isModelSelected(model)"
+            (click)="selectModel(model)"
+          >
+            <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
+            <div class="selected-check" *ngIf="isModelSelected(model)">
+              <mat-icon>check</mat-icon>
+            </div>
+          </div>
+        </ng-container>
+      </div>
     </div>
 
-    <!-- Generate button -->
-    <div
-      class="generate-button-wrapper"
-      [matTooltip]="(canGenerate$ | async) ? '' : 'Select a model and at least one garment'"
-      matTooltipPosition="above"
-    >
-      <app-luxe-button
-        variant="primary"
-        size="lg"
-        [fullWidth]="true"
-        [loading]="isGenerating()"
-        [disabled]="!(canGenerate$ | async)"
-        (clicked)="generateOutfit()"
-      >
-        {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
-      </app-luxe-button>
+    <!-- POSE SECTION -->
+    <div class="mobile-section" *ngIf="mobileActiveSection() === 'pose'">
+      <div class="mobile-grid poses">
+        <div
+          class="mobile-grid-item pose-item"
+          *ngFor="let pose of posePresets"
+          [class.selected]="isPoseSelected(pose.id)"
+          (click)="selectPose(pose.id)"
+        >
+          <mat-icon class="pose-icon">accessibility_new</mat-icon>
+          <span class="pose-name">{{ pose.name }}</span>
+          <div class="selected-check" *ngIf="isPoseSelected(pose.id)">
+            <mat-icon>check</mat-icon>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- BACKGROUND SECTION -->
+    <div class="mobile-section" *ngIf="mobileActiveSection() === 'background'">
+      <!-- Category pills -->
+      <div class="category-pills">
+        <button
+          class="category-pill"
+          *ngFor="let cat of backgroundCategories"
+          [class.active]="expandedCategory() === cat.id"
+          (click)="selectBackgroundCategory(cat.id)"
+        >
+          {{ cat.label }}
+        </button>
+      </div>
+      <!-- Presets grid -->
+      <div class="mobile-grid backgrounds" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
+        <div
+          class="mobile-grid-item bg-item"
+          *ngFor="let preset of filteredPresets"
+          [class.selected]="isPresetSelected(preset.id)"
+          (click)="selectPreset(preset)"
+        >
+          <mat-icon class="bg-icon">wallpaper</mat-icon>
+          <span class="bg-name">{{ preset.name }}</span>
+          <div class="selected-check" *ngIf="isPresetSelected(preset.id)">
+            <mat-icon>check</mat-icon>
+          </div>
+        </div>
+      </div>
+      <!-- Original selected message -->
+      <div class="original-state" *ngIf="expandedCategory() === 'original'">
+        <mat-icon>photo_camera</mat-icon>
+        <p>Keep the original background from your photo</p>
+      </div>
+      <!-- Custom prompt -->
+      <div class="custom-prompt-mobile" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
+        <label>Or describe a custom background:</label>
+        <textarea
+          [value]="customBackgroundPrompt()"
+          (input)="onCustomPromptChange($any($event.target).value)"
+          placeholder="e.g., A sunny beach at sunset..."
+          rows="2"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- RATIO SECTION -->
+    <div class="mobile-section" *ngIf="mobileActiveSection() === 'ratio'">
+      <div class="mobile-grid ratios">
+        <div
+          class="mobile-grid-item ratio-item"
+          *ngFor="let option of aspectRatioOptions"
+          [class.selected]="selectedAspectRatio() === option.value"
+          (click)="selectAspectRatio(option.value)"
+        >
+          <div class="ratio-preview" [attr.data-ratio]="option.value"></div>
+          <span class="ratio-label">{{ option.label }}</span>
+          <div class="selected-check" *ngIf="selectedAspectRatio() === option.value">
+            <mat-icon>check</mat-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GARMENTS SECTION -->
+    <div class="mobile-section" *ngIf="mobileActiveSection() === 'garments'">
+      <!-- Sub-category tabs -->
+      <div class="garment-category-tabs">
+        <button
+          class="garment-tab"
+          [class.active]="mobileGarmentCategory() === 'all'"
+          (click)="setMobileGarmentCategory('all')"
+        >
+          All
+        </button>
+        <button
+          class="garment-tab"
+          [class.active]="mobileGarmentCategory() === 'tops'"
+          (click)="setMobileGarmentCategory('tops')"
+        >
+          Tops
+          <span class="tab-badge" *ngIf="(selectedGarments$ | async)?.top?.length">{{ (selectedGarments$ | async)?.top?.length }}</span>
+        </button>
+        <button
+          class="garment-tab"
+          [class.active]="mobileGarmentCategory() === 'bottoms'"
+          (click)="setMobileGarmentCategory('bottoms')"
+        >
+          Bottoms
+          <span class="tab-badge" *ngIf="(selectedGarments$ | async)?.bottom?.length">{{ (selectedGarments$ | async)?.bottom?.length }}</span>
+        </button>
+        <button
+          class="garment-tab"
+          [class.active]="mobileGarmentCategory() === 'full-body'"
+          (click)="setMobileGarmentCategory('full-body')"
+        >
+          Full
+          <span class="tab-badge" *ngIf="(selectedGarments$ | async)?.fullBody?.length">{{ (selectedGarments$ | async)?.fullBody?.length }}</span>
+        </button>
+        <button
+          class="garment-tab"
+          [class.active]="mobileGarmentCategory() === 'jackets'"
+          (click)="setMobileGarmentCategory('jackets')"
+        >
+          Jackets
+          <span class="tab-badge" *ngIf="(selectedGarments$ | async)?.jacket?.length">{{ (selectedGarments$ | async)?.jacket?.length }}</span>
+        </button>
+        <button
+          class="garment-tab"
+          [class.active]="mobileGarmentCategory() === 'footwear'"
+          (click)="setMobileGarmentCategory('footwear')"
+        >
+          Shoes
+          <span class="tab-badge" *ngIf="(selectedGarments$ | async)?.footwear?.length">{{ (selectedGarments$ | async)?.footwear?.length }}</span>
+        </button>
+        <button
+          class="garment-tab"
+          [class.active]="mobileGarmentCategory() === 'accessories'"
+          (click)="setMobileGarmentCategory('accessories')"
+        >
+          Acc
+          <span class="tab-badge" *ngIf="(selectedGarments$ | async)?.accessories?.length">{{ (selectedGarments$ | async)?.accessories?.length }}</span>
+        </button>
+      </div>
+
+      <!-- Add garment button -->
+      <div class="section-toolbar">
+        <button class="toolbar-btn primary" (click)="openGarmentUploadDialog()">
+          <mat-icon>add_photo_alternate</mat-icon>
+          Add Garment
+        </button>
+      </div>
+
+      <!-- Garments grid -->
+      <ng-container *ngIf="garmentsByGroup$ | async as groups">
+        <div class="mobile-grid garments">
+          <!-- All category -->
+          <ng-container *ngIf="mobileGarmentCategory() === 'all'">
+            <ng-container *ngFor="let g of groups['tops']">
+              <div
+                class="mobile-grid-item"
+                [class.selected]="isGarmentSelected(g)"
+                (click)="toggleGarment(g)"
+              >
+                <img [src]="g.image" [alt]="g.name" />
+                <span class="garment-badge">Top</span>
+                <div class="selected-check" *ngIf="isGarmentSelected(g)">
+                  <mat-icon>check</mat-icon>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngFor="let g of groups['bottoms']">
+              <div
+                class="mobile-grid-item"
+                [class.selected]="isGarmentSelected(g)"
+                (click)="toggleGarment(g)"
+              >
+                <img [src]="g.image" [alt]="g.name" />
+                <span class="garment-badge">Bottom</span>
+                <div class="selected-check" *ngIf="isGarmentSelected(g)">
+                  <mat-icon>check</mat-icon>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngFor="let g of groups['full-body']">
+              <div
+                class="mobile-grid-item"
+                [class.selected]="isGarmentSelected(g)"
+                (click)="toggleGarment(g)"
+              >
+                <img [src]="g.image" [alt]="g.name" />
+                <span class="garment-badge">Full</span>
+                <div class="selected-check" *ngIf="isGarmentSelected(g)">
+                  <mat-icon>check</mat-icon>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngFor="let g of groups['jackets']">
+              <div
+                class="mobile-grid-item"
+                [class.selected]="isGarmentSelected(g)"
+                (click)="toggleGarment(g)"
+              >
+                <img [src]="g.image" [alt]="g.name" />
+                <span class="garment-badge">Jacket</span>
+                <div class="selected-check" *ngIf="isGarmentSelected(g)">
+                  <mat-icon>check</mat-icon>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngFor="let g of groups['footwear']">
+              <div
+                class="mobile-grid-item"
+                [class.selected]="isGarmentSelected(g)"
+                (click)="toggleGarment(g)"
+              >
+                <img [src]="g.image" [alt]="g.name" />
+                <span class="garment-badge">Shoes</span>
+                <div class="selected-check" *ngIf="isGarmentSelected(g)">
+                  <mat-icon>check</mat-icon>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngFor="let g of groups['accessories']">
+              <div
+                class="mobile-grid-item"
+                [class.selected]="isGarmentSelected(g)"
+                (click)="toggleGarment(g)"
+              >
+                <img [src]="g.image" [alt]="g.name" />
+                <span class="garment-badge">Acc</span>
+                <div class="selected-check" *ngIf="isGarmentSelected(g)">
+                  <mat-icon>check</mat-icon>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <!-- Specific category -->
+          <ng-container *ngIf="mobileGarmentCategory() !== 'all'">
+            <ng-container *ngFor="let g of groups[getMobileGarmentCategory()]">
+              <div
+                class="mobile-grid-item"
+                [class.selected]="isGarmentSelected(g)"
+                (click)="toggleGarment(g)"
+              >
+                <img [src]="g.image" [alt]="g.name" />
+                <div class="selected-check" *ngIf="isGarmentSelected(g)">
+                  <mat-icon>check</mat-icon>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+        </div>
+
+        <!-- Empty state for category -->
+        <div class="empty-category" *ngIf="mobileGarmentCategory() !== 'all' && (!groups[getMobileGarmentCategory()] || groups[getMobileGarmentCategory()].length === 0)">
+          <mat-icon>checkroom</mat-icon>
+          <p>No {{ mobileGarmentCategory() }} yet</p>
+          <button class="add-btn" (click)="openGarmentUploadDialog()">Add Garment</button>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Section Tabs (bottom navigation) -->
+  <div class="mobile-section-tabs">
+    <button
+      class="section-tab"
+      [class.active]="mobileActiveSection() === 'model'"
+      (click)="setMobileSection('model')"
+    >
+      <mat-icon>person</mat-icon>
+      <span>Model</span>
+      <span class="tab-count" *ngIf="(selectedModelCount$ | async)! > 0">{{ selectedModelCount$ | async }}</span>
+    </button>
+    <button
+      class="section-tab"
+      [class.active]="mobileActiveSection() === 'pose'"
+      (click)="setMobileSection('pose')"
+    >
+      <mat-icon>accessibility_new</mat-icon>
+      <span>Pose</span>
+      <span class="tab-dot" *ngIf="selectedPoseId() !== 'original'"></span>
+    </button>
+    <button
+      class="section-tab"
+      [class.active]="mobileActiveSection() === 'background'"
+      (click)="setMobileSection('background')"
+    >
+      <mat-icon>wallpaper</mat-icon>
+      <span>Scene</span>
+      <span class="tab-dot" *ngIf="hasBackgroundSelection()"></span>
+    </button>
+    <button
+      class="section-tab"
+      [class.active]="mobileActiveSection() === 'ratio'"
+      (click)="setMobileSection('ratio')"
+    >
+      <mat-icon>aspect_ratio</mat-icon>
+      <span>Ratio</span>
+    </button>
+    <button
+      class="section-tab"
+      [class.active]="mobileActiveSection() === 'garments'"
+      (click)="setMobileSection('garments')"
+    >
+      <mat-icon>checkroom</mat-icon>
+      <span>Clothes</span>
+      <span class="tab-count" *ngIf="(selectedGarmentCount$ | async)! > 0">{{ selectedGarmentCount$ | async }}</span>
+    </button>
+  </div>
+
+  <!-- Generate Button -->
+  <div class="mobile-generate">
+    <div class="generate-info" *ngIf="(selectedGarmentCount$ | async)! > 0 && (selectedModelCount$ | async)! > 0">
+      <mat-icon>toll</mat-icon>
+      <span>{{ generationCreditCost }} credits</span>
+    </div>
+    <app-luxe-button
+      variant="primary"
+      size="lg"
+      [fullWidth]="true"
+      [loading]="isGenerating()"
+      [disabled]="!(canGenerate$ | async)"
+      (clicked)="generateOutfit()"
+    >
+      {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
+    </app-luxe-button>
   </div>
 </div>
 
