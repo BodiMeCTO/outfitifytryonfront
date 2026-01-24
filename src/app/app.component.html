@@ -22,6 +22,16 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
+        <!-- Gallery button (mobile only) -->
+        <a
+          routerLink="/generated-gallery"
+          class="mobile-gallery-button"
+          aria-label="View gallery"
+          *ngIf="(isLoggedIn$ | async)"
+        >
+          <mat-icon>collections</mat-icon>
+        </a>
+        <!-- Menu button (desktop only) -->
         <button
           mat-icon-button
           type="button"
@@ -31,8 +41,12 @@
         >
           <mat-icon>menu</mat-icon>
         </button>
-        <a routerLink="/studio" class="brand">OUTFITIFY</a>
+        <!-- Brand (desktop only in header-left) -->
+        <a routerLink="/studio" class="brand desktop-brand">OUTFITIFY</a>
       </div>
+
+      <!-- Centered brand (mobile only) -->
+      <a routerLink="/studio" class="brand mobile-brand">OUTFITIFY</a>
 
       <div class="header-right" *ngIf="(isLoggedIn$ | async)">
         <a
@@ -44,14 +58,23 @@
           <span class="credits-value">{{ (credits$ | async) ?? '...' }}</span>
         </a>
 
+        <!-- User button (desktop - opens drawer) -->
         <button
           mat-icon-button
-          class="user-button"
+          class="user-button desktop-user-button"
           (click)="toggleDrawer()"
           aria-label="User menu"
         >
           <mat-icon>person_outline</mat-icon>
         </button>
+        <!-- User button (mobile - links to account) -->
+        <a
+          routerLink="/account"
+          class="user-button mobile-user-button"
+          aria-label="Account"
+        >
+          <mat-icon>person_outline</mat-icon>
+        </a>
       </div>
     </header>
 

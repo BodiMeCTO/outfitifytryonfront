@@ -1,4 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { take, filter } from 'rxjs/operators';
+import { OutfitifyApiService } from './outfitify-api.service';
+import { AuthService } from './auth.service';
 
 // Tutorial steps flow:
 // 1. 'model' - First visit: pick a model (simplified)
@@ -32,11 +35,17 @@ const FULL_WALKTHROUGH_STEPS: TutorialStep[] = [
 
 @Injectable({ providedIn: 'root' })
 export class TutorialService {
+  private readonly apiService = inject(OutfitifyApiService);
+  private readonly authService = inject(AuthService);
+
   private readonly STORAGE_KEY = 'outfitify_tutorial_completed';
   private readonly FIRST_OUTFIT_KEY = 'outfitify_has_created_outfit';
 
   // Tutorial step signal for reactive updates
   private readonly _tutorialStep = signal<TutorialStep>(this.getInitialStep());
+
+  // Track if we've loaded from server
+  private serverStateLoaded = false;
 
   // Public readonly signals
   readonly tutorialStep = this._tutorialStep.asReadonly();
@@ -59,6 +68,24 @@ export class TutorialService {
   // Check if we're on the gallery return step
   readonly isGalleryReturnStep = computed(() => this._tutorialStep() === 'gallery-return');
 
+  constructor() {
+    // Load from server when user logs in
+    this.authService.token$.pipe(
+      filter(token => !!token)
+    ).subscribe(() => {
+      this.loadFromServer();
+    });
+
+    // Reset to initial state when user logs out
+    this.authService.token$.pipe(
+      filter(token => !token)
+    ).subscribe(() => {
+      this.serverStateLoaded = false;
+      // Reset to localStorage state (or default) on logout
+      this._tutorialStep.set(this.getInitialStep());
+    });
+  }
+
   private getInitialStep(): TutorialStep {
     // Check if tutorial is fully completed
     if (localStorage.getItem(this.STORAGE_KEY) === 'true') {
@@ -76,6 +103,78 @@ export class TutorialService {
     return 'model';
   }
 
+  private loadFromServer(): void {
+    this.apiService.getTutorialState().pipe(take(1)).subscribe({
+      next: (state) => {
+        this.serverStateLoaded = true;
+
+        // Update localStorage cache
+        if (state.tutorialCompleted) {
+          localStorage.setItem(this.STORAGE_KEY, 'true');
+        } else {
+          localStorage.removeItem(this.STORAGE_KEY);
+        }
+
+        if (state.hasCreatedFirstOutfit) {
+          localStorage.setItem(this.FIRST_OUTFIT_KEY, 'true');
+        } else {
+          localStorage.removeItem(this.FIRST_OUTFIT_KEY);
+        }
+
+        if (state.tutorialStep) {
+          localStorage.setItem('outfitify_tutorial_step', state.tutorialStep);
+        } else {
+          localStorage.removeItem('outfitify_tutorial_step');
+        }
+
+        // Determine the correct step based on server state
+        let step: TutorialStep;
+        if (state.tutorialCompleted) {
+          step = 'complete';
+        } else if (state.tutorialStep && this.isValidStep(state.tutorialStep)) {
+          step = state.tutorialStep as TutorialStep;
+        } else if (state.hasCreatedFirstOutfit) {
+          step = 'gallery-return';
+        } else {
+          step = 'model';
+        }
+
+        this._tutorialStep.set(step);
+      },
+      error: (err) => {
+        console.error('Failed to load tutorial state from server:', err);
+        // Keep using localStorage state
+      }
+    });
+  }
+
+  private isValidStep(step: string): boolean {
+    const validSteps: TutorialStep[] = [
+      'model', 'garment', 'gallery-return',
+      'models-full', 'pose-full', 'background-full',
+      'aspect-ratio-full', 'garments-full', 'complete'
+    ];
+    return validSteps.includes(step as TutorialStep);
+  }
+
+  private saveToServer(): void {
+    if (!this.authService.isLoggedIn()) {
+      return;
+    }
+
+    const step = this._tutorialStep();
+    const tutorialCompleted = step === 'complete';
+    const hasCreatedFirstOutfit = localStorage.getItem(this.FIRST_OUTFIT_KEY) === 'true';
+
+    this.apiService.updateTutorialState({
+      tutorialCompleted,
+      tutorialStep: step !== 'complete' && step !== 'model' && step !== 'garment' ? step : null,
+      hasCreatedFirstOutfit
+    }).pipe(take(1)).subscribe({
+      error: (err) => console.error('Failed to save tutorial state to server:', err)
+    });
+  }
+
   isTutorialCompleted(): boolean {
     return localStorage.getItem(this.STORAGE_KEY) === 'true';
   }
@@ -84,6 +183,7 @@ export class TutorialService {
     localStorage.setItem(this.STORAGE_KEY, 'true');
     localStorage.removeItem('outfitify_tutorial_step');
     this._tutorialStep.set('complete');
+    this.saveToServer();
   }
 
   resetTutorial(): void {
@@ -91,6 +191,7 @@ export class TutorialService {
     localStorage.removeItem(this.FIRST_OUTFIT_KEY);
     localStorage.removeItem('outfitify_tutorial_step');
     this._tutorialStep.set('model');
+    this.saveToServer();
   }
 
   // Check if user has ever created an outfit
@@ -102,6 +203,7 @@ export class TutorialService {
   markFirstOutfitCreated(): void {
     localStorage.setItem(this.FIRST_OUTFIT_KEY, 'true');
     this._tutorialStep.set('gallery-return');
+    this.saveToServer();
   }
 
   // Get current tutorial step
@@ -116,6 +218,7 @@ export class TutorialService {
     if (FULL_WALKTHROUGH_STEPS.includes(step)) {
       localStorage.setItem('outfitify_tutorial_step', step);
     }
+    this.saveToServer();
   }
 
   // Called when user selects a model (simplified flow)
@@ -137,6 +240,7 @@ export class TutorialService {
     if (this._tutorialStep() === 'gallery-return') {
       this._tutorialStep.set('models-full');
       localStorage.setItem('outfitify_tutorial_step', 'models-full');
+      this.saveToServer();
     }
   }
 
@@ -149,6 +253,7 @@ export class TutorialService {
       const nextStep = FULL_WALKTHROUGH_STEPS[currentIndex + 1];
       this._tutorialStep.set(nextStep);
       localStorage.setItem('outfitify_tutorial_step', nextStep);
+      this.saveToServer();
     } else if (currentIndex === FULL_WALKTHROUGH_STEPS.length - 1) {
       // Last step - complete the tutorial
       this.markTutorialCompleted();

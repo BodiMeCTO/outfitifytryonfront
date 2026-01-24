@@ -110,12 +110,48 @@
 
   @include lg {
     display: flex;
-    flex-direction: column;
-    gap: $space-1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-4;
     padding-bottom: $space-4;
     border-bottom: 2px solid $color-accent-gold;
     margin-bottom: $space-2;
   }
+}
+
+.gallery-link-btn {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-2 $space-3;
+  background: transparent;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: rgba($color-accent-gold, 0.1);
+    border-color: $color-accent-gold;
+    color: $color-accent-gold;
+  }
+}
+
+.outfit-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
 }
 
 .outfit-title {
@@ -2823,7 +2859,7 @@
 // Section Tabs (bottom navigation)
 .mobile-section-tabs {
   position: fixed;
-  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(68px + env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
   display: flex;
@@ -2889,6 +2925,179 @@
     background: $color-accent-gold;
     border-radius: $radius-full;
   }
+
+  // Tutorial highlight state
+  &.tutorial-highlight {
+    color: $color-accent-gold;
+    animation: tab-pulse 1.5s ease-in-out infinite;
+
+    mat-icon {
+      color: $color-accent-gold;
+    }
+  }
+}
+
+// Mobile tab pulse animation
+@keyframes tab-pulse {
+  0%, 100% {
+    transform: scale(1);
+    background: transparent;
+  }
+  50% {
+    transform: scale(1.05);
+    background: rgba($color-accent-gold, 0.1);
+  }
+}
+
+// Mobile Walkthrough Header
+.mobile-walkthrough-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-2 $space-4;
+  background: linear-gradient(135deg, rgba($color-accent-gold, 0.15), rgba($color-accent-gold, 0.05));
+  border-bottom: 1px solid rgba($color-accent-gold, 0.3);
+
+  @include lg {
+    display: none;
+  }
+
+  .walkthrough-info {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  .walkthrough-title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-accent-gold;
+  }
+
+  .walkthrough-step {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    background: rgba($color-accent-gold, 0.2);
+    padding: 2px 8px;
+    border-radius: $radius-full;
+  }
+
+  .walkthrough-skip {
+    background: transparent;
+    border: 1px solid $color-border;
+    color: $color-text-secondary;
+    font-size: $font-size-sm;
+    padding: $space-1 $space-3;
+    border-radius: $radius-md;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+  }
+}
+
+// Mobile Tab Tooltip
+.mobile-tab-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  padding: $space-2 $space-3;
+  background: $color-bg-primary;
+  border: 2px solid $color-accent-gold;
+  border-radius: $radius-md;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  z-index: calc(#{$z-fixed} + 10);
+  animation: tooltip-bounce 0.3s ease-out;
+
+  span {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+  }
+
+  .tooltip-arrow {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid $color-accent-gold;
+  }
+}
+
+// Position tooltips for edge tabs to prevent overflow
+.section-tab:first-child .mobile-tab-tooltip {
+  left: 0;
+  transform: translateX(0);
+
+  .tooltip-arrow {
+    left: 20px;
+    transform: translateX(0);
+  }
+}
+
+.section-tab:last-child .mobile-tab-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateX(0);
+
+  .tooltip-arrow {
+    left: auto;
+    right: 20px;
+    transform: translateX(0);
+  }
+}
+
+.mobile-tab-tooltip {
+  // Walkthrough tooltip with next button
+  &.walkthrough {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    min-width: 160px;
+
+    .tooltip-next {
+      align-self: flex-end;
+      background: $color-accent-gold;
+      color: white;
+      border: none;
+      padding: $space-1 $space-3;
+      border-radius: $radius-sm;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      cursor: pointer;
+
+      &:hover {
+        background: darken($color-accent-gold, 10%);
+      }
+    }
+  }
+
+  &.finish .tooltip-next {
+    background: $color-success;
+
+    &:hover {
+      background: darken($color-success, 10%);
+    }
+  }
+}
+
+@keyframes tooltip-bounce {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 // Generate Button (fixed bottom)
@@ -2907,20 +3116,28 @@
     display: none;
   }
 
-  .generate-info {
+  .mobile-generate-content {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: $space-1;
-    margin-bottom: $space-2;
-    font-size: $font-size-sm;
-    color: $color-text-secondary;
+    gap: $space-3;
+    width: 100%;
+  }
+
+  .mobile-credit-cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: $radius-full;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
 
     mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      color: $color-accent-gold;
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
     }
   }
 }

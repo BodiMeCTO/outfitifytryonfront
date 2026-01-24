@@ -4,11 +4,21 @@
     <div class="preview-content">
       <!-- Outfit Preview Header -->
       <div class="outfit-preview-header">
-        <div class="outfit-title">
-          <mat-icon>auto_awesome</mat-icon>
-          <h2>Your Outfit</h2>
+        <div class="outfit-title-group">
+          <div class="outfit-title">
+            <mat-icon>auto_awesome</mat-icon>
+            <h2>Your Outfit</h2>
+          </div>
+          <span class="outfit-subtitle">This is what will be generated</span>
         </div>
-        <span class="outfit-subtitle">This is what will be generated</span>
+        <button
+          class="gallery-link-btn"
+          (click)="goToGallery()"
+          matTooltip="View generated outfits"
+        >
+          <mat-icon>collections</mat-icon>
+          <span>Gallery</span>
+        </button>
       </div>
 
       <!-- Selection Details Panel -->
@@ -45,7 +55,7 @@
           </div>
           <div class="empty-selection" *ngIf="models.length === 0">
             <mat-icon>person_add</mat-icon>
-            <span>Select a model from below</span>
+            <span>Select a model</span>
           </div>
         </div>
 
@@ -152,7 +162,7 @@
             <!-- Empty state -->
             <div class="empty-selection" *ngIf="(selectedGarmentCount$ | async) === 0">
               <mat-icon>checkroom</mat-icon>
-              <span>Select garments from below</span>
+              <span>Select garments</span>
             </div>
           </ng-container>
         </div>
@@ -231,7 +241,7 @@
     </div>
 
     <!-- Model Images Section -->
-    <section class="workflow-section"
+    <section class="workflow-section" #modelSection
       [class.tutorial-highlight]="(isTutorialActive() && tutorialStep() === 'model') || tutorialStep() === 'models-full'">
       <!-- Simplified flow: Pick a model -->
       <div class="tutorial-step-badge" *ngIf="isTutorialActive() && tutorialStep() === 'model'">
@@ -383,7 +393,7 @@
     </div>
 
     <!-- Pose Section (Optional - pre-defined poses) -->
-    <section class="workflow-section pose-section"
+    <section class="workflow-section pose-section" #poseSection
       [class.tutorial-highlight]="tutorialStep() === 'pose-full'"
       *ngIf="showAdvancedOptions() || !isSimplifiedFlow()">
       <!-- Full walkthrough: Explain pose options -->
@@ -418,7 +428,7 @@
     </section>
 
     <!-- Background Section (Optional - AI-generated or uploaded) -->
-    <section class="workflow-section background-section"
+    <section class="workflow-section background-section" #backgroundSection
       [class.tutorial-highlight]="tutorialStep() === 'background-full'"
       *ngIf="showAdvancedOptions() || !isSimplifiedFlow()">
       <!-- Full walkthrough: Explain background options -->
@@ -506,7 +516,7 @@
     </section>
 
     <!-- Aspect Ratio Section -->
-    <section class="workflow-section aspect-ratio-section"
+    <section class="workflow-section aspect-ratio-section" #aspectRatioSection
       [class.tutorial-highlight]="tutorialStep() === 'aspect-ratio-full'"
       *ngIf="showAdvancedOptions() || !isSimplifiedFlow()">
       <!-- Full walkthrough: Explain aspect ratio options -->
@@ -540,7 +550,7 @@
     </section>
 
     <!-- Garments Section -->
-    <section class="workflow-section"
+    <section class="workflow-section" #garmentsSection
       [class.tutorial-highlight]="tutorialStep() === 'garment' || tutorialStep() === 'garments-full'">
       <!-- Simplified flow: Pick garments -->
       <div class="tutorial-step-badge" *ngIf="tutorialStep() === 'garment'">
@@ -677,7 +687,7 @@
     <ng-container *ngIf="selectedModels$ | async as models">
       <ng-container *ngIf="selectedGarments$ | async as garments">
         <!-- Show selected items or empty state -->
-        <div class="selected-items-scroll" *ngIf="models.length > 0 || (selectedGarmentCount$ | async)! > 0 || selectedPoseId() !== 'original' || hasBackgroundSelection()">
+        <div class="selected-items-scroll" *ngIf="models.length > 0 || (selectedGarmentCount$ | async)! > 0 || selectedPoseId() !== 'original' || hasBackgroundSelection() || selectedAspectRatio() !== 'original'">
           <!-- Selected Models -->
           <div
             class="selected-item"
@@ -708,6 +718,17 @@
           >
             <mat-icon class="option-icon">wallpaper</mat-icon>
             <span class="option-label">{{ selectedPresetInfo?.name || 'Custom' }}</span>
+            <div class="remove-badge"><mat-icon>close</mat-icon></div>
+          </div>
+
+          <!-- Selected Aspect Ratio (if not original) -->
+          <div
+            class="selected-item selected-option"
+            *ngIf="selectedAspectRatio() !== 'original'"
+            (click)="clearAspectRatio()"
+          >
+            <mat-icon class="option-icon">aspect_ratio</mat-icon>
+            <span class="option-label">{{ selectedAspectRatio() }}</span>
             <div class="remove-badge"><mat-icon>close</mat-icon></div>
           </div>
 
@@ -757,7 +778,7 @@
         </div>
 
         <!-- Empty state -->
-        <div class="selected-empty" *ngIf="models.length === 0 && (selectedGarmentCount$ | async) === 0 && selectedPoseId() === 'original' && !hasBackgroundSelection()">
+        <div class="selected-empty" *ngIf="models.length === 0 && (selectedGarmentCount$ | async) === 0 && selectedPoseId() === 'original' && !hasBackgroundSelection() && selectedAspectRatio() === 'original'">
           <mat-icon>touch_app</mat-icon>
           <span>Tap below to build your outfit</span>
         </div>
@@ -1062,60 +1083,114 @@
     </div>
   </div>
 
+  <!-- Mobile Walkthrough Header (shows during full walkthrough) -->
+  <div class="mobile-walkthrough-header" *ngIf="isFullWalkthrough()">
+    <div class="walkthrough-info">
+      <span class="walkthrough-title">Studio Tour</span>
+      <span class="walkthrough-step">{{ getWalkthroughStepNumber() }}/{{ getTotalWalkthroughSteps() }}</span>
+    </div>
+    <button class="walkthrough-skip" (click)="skipWalkthrough()">Skip</button>
+  </div>
+
   <!-- Section Tabs (bottom navigation) -->
-  <div class="mobile-section-tabs">
+  <div class="mobile-section-tabs" [class.tutorial-active]="isTutorialActive()">
+    <!-- Model Tab -->
     <button
       class="section-tab"
       [class.active]="mobileActiveSection() === 'model'"
-      (click)="setMobileSection('model')"
+      [class.tutorial-highlight]="tutorialStep() === 'model' || tutorialStep() === 'models-full'"
+      (click)="onMobileTabClick('model')"
     >
       <mat-icon>person</mat-icon>
       <span>Model</span>
       <span class="tab-count" *ngIf="(selectedModelCount$ | async)! > 0">{{ selectedModelCount$ | async }}</span>
+      <!-- Tutorial tooltip for model tab -->
+      <div class="mobile-tab-tooltip" *ngIf="tutorialStep() === 'model' && mobileActiveSection() === 'model'">
+        <span>Pick a model photo</span>
+        <div class="tooltip-arrow"></div>
+      </div>
+      <div class="mobile-tab-tooltip walkthrough" *ngIf="tutorialStep() === 'models-full'">
+        <span>Upload your own photos or use templates</span>
+        <button class="tooltip-next" (click)="nextMobileWalkthroughStep($event)">Next</button>
+        <div class="tooltip-arrow"></div>
+      </div>
     </button>
+
+    <!-- Pose Tab -->
     <button
       class="section-tab"
       [class.active]="mobileActiveSection() === 'pose'"
-      (click)="setMobileSection('pose')"
+      [class.tutorial-highlight]="tutorialStep() === 'pose-full'"
+      (click)="onMobileTabClick('pose')"
     >
       <mat-icon>accessibility_new</mat-icon>
       <span>Pose</span>
       <span class="tab-dot" *ngIf="selectedPoseId() !== 'original'"></span>
+      <div class="mobile-tab-tooltip walkthrough" *ngIf="tutorialStep() === 'pose-full'">
+        <span>Change the model's pose</span>
+        <button class="tooltip-next" (click)="nextMobileWalkthroughStep($event)">Next</button>
+        <div class="tooltip-arrow"></div>
+      </div>
     </button>
+
+    <!-- Background Tab -->
     <button
       class="section-tab"
       [class.active]="mobileActiveSection() === 'background'"
-      (click)="setMobileSection('background')"
+      [class.tutorial-highlight]="tutorialStep() === 'background-full'"
+      (click)="onMobileTabClick('background')"
     >
       <mat-icon>wallpaper</mat-icon>
       <span>Scene</span>
       <span class="tab-dot" *ngIf="hasBackgroundSelection()"></span>
+      <div class="mobile-tab-tooltip walkthrough" *ngIf="tutorialStep() === 'background-full'">
+        <span>Set the background scene</span>
+        <button class="tooltip-next" (click)="nextMobileWalkthroughStep($event)">Next</button>
+        <div class="tooltip-arrow"></div>
+      </div>
     </button>
+
+    <!-- Ratio Tab -->
     <button
       class="section-tab"
       [class.active]="mobileActiveSection() === 'ratio'"
-      (click)="setMobileSection('ratio')"
+      [class.tutorial-highlight]="tutorialStep() === 'aspect-ratio-full'"
+      (click)="onMobileTabClick('ratio')"
     >
       <mat-icon>aspect_ratio</mat-icon>
       <span>Ratio</span>
+      <div class="mobile-tab-tooltip walkthrough" *ngIf="tutorialStep() === 'aspect-ratio-full'">
+        <span>Choose output format</span>
+        <button class="tooltip-next" (click)="nextMobileWalkthroughStep($event)">Next</button>
+        <div class="tooltip-arrow"></div>
+      </div>
     </button>
+
+    <!-- Garments Tab -->
     <button
       class="section-tab"
       [class.active]="mobileActiveSection() === 'garments'"
-      (click)="setMobileSection('garments')"
+      [class.tutorial-highlight]="tutorialStep() === 'garment' || tutorialStep() === 'garments-full'"
+      (click)="onMobileTabClick('garments')"
     >
       <mat-icon>checkroom</mat-icon>
       <span>Clothes</span>
       <span class="tab-count" *ngIf="(selectedGarmentCount$ | async)! > 0">{{ selectedGarmentCount$ | async }}</span>
+      <!-- Tutorial tooltip for garments tab -->
+      <div class="mobile-tab-tooltip" *ngIf="tutorialStep() === 'garment' && mobileActiveSection() === 'garments'">
+        <span>Pick clothes to try on</span>
+        <div class="tooltip-arrow"></div>
+      </div>
+      <div class="mobile-tab-tooltip walkthrough finish" *ngIf="tutorialStep() === 'garments-full'">
+        <span>Add your own garments</span>
+        <button class="tooltip-next" (click)="nextMobileWalkthroughStep($event)">Done</button>
+        <div class="tooltip-arrow"></div>
+      </div>
     </button>
   </div>
 
   <!-- Generate Button -->
   <div class="mobile-generate">
-    <div class="generate-info" *ngIf="(selectedGarmentCount$ | async)! > 0 && (selectedModelCount$ | async)! > 0">
-      <mat-icon>toll</mat-icon>
-      <span>{{ generationCreditCost }} credits</span>
-    </div>
     <app-luxe-button
       variant="primary"
       size="lg"
@@ -1124,7 +1199,13 @@
       [disabled]="!(canGenerate$ | async)"
       (clicked)="generateOutfit()"
     >
-      {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
+      <span class="mobile-generate-content">
+        <span>{{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}</span>
+        <span class="mobile-credit-cost" *ngIf="!isGenerating() && (canGenerate$ | async)">
+          <mat-icon>toll</mat-icon>
+          {{ generationCreditCost }}
+        </span>
+      </span>
     </app-luxe-button>
   </div>
 </div>

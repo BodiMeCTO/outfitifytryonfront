@@ -63,6 +63,34 @@
   @include focus-ring;
 }
 
+// Mobile gallery button
+.mobile-gallery-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $touch-target-min;
+  height: $touch-target-min;
+  color: $color-text-secondary;
+  text-decoration: none;
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  &:hover {
+    color: $color-accent-gold;
+    background: $color-accent-gold-light;
+  }
+
+  @include lg {
+    display: none;
+  }
+}
+
 .brand {
   font-size: $font-size-lg;
   font-weight: $font-weight-light;
@@ -73,6 +101,26 @@
 
   &:hover {
     color: $color-accent-gold;
+  }
+}
+
+// Desktop brand - in header-left, hidden on mobile
+.desktop-brand {
+  display: none;
+
+  @include lg {
+    display: block;
+  }
+}
+
+// Mobile brand - centered, hidden on desktop
+.mobile-brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+
+  @include lg {
+    display: none;
   }
 }
 
@@ -111,9 +159,14 @@
 }
 
 .user-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: $color-text-secondary;
   min-width: $touch-target-min;
   min-height: $touch-target-min;
+  text-decoration: none;
+  border-radius: $radius-md;
 
   &:hover {
     color: $color-accent-gold;
@@ -121,6 +174,24 @@
   }
 
   @include focus-ring;
+}
+
+// Desktop user button (opens drawer)
+.desktop-user-button {
+  display: none;
+
+  @include lg {
+    display: flex;
+  }
+}
+
+// Mobile user button (links to account)
+.mobile-user-button {
+  display: flex;
+
+  @include lg {
+    display: none;
+  }
 }
 
 .logout-button {

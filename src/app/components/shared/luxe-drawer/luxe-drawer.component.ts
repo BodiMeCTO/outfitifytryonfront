@@ -98,14 +98,16 @@ export interface DrawerNavItem {
       max-width: 85vw;
       background: $drawer-bg;
       transform: translateX(-100%);
-      transition: transform $transition-drawer;
+      transition: transform $transition-drawer, visibility $transition-drawer;
       z-index: $z-drawer;
       display: flex;
       flex-direction: column;
       box-shadow: $shadow-xl;
+      visibility: hidden;
 
       &.is-open {
         transform: translateX(0);
+        visibility: visible;
       }
     }
 

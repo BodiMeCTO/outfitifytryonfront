@@ -3,7 +3,7 @@ export const environment = {
   // Set this to the OutfitifyAPI base URL (e.g. https://your-api-host)
   //apiBaseUrl: 'https://outfitifyapi.azurewebsites.net',
   //apiBaseUrl: 'https://localhost:44383',
-  apiBaseUrl: 'https://api.outfitify.ai/',
+  apiBaseUrl: 'http://localhost:5042/',
   /**
    * Bearer token used for OutfitifyAPI requests. Replace with a real token in deployment.
    */
