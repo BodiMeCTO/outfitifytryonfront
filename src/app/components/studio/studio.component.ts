@@ -180,6 +180,7 @@ export class StudioComponent implements OnInit {
   readonly userModels$ = this.outfitService.userModelImages$;
   readonly isUploadingModel = signal(false);
   readonly showTemplates = signal(this.loadShowTemplatesPreference());
+  readonly showTemplateGarments = signal(this.loadShowTemplateGarmentsPreference());
 
   // Pose state
   readonly posePresets = POSE_PRESETS;
@@ -290,26 +291,33 @@ export class StudioComponent implements OnInit {
   readonly garments$ = this.outfitService.garments$;
   readonly selectedGarments$ = this.outfitService.selectedGarments$;
 
-  // Group garments by their group property
-  readonly garmentsByGroup$ = this.garments$.pipe(
-    map(garments => {
-      const groups: Record<GarmentGroup, Garment[]> = {
-        'tops': [],
-        'bottoms': [],
-        'full-body': [],
-        'jackets': [],
-        'footwear': [],
-        'accessories': []
-      };
-      garments.forEach(g => {
-        const group = g.group;
-        if (groups[group]) {
-          groups[group].push(g);
-        }
-      });
-      return groups;
-    })
-  );
+  // Group garments by their group property (filtered by template visibility)
+  get garmentsByGroup$() {
+    return this.garments$.pipe(
+      map(garments => {
+        // Filter out templates if toggle is off
+        const filteredGarments = this.showTemplateGarments()
+          ? garments
+          : garments.filter(g => !g.isTemplate);
+
+        const groups: Record<GarmentGroup, Garment[]> = {
+          'tops': [],
+          'bottoms': [],
+          'full-body': [],
+          'jackets': [],
+          'footwear': [],
+          'accessories': []
+        };
+        filteredGarments.forEach(g => {
+          const group = g.group;
+          if (groups[group]) {
+            groups[group].push(g);
+          }
+        });
+        return groups;
+      })
+    );
+  }
 
   // UI state
   readonly garmentGroups = GARMENT_GROUPS;
@@ -963,6 +971,22 @@ export class StudioComponent implements OnInit {
 
   private saveShowTemplatesPreference(value: boolean): void {
     localStorage.setItem('studio.showTemplates', String(value));
+  }
+
+  // Template garment visibility toggle methods
+  toggleShowTemplateGarments(): void {
+    const newValue = !this.showTemplateGarments();
+    this.showTemplateGarments.set(newValue);
+    this.saveShowTemplateGarmentsPreference(newValue);
+  }
+
+  private loadShowTemplateGarmentsPreference(): boolean {
+    const stored = localStorage.getItem('studio.showTemplateGarments');
+    return stored === null ? true : stored === 'true';
+  }
+
+  private saveShowTemplateGarmentsPreference(value: boolean): void {
+    localStorage.setItem('studio.showTemplateGarments', String(value));
   }
 
   private getInitialBackgroundCategory(): BackgroundCategory {

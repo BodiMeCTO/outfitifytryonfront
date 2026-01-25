@@ -575,6 +575,16 @@
         <h2 class="section-label-gold">Garments</h2>
         <div class="section-actions">
           <button
+            class="template-toggle-btn"
+            [class.active]="showTemplateGarments()"
+            (click)="toggleShowTemplateGarments()"
+            [matTooltip]="showTemplateGarments() ? 'Hide preloaded template garments' : 'Show preloaded template garments'"
+            aria-label="Toggle preloaded template garment visibility"
+          >
+            <mat-icon>{{ showTemplateGarments() ? 'visibility' : 'visibility_off' }}</mat-icon>
+            <span class="toggle-label">Templates</span>
+          </button>
+          <button
             class="clear-btn-small"
             *ngIf="(selectedGarmentCount$ | async)! > 0"
             (click)="clearAllGarments()"
@@ -963,8 +973,16 @@
         </button>
       </div>
 
-      <!-- Add garment button -->
+      <!-- Garment toolbar -->
       <div class="section-toolbar">
+        <button
+          class="toolbar-btn"
+          [class.active]="showTemplateGarments()"
+          (click)="toggleShowTemplateGarments()"
+        >
+          <mat-icon>{{ showTemplateGarments() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          Templates
+        </button>
         <button class="toolbar-btn primary" (click)="openGarmentUploadDialog()">
           <mat-icon>add_photo_alternate</mat-icon>
           Add Garment
