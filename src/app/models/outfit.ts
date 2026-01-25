@@ -289,14 +289,14 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   { id: 'black-studio', name: 'Black Seamless', prompt: 'deep black seamless backdrop, subject edges subtly highlighted, high contrast dramatic look, empty minimal background', category: 'studio' },
   { id: 'high-key', name: 'High Key', prompt: 'bright white backdrop, clean overexposed aesthetic, minimal shadows, airy luminous feel, empty uncluttered space', category: 'studio' },
   { id: 'low-key', name: 'Low Key', prompt: 'dark moody backdrop, deep dramatic shadows on one side of face, mysterious cinematic mood, empty minimal setting', category: 'studio' },
-  { id: 'rembrandt', name: 'Rembrandt Light', prompt: 'neutral backdrop, classic triangle of light on cheek, deep painterly shadows, timeless portrait aesthetic, clean uncluttered background', category: 'studio' },
-  { id: 'butterfly', name: 'Butterfly Light', prompt: 'clean backdrop, glamorous Hollywood glow on face, soft shadow under nose, flattering beauty aesthetic, empty minimal setting', category: 'studio' },
-  { id: 'split-light', name: 'Split Light', prompt: 'dark backdrop, half of face illuminated and half in deep shadow, dramatic artistic contrast, clean uncluttered background', category: 'studio' },
-  { id: 'rim-light', name: 'Rim/Edge Light', prompt: 'dark backdrop, glowing highlighted edges around subject silhouette, dramatic separation, editorial style, empty minimal background', category: 'studio' },
+  { id: 'rembrandt', name: 'Rembrandt', prompt: 'neutral backdrop, classic triangle shadow on cheek, deep painterly shadows, timeless portrait aesthetic, clean uncluttered background', category: 'studio' },
+  { id: 'butterfly', name: 'Butterfly', prompt: 'clean backdrop, glamorous Hollywood glow on face, soft shadow under nose, flattering beauty aesthetic, empty minimal setting', category: 'studio' },
+  { id: 'split-light', name: 'Split', prompt: 'dark backdrop, half of face bright and half in deep shadow, dramatic artistic contrast, clean uncluttered background', category: 'studio' },
+  { id: 'rim-light', name: 'Rim/Edge', prompt: 'dark backdrop, glowing highlighted edges around subject silhouette, dramatic separation, editorial style, empty minimal background', category: 'studio' },
   { id: 'clamshell', name: 'Clamshell', prompt: 'clean backdrop, soft even glow on face, flattering beauty portrait look, minimal shadows, empty uncluttered setting', category: 'studio' },
-  { id: 'natural-window', name: 'Window Light', prompt: 'clean white walls, soft natural daylight feel, gentle directional glow, editorial portrait aesthetic, empty uncluttered space', category: 'studio' },
+  { id: 'natural-window', name: 'Window', prompt: 'clean white walls, soft natural window glow, gentle directional glow, editorial portrait aesthetic, empty uncluttered space', category: 'studio' },
   { id: 'cyclorama', name: 'Cyclorama', prompt: 'curved infinity wall backdrop, seamless white floor-to-wall transition, clean endless background, empty uncluttered space', category: 'studio' },
-  { id: 'gradient-studio', name: 'Gradient', prompt: 'smooth gradient backdrop transitioning from light gray to dark gray, elegant tonal range, clean minimal setting', category: 'studio' },
+  { id: 'gradient-studio', name: 'Gradient', prompt: 'smooth gradient backdrop transitioning from pale gray to dark gray, elegant tonal range, clean minimal setting', category: 'studio' },
 
   // ===========================================
   // SEAMLESS - Colored paper backdrops
@@ -322,7 +322,7 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   // COMMERCIAL - E-commerce & catalog
   // ===========================================
   { id: 'ecommerce-white', name: 'E-commerce White', prompt: 'clean e-commerce background, pure white, shadowless clean appearance, commercial catalog style, empty backdrop', category: 'commercial' },
-  { id: 'ecommerce-lifestyle', name: 'Lifestyle Product', prompt: 'lifestyle e-commerce setting, minimal modern interior, natural daylight feel, product context', category: 'commercial' },
+  { id: 'ecommerce-lifestyle', name: 'Lifestyle Product', prompt: 'lifestyle e-commerce setting, minimal modern interior, naturally bright feel, product context', category: 'commercial' },
   { id: 'lookbook-minimal', name: 'Lookbook Minimal', prompt: 'fashion lookbook background, clean minimal backdrop, soft directional glow, catalog style, uncluttered setting', category: 'commercial' },
   { id: 'catalog-neutral', name: 'Catalog Neutral', prompt: 'fashion catalog setting, neutral gray background, polished professional appearance, commercial apparel style, clean backdrop', category: 'commercial' },
   { id: 'retail-store', name: 'Retail Store', prompt: 'modern retail store interior, clean displays, bright welcoming atmosphere, in-store fashion setting', category: 'commercial' },
@@ -337,7 +337,7 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   { id: 'harpers-elegant', name: 'Harpers Elegant', prompt: 'elegant editorial setting, softly diffused, timeless sophisticated backdrop, luxury magazine style', category: 'editorial' },
   { id: 'avant-garde', name: 'Avant-Garde', prompt: 'avant-garde fashion editorial setting, bold artistic backdrop, creative dramatic atmosphere, experimental aesthetic', category: 'editorial' },
   { id: 'minimalist-editorial', name: 'Minimalist Editorial', prompt: 'minimalist fashion editorial, stark clean background, strong graphic shadows, high contrast magazine style', category: 'editorial' },
-  { id: 'architectural', name: 'Architectural', prompt: 'architectural fashion editorial, modern building backdrop, geometric lines and shapes, natural daylight feel', category: 'editorial' },
+  { id: 'architectural', name: 'Architectural', prompt: 'architectural fashion editorial, modern building backdrop, geometric lines and shapes, naturally bright feel', category: 'editorial' },
   { id: 'vintage-editorial', name: 'Vintage Editorial', prompt: 'vintage-inspired editorial setting, nostalgic backdrop, warm film-like tones, classic aesthetic', category: 'editorial' },
   { id: 'brutalist', name: 'Brutalist', prompt: 'brutalist architecture backdrop, raw concrete surfaces, strong shadows, edgy fashion editorial', category: 'editorial' },
   { id: 'art-museum', name: 'Art Museum', prompt: 'contemporary art museum setting, gallery walls, curated artwork backdrop, cultural fashion editorial', category: 'editorial' },
@@ -348,17 +348,17 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   // OUTDOOR - Nature & landscapes
   // ===========================================
   { id: 'beach-sunset', name: 'Beach Sunset', prompt: 'beautiful beach at golden hour, soft warm sunset glow, ocean waves in background, romantic atmosphere', category: 'outdoor' },
-  { id: 'beach-midday', name: 'Beach Bright', prompt: 'bright sunny beach, crystal clear water, white sand, vibrant daylight, summer aesthetic', category: 'outdoor' },
-  { id: 'forest-path', name: 'Forest Path', prompt: 'enchanting forest path, dappled sunlight filtering through trees, lush green foliage, peaceful atmosphere', category: 'outdoor' },
-  { id: 'mountain-view', name: 'Mountain View', prompt: 'breathtaking mountain landscape, clear blue sky, majestic peaks in distance, natural daylight', category: 'outdoor' },
-  { id: 'golden-field', name: 'Golden Field', prompt: 'golden wheat field at sunset, warm backlit glow, dreamy pastoral beauty', category: 'outdoor' },
-  { id: 'lavender-field', name: 'Lavender Field', prompt: 'purple lavender field in Provence, soft sunlight, romantic countryside setting', category: 'outdoor' },
-  { id: 'garden-flowers', name: 'Flower Garden', prompt: 'beautiful flower garden, colorful blooming flowers, soft natural daylight, romantic garden setting', category: 'outdoor' },
-  { id: 'tropical-paradise', name: 'Tropical', prompt: 'lush tropical paradise, palm trees, crystal blue water, warm sunlight, vacation resort atmosphere', category: 'outdoor' },
+  { id: 'beach-midday', name: 'Beach Bright', prompt: 'bright sunny beach, crystal clear water, white sand, vibrant bright day, summer aesthetic', category: 'outdoor' },
+  { id: 'forest-path', name: 'Forest Path', prompt: 'enchanting forest path, dappled sun rays filtering through trees, lush green foliage, peaceful atmosphere', category: 'outdoor' },
+  { id: 'mountain-view', name: 'Mountain View', prompt: 'breathtaking mountain landscape, clear blue sky, majestic peaks in distance, bright natural setting', category: 'outdoor' },
+  { id: 'golden-field', name: 'Golden Field', prompt: 'golden wheat field at sunset, warm back glow, dreamy pastoral beauty', category: 'outdoor' },
+  { id: 'lavender-field', name: 'Lavender Field', prompt: 'purple lavender field in Provence, soft sun, romantic countryside setting', category: 'outdoor' },
+  { id: 'garden-flowers', name: 'Flower Garden', prompt: 'beautiful flower garden, colorful blooming flowers, soft natural brightness, romantic garden setting', category: 'outdoor' },
+  { id: 'tropical-paradise', name: 'Tropical', prompt: 'lush tropical paradise, palm trees, crystal blue water, warm sun, vacation resort atmosphere', category: 'outdoor' },
   { id: 'cherry-blossoms', name: 'Cherry Blossoms', prompt: 'dreamy cherry blossom garden, soft pink petals falling, spring sunshine, romantic Japanese garden', category: 'outdoor' },
   { id: 'desert-dunes', name: 'Desert Dunes', prompt: 'golden desert sand dunes at golden hour, warm dramatic glow, vast open landscape, artistic aesthetic', category: 'outdoor' },
-  { id: 'autumn-park', name: 'Autumn Park', prompt: 'beautiful autumn park, golden and red fallen leaves, warm afternoon sunlight filtering through trees', category: 'outdoor' },
-  { id: 'vineyard', name: 'Vineyard', prompt: 'beautiful vineyard landscape, rolling hills of grapevines, warm Tuscan sunlight, wine country atmosphere', category: 'outdoor' },
+  { id: 'autumn-park', name: 'Autumn Park', prompt: 'beautiful autumn park, golden and red fallen leaves, warm afternoon sun filtering through trees', category: 'outdoor' },
+  { id: 'vineyard', name: 'Vineyard', prompt: 'beautiful vineyard landscape, rolling hills of grapevines, warm Tuscan sun, wine country atmosphere', category: 'outdoor' },
   { id: 'lake-reflection', name: 'Lake Reflection', prompt: 'serene lake with mountain reflections, calm water, soft morning glow, peaceful outdoor setting', category: 'outdoor' },
   { id: 'cliffside-ocean', name: 'Cliffside Ocean', prompt: 'dramatic ocean cliffside, crashing waves below, moody coastal atmosphere, editorial outdoors', category: 'outdoor' },
 
@@ -367,24 +367,24 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   // ===========================================
   { id: 'city-street', name: 'City Street', prompt: 'trendy urban street, modern architecture, golden hour glow, streetwear vibe', category: 'urban' },
   { id: 'brick-wall', name: 'Brick Wall', prompt: 'textured red brick wall background, urban industrial aesthetic, softly diffused', category: 'urban' },
-  { id: 'neon-night', name: 'Neon Night', prompt: 'vibrant neon-lit urban night scene, colorful reflections, cyberpunk atmosphere, dramatically lit by neon', category: 'urban' },
+  { id: 'neon-night', name: 'Neon Night', prompt: 'vibrant neon-glow urban night scene, colorful reflections, cyberpunk atmosphere, dramatic neon ambiance', category: 'urban' },
   { id: 'cafe-interior', name: 'Café', prompt: 'cozy modern café interior, warm ambient glow, stylish décor, relaxed atmosphere', category: 'urban' },
   { id: 'rooftop-city', name: 'Rooftop', prompt: 'urban rooftop terrace, city skyline panorama, golden hour glow, sophisticated metropolitan vibe', category: 'urban' },
   { id: 'subway-station', name: 'Subway', prompt: 'stylish modern subway station, clean architectural lines, urban commuter atmosphere, bright modern environment', category: 'urban' },
   { id: 'graffiti-alley', name: 'Graffiti Alley', prompt: 'vibrant graffiti-covered urban alley, colorful street art murals, edgy creative atmosphere', category: 'urban' },
-  { id: 'modern-loft', name: 'Modern Loft', prompt: 'industrial modern loft interior, exposed brick and metal beams, large windows with natural daylight, urban chic aesthetic', category: 'urban' },
+  { id: 'modern-loft', name: 'Modern Loft', prompt: 'industrial modern loft interior, exposed brick and metal beams, large windows with natural brightness, urban chic aesthetic', category: 'urban' },
   { id: 'parking-garage', name: 'Parking Garage', prompt: 'urban parking garage, concrete pillars, dramatic overhead shadows, edgy street fashion setting', category: 'urban' },
   { id: 'stairwell', name: 'Stairwell', prompt: 'architectural stairwell, geometric lines, dramatic shadows, urban aesthetic', category: 'urban' },
   { id: 'crosswalk', name: 'Crosswalk', prompt: 'busy city crosswalk, blurred motion, urban energy, street fashion aesthetic', category: 'urban' },
-  { id: 'times-square', name: 'Times Square', prompt: 'Times Square style urban backdrop, bright billboards and lights, bustling city atmosphere, night scene', category: 'urban' },
+  { id: 'times-square', name: 'Times Square', prompt: 'Times Square style urban backdrop, bright billboards and signs, bustling city atmosphere, night scene', category: 'urban' },
 
   // ===========================================
   // LIFESTYLE - Real-world settings
   // ===========================================
-  { id: 'modern-home', name: 'Modern Home', prompt: 'modern home interior, clean contemporary design, naturally lit through windows, lifestyle aesthetic', category: 'lifestyle' },
-  { id: 'cozy-bedroom', name: 'Cozy Bedroom', prompt: 'cozy bedroom interior, soft natural daylight, comfortable aesthetic, intimate lifestyle setting', category: 'lifestyle' },
-  { id: 'kitchen-bright', name: 'Bright Kitchen', prompt: 'bright modern kitchen, white cabinets, naturally lit, lifestyle domestic setting', category: 'lifestyle' },
-  { id: 'living-room', name: 'Living Room', prompt: 'stylish living room interior, comfortable furniture, natural daylight, lifestyle at-home setting', category: 'lifestyle' },
+  { id: 'modern-home', name: 'Modern Home', prompt: 'modern home interior, clean contemporary design, naturally bright through windows, lifestyle aesthetic', category: 'lifestyle' },
+  { id: 'cozy-bedroom', name: 'Cozy Bedroom', prompt: 'cozy bedroom interior, soft natural glow, comfortable aesthetic, intimate lifestyle setting', category: 'lifestyle' },
+  { id: 'kitchen-bright', name: 'Bright Kitchen', prompt: 'bright modern kitchen, white cabinets, naturally bright, lifestyle domestic setting', category: 'lifestyle' },
+  { id: 'living-room', name: 'Living Room', prompt: 'stylish living room interior, comfortable furniture, natural brightness, lifestyle at-home setting', category: 'lifestyle' },
   { id: 'office-workspace', name: 'Office Space', prompt: 'modern office workspace, clean desk setup, professional environment, workwear aesthetic', category: 'lifestyle' },
   { id: 'gym-fitness', name: 'Gym/Fitness', prompt: 'modern gym interior, fitness equipment, energetic atmosphere, athletic wear aesthetic', category: 'lifestyle' },
   { id: 'yoga-studio', name: 'Yoga Studio', prompt: 'serene yoga studio, natural wood floors, soft tranquil glow, wellness lifestyle setting', category: 'lifestyle' },
@@ -397,10 +397,10 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   // ===========================================
   // SEASONAL - Holiday & seasonal
   // ===========================================
-  { id: 'christmas-cozy', name: 'Christmas Cozy', prompt: 'cozy Christmas interior, decorated tree, warm string lights, festive holiday atmosphere, winter fashion', category: 'seasonal' },
+  { id: 'christmas-cozy', name: 'Christmas Cozy', prompt: 'cozy Christmas interior, decorated tree, warm festive glow, festive holiday atmosphere, winter fashion', category: 'seasonal' },
   { id: 'christmas-elegant', name: 'Christmas Elegant', prompt: 'elegant Christmas setting, sophisticated decorations, champagne gold tones, luxury holiday fashion', category: 'seasonal' },
   { id: 'winter-snow', name: 'Winter Snow', prompt: 'beautiful winter snow scene, fresh white snow, soft winter glow, cold weather fashion photography', category: 'seasonal' },
-  { id: 'spring-garden', name: 'Spring Garden', prompt: 'blooming spring garden, fresh flowers, soft sunlight, renewal and fresh beginnings, spring fashion', category: 'seasonal' },
+  { id: 'spring-garden', name: 'Spring Garden', prompt: 'blooming spring garden, fresh flowers, soft sun, renewal and fresh beginnings, spring fashion', category: 'seasonal' },
   { id: 'summer-beach', name: 'Summer Beach', prompt: 'perfect summer beach day, bright sunshine, blue sky, vacation vibes, summer fashion photography', category: 'seasonal' },
   { id: 'autumn-foliage', name: 'Autumn Foliage', prompt: 'stunning autumn foliage, red and gold leaves, warm afternoon glow, fall fashion photography', category: 'seasonal' },
   { id: 'valentines', name: 'Valentines', prompt: 'romantic Valentines setting, red roses, soft pink tones, love and romance atmosphere, date night fashion', category: 'seasonal' },
@@ -413,16 +413,16 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   // ===========================================
   // ABSTRACT - Artistic backgrounds
   // ===========================================
-  { id: 'bokeh-lights', name: 'Bokeh Lights', prompt: 'dreamy bokeh background, soft blurred colorful lights, ethereal magical atmosphere', category: 'abstract' },
+  { id: 'bokeh-lights', name: 'Bokeh', prompt: 'dreamy bokeh background, soft blurred colorful orbs, ethereal magical atmosphere', category: 'abstract' },
   { id: 'watercolor', name: 'Watercolor', prompt: 'artistic watercolor wash background, soft pastel colors blending together, artistic fashion editorial', category: 'abstract' },
   { id: 'marble-texture', name: 'Marble', prompt: 'elegant white marble texture background, luxury fashion aesthetic, clean sophisticated look', category: 'abstract' },
   { id: 'gradient-pastel', name: 'Pastel Gradient', prompt: 'smooth pastel gradient background, soft pink and blue tones, dreamy fashion photography', category: 'abstract' },
   { id: 'gradient-sunset', name: 'Sunset Gradient', prompt: 'warm sunset gradient background, orange to purple transition, dramatic fashion photography', category: 'abstract' },
   { id: 'smoke-mist', name: 'Smoke & Mist', prompt: 'ethereal smoke and mist background, soft swirling wisps, mysterious atmospheric mood, artistic editorial', category: 'abstract' },
   { id: 'geometric', name: 'Geometric', prompt: 'modern geometric abstract background, clean lines and shapes, minimalist contemporary design aesthetic', category: 'abstract' },
-  { id: 'holographic', name: 'Holographic', prompt: 'iridescent holographic background, rainbow light reflections, futuristic dreamy atmosphere', category: 'abstract' },
+  { id: 'holographic', name: 'Holographic', prompt: 'iridescent holographic background, rainbow reflections, futuristic dreamy atmosphere', category: 'abstract' },
   { id: 'gold-shimmer', name: 'Gold Shimmer', prompt: 'luxurious shimmering gold background, elegant metallic reflections, glamorous high-fashion aesthetic', category: 'abstract' },
-  { id: 'prism-rainbow', name: 'Prism Rainbow', prompt: 'prismatic rainbow light effects, colorful light refractions, artistic creative fashion photography', category: 'abstract' },
+  { id: 'prism-rainbow', name: 'Prism Rainbow', prompt: 'prismatic rainbow prism effects, colorful refractions, artistic creative fashion photography', category: 'abstract' },
   { id: 'textured-concrete', name: 'Textured Concrete', prompt: 'raw textured concrete background, industrial minimalist aesthetic, dramatic shadows', category: 'abstract' },
   { id: 'silk-fabric', name: 'Silk Fabric', prompt: 'flowing silk fabric background, soft luxurious folds, elegant fashion photography backdrop', category: 'abstract' },
   { id: 'digital-glitch', name: 'Digital Glitch', prompt: 'digital glitch art background, distorted pixels, futuristic cyberpunk aesthetic, edgy fashion', category: 'abstract' },
@@ -431,10 +431,10 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   // ===========================================
   // LUXURY - High-end locations
   // ===========================================
-  { id: 'penthouse', name: 'Penthouse', prompt: 'luxurious modern penthouse interior, floor-to-ceiling windows, city lights panorama, sophisticated evening ambiance', category: 'luxury' },
+  { id: 'penthouse', name: 'Penthouse', prompt: 'luxurious modern penthouse interior, floor-to-ceiling windows, city skyline panorama, sophisticated evening ambiance', category: 'luxury' },
   { id: 'yacht-deck', name: 'Yacht Deck', prompt: 'elegant luxury yacht deck, pristine white surfaces, azure ocean backdrop, exclusive Mediterranean atmosphere', category: 'luxury' },
   { id: 'champagne-lounge', name: 'Champagne Lounge', prompt: 'opulent champagne lounge, velvet furnishings, crystal chandeliers, golden ambient warmth', category: 'luxury' },
-  { id: 'fashion-runway', name: 'Runway', prompt: 'haute couture fashion runway, bold dramatic illumination, sleek minimal stage design, high fashion event atmosphere', category: 'luxury' },
+  { id: 'fashion-runway', name: 'Runway', prompt: 'haute couture fashion runway, bold dramatic glow, sleek minimal stage design, high fashion event atmosphere', category: 'luxury' },
   { id: 'boutique-hotel', name: 'Boutique Hotel', prompt: 'elegant boutique hotel lobby, art deco design, marble floors, tasteful luxury interior design', category: 'luxury' },
   { id: 'private-jet', name: 'Private Jet', prompt: 'luxurious private jet interior, cream leather seats, polished wood accents, exclusive travel lifestyle', category: 'luxury' },
   { id: 'mansion-garden', name: 'Estate Garden', prompt: 'manicured mansion garden, classical architecture, elegant fountain, refined aristocratic atmosphere', category: 'luxury' },
@@ -442,8 +442,8 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   { id: 'luxury-spa', name: 'Luxury Spa', prompt: 'exclusive luxury spa interior, marble surfaces, soft ambient warmth, relaxation and wellness', category: 'luxury' },
   { id: 'palace-interior', name: 'Palace Interior', prompt: 'opulent palace interior, ornate gilded details, grand chandeliers, royal aristocratic elegance', category: 'luxury' },
   { id: 'rooftop-pool', name: 'Rooftop Pool', prompt: 'infinity rooftop pool, city skyline view, sunset ambiance, luxury lifestyle fashion', category: 'luxury' },
-  { id: 'wine-cellar', name: 'Wine Cellar', prompt: 'elegant wine cellar, barrel-vaulted ceiling, ambient candlelight, sophisticated atmosphere', category: 'luxury' },
-  { id: 'casino-floor', name: 'Casino Floor', prompt: 'glamorous casino floor, bright lights, elegant evening atmosphere, high roller fashion', category: 'luxury' },
+  { id: 'wine-cellar', name: 'Wine Cellar', prompt: 'elegant wine cellar, barrel-vaulted ceiling, ambient candle glow, sophisticated atmosphere', category: 'luxury' },
+  { id: 'casino-floor', name: 'Casino Floor', prompt: 'glamorous casino floor, bright atmosphere, elegant evening atmosphere, high roller fashion', category: 'luxury' },
   { id: 'opera-house', name: 'Opera House', prompt: 'grand opera house interior, red velvet seats, ornate architecture, cultural elegance', category: 'luxury' }
 ];
 
