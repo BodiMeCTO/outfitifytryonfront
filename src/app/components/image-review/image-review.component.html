@@ -4,6 +4,9 @@
       <img [src]="displayImageUrl()" alt="Selected generated outfit" />
     </figure>
 
+    <!-- AI Disclaimer -->
+    <app-ai-disclaimer variant="compact"></app-ai-disclaimer>
+
     <!-- Variant thumbnails (only show if there are multiple variants) -->
     <div class="variants-strip" *ngIf="hasVariants()">
       <span class="variants-label">Versions:</span>
@@ -90,6 +93,10 @@
       <button class="action-btn" (click)="download()">
         <mat-icon>download</mat-icon>
         Download
+      </button>
+      <button class="action-btn" (click)="downloadWithWatermark()" matTooltip="Download with AI-generated watermark">
+        <mat-icon>verified</mat-icon>
+        With Watermark
       </button>
       <button class="action-btn secondary" routerLink="/generated-gallery">
         <mat-icon>grid_view</mat-icon>

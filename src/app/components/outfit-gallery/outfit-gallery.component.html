@@ -24,6 +24,9 @@
     </div>
   </header>
 
+  <!-- AI Disclaimer Banner -->
+  <app-ai-disclaimer variant="banner" *ngIf="(generatedImages$ | async)?.length"></app-ai-disclaimer>
+
   <!-- Studio Return Banner - Shows during tutorial OR when processing images -->
   <div
     class="studio-return-banner"

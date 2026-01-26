@@ -18,6 +18,7 @@ import { GeneratedImage } from '../../models/outfit';
 import { SmartGarmentUploadDialogComponent } from '../smart-garment-upload-dialog/smart-garment-upload-dialog.component';
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
 import { ArchivePanelComponent } from '../archive-panel/archive-panel.component';
+import { AiDisclaimerComponent } from '../shared/ai-disclaimer/ai-disclaimer.component';
 
 @Component({
   selector: 'app-outfit-gallery',
@@ -35,7 +36,8 @@ import { ArchivePanelComponent } from '../archive-panel/archive-panel.component'
     MatSnackBarModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
-    ArchivePanelComponent
+    ArchivePanelComponent,
+    AiDisclaimerComponent
   ],
   templateUrl: './outfit-gallery.component.html',
   styleUrls: ['./outfit-gallery.component.scss'],
@@ -108,7 +110,8 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
       // Update processing set
       const newProcessingIds = new Set<string>();
       currentImages.forEach(img => {
-        if (img.status === 'processing' || img.status === 'pending_retry') {
+        if (img.status === 'processing' || img.status === 'pending_retry' || img.status === 'failed') {
+          // Include 'failed' because the backend may retry failed attempts
           newProcessingIds.add(img.id);
         }
       });

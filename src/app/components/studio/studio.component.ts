@@ -44,6 +44,7 @@ import { GenerationProgressComponent } from '../shared/generation-progress/gener
 import { SmartGarmentUploadDialogComponent } from '../smart-garment-upload-dialog/smart-garment-upload-dialog.component';
 import { ArchivePanelComponent } from '../archive-panel/archive-panel.component';
 import { WelcomeDialogComponent } from '../shared/welcome-dialog/welcome-dialog.component';
+import { AiDisclaimerComponent } from '../shared/ai-disclaimer/ai-disclaimer.component';
 
 // Group display config
 interface GroupConfig {
@@ -77,7 +78,8 @@ const GARMENT_GROUPS: GroupConfig[] = [
     LuxeImageCardComponent,
     LuxeCarouselComponent,
     GenerationProgressComponent,
-    ArchivePanelComponent
+    ArchivePanelComponent,
+    AiDisclaimerComponent
   ],
   templateUrl: './studio.component.html',
   styleUrls: ['./studio.component.scss'],
@@ -672,10 +674,26 @@ export class StudioComponent implements OnInit {
       this.addToRecentlyDeselected(model);
     }
 
+    // Check if we're in the simplified tutorial 'model' step
+    const isInModelTutorialStep = this.tutorialStep() === 'model';
+    const isMobile = window.innerWidth < 1024;
+
     // Update tutorial state based on selection
     const selectedModels = this.outfitService.getSelectedModels();
     if (selectedModels.length > 0) {
-      this.tutorialService.onModelSelected();
+      // If in model tutorial step and on mobile, delay the tutorial advance
+      // to let user see the selection feedback before auto-navigating
+      if (isInModelTutorialStep && isMobile && wasAdded) {
+        setTimeout(() => {
+          this.tutorialService.onModelSelected();
+          // Auto-navigate to garments tab after tutorial advances
+          setTimeout(() => {
+            this.mobileActiveSection.set('garments');
+          }, 100);
+        }, 800);
+      } else {
+        this.tutorialService.onModelSelected();
+      }
     } else {
       this.tutorialService.onModelDeselected();
     }
@@ -689,8 +707,8 @@ export class StudioComponent implements OnInit {
       );
     }
 
-    // On mobile, scroll to preview panel when model is selected
-    if (wasAdded && window.innerWidth < 1024) {
+    // On mobile, scroll to preview panel when model is selected (skip if in tutorial - we'll navigate to garments instead)
+    if (wasAdded && isMobile && !isInModelTutorialStep) {
       setTimeout(() => {
         this.previewPanel?.nativeElement?.scrollIntoView({
           behavior: 'smooth',

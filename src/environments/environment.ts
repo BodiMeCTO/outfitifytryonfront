@@ -1,9 +1,14 @@
 export const environment = {
-  production: true,
-  // Set this to the OutfitifyAPI base URL (e.g. https://your-api-host)
-  //apiBaseUrl: 'https://outfitifyapi.azurewebsites.net',
-  //apiBaseUrl: 'https://localhost:44383',
+  production: false,
+
+  // ============================================================
+  // API URL CONFIGURATION
+  // ============================================================
+  // For LOCAL development, use localhost:
   apiBaseUrl: 'http://localhost:5042/',
+  // For PRODUCTION, uncomment the line below and comment out localhost:
+  // apiBaseUrl: 'https://api.outfitify.ai/',
+
   /**
    * Bearer token used for OutfitifyAPI requests. Replace with a real token in deployment.
    */

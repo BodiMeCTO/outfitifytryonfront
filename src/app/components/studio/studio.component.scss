@@ -3100,6 +3100,122 @@
   }
 }
 
+@keyframes generate-tooltip-bounce {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+// Mobile Tutorial Hint (shown in content area)
+.mobile-tutorial-hint {
+  margin-bottom: $space-3;
+  padding: $space-3 $space-4;
+  background: linear-gradient(135deg, rgba($color-accent-gold, 0.15), rgba($color-accent-gold, 0.05));
+  border: 2px solid $color-accent-gold;
+  border-radius: $radius-lg;
+  animation: hint-slide-in 0.4s ease-out;
+
+  .tutorial-hint-content {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  .hint-icon {
+    flex-shrink: 0;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: $color-accent-gold;
+    animation: hint-icon-pulse 1.5s ease-in-out infinite;
+  }
+
+  span {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+    line-height: 1.4;
+  }
+}
+
+@keyframes hint-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hint-icon-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+// Tutorial pulse animation for first grid item
+.mobile-grid-item.tutorial-pulse {
+  position: relative;
+  animation: item-pulse 2s ease-in-out infinite;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border: 2px solid $color-accent-gold;
+    border-radius: $radius-lg;
+    animation: pulse-ring 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+}
+
+@keyframes item-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+// Tutorial active state for grid
+.mobile-grid.tutorial-active {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -$space-2;
+    border: 2px dashed rgba($color-accent-gold, 0.3);
+    border-radius: $radius-lg;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
 // Generate Button (fixed bottom)
 .mobile-generate {
   position: fixed;
@@ -3114,6 +3230,41 @@
 
   @include lg {
     display: none;
+  }
+
+  // Tutorial tooltip for generate button
+  .generate-tutorial-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: $space-2;
+    padding: $space-3 $space-4;
+    background: linear-gradient(135deg, rgba($color-accent-gold, 0.95), rgba(darken($color-accent-gold, 10%), 0.95));
+    border-radius: $radius-lg;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    animation: generate-tooltip-bounce 0.4s ease-out;
+    max-width: calc(100% - #{$space-8});
+    text-align: center;
+
+    span {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: $color-bg-primary;
+      line-height: 1.4;
+    }
+
+    .tooltip-arrow {
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 10px solid rgba(darken($color-accent-gold, 5%), 0.95);
+    }
   }
 
   .mobile-generate-content {

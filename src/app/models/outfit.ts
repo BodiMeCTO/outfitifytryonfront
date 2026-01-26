@@ -73,8 +73,8 @@ export interface GeneratedImage {
   outfitImageId?: string;  // Primary OutfitImage ID (for edit operations)
   imageUrl: string;
   createdAt: Date;
-  status: 'processing' | 'ready' | 'failed' | 'pending_retry';
-  failureReason?: string | null;  // Human-readable reason when status is 'failed' or 'pending_retry'
+  status: 'processing' | 'ready' | 'failed' | 'pending_retry' | 'permanently_failed';
+  failureReason?: string | null;  // Human-readable reason when status is 'failed', 'pending_retry', or 'permanently_failed'
   variants?: OutfitImageVariant[];  // All images for this outfit (original + enhanced)
   variantCount?: number;   // Quick count for badge display
   archivedAtUtc?: string | null;  // When archived, null if active
@@ -92,7 +92,7 @@ export interface GeneratedImageResponse {
   image?: string;
   url?: string;
   createdAt?: string;
-  status?: 'processing' | 'ready' | 'completed' | 'failed' | 'pending_retry';
+  status?: 'processing' | 'ready' | 'completed' | 'failed' | 'pending_retry' | 'permanently_failed';
 }
 
 // -----------------------

@@ -220,6 +220,9 @@
           {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
         </app-luxe-button>
       </div>
+
+      <!-- AI Disclaimer -->
+      <app-ai-disclaimer variant="compact"></app-ai-disclaimer>
     </div>
   </aside>
 
@@ -800,6 +803,13 @@
   <div class="mobile-content">
     <!-- MODEL SECTION -->
     <div class="mobile-section" *ngIf="mobileActiveSection() === 'model'">
+      <!-- Tutorial hint for model selection -->
+      <div class="mobile-tutorial-hint" *ngIf="tutorialStep() === 'model'">
+        <div class="tutorial-hint-content">
+          <mat-icon class="hint-icon">touch_app</mat-icon>
+          <span>Tap a model photo to select it. You can choose up to 5.</span>
+        </div>
+      </div>
       <div class="section-toolbar">
         <button
           class="toolbar-btn"
@@ -814,12 +824,13 @@
           Upload
         </button>
       </div>
-      <div class="mobile-grid">
+      <div class="mobile-grid" [class.tutorial-active]="tutorialStep() === 'model'">
         <ng-container *ngIf="originalModelImages$ | async as models">
           <div
             class="mobile-grid-item"
-            *ngFor="let model of models"
+            *ngFor="let model of models; let i = index"
             [class.selected]="isModelSelected(model)"
+            [class.tutorial-pulse]="tutorialStep() === 'model' && i === 0 && !isModelSelected(model)"
             (click)="selectModel(model)"
           >
             <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
@@ -914,6 +925,13 @@
 
     <!-- GARMENTS SECTION -->
     <div class="mobile-section" *ngIf="mobileActiveSection() === 'garments'">
+      <!-- Tutorial hint for garment selection -->
+      <div class="mobile-tutorial-hint" *ngIf="tutorialStep() === 'garment'">
+        <div class="tutorial-hint-content">
+          <mat-icon class="hint-icon">checkroom</mat-icon>
+          <span>Choose what garments you wish to try on</span>
+        </div>
+      </div>
       <!-- Sub-category tabs -->
       <div class="garment-category-tabs">
         <button
@@ -991,13 +1009,14 @@
 
       <!-- Garments grid -->
       <ng-container *ngIf="garmentsByGroup$ | async as groups">
-        <div class="mobile-grid garments">
+        <div class="mobile-grid garments" [class.tutorial-active]="tutorialStep() === 'garment'">
           <!-- All category -->
           <ng-container *ngIf="mobileGarmentCategory() === 'all'">
-            <ng-container *ngFor="let g of groups['tops']">
+            <ng-container *ngFor="let g of groups['tops']; let gi = index">
               <div
                 class="mobile-grid-item"
                 [class.selected]="isGarmentSelected(g)"
+                [class.tutorial-pulse]="tutorialStep() === 'garment' && gi === 0 && !isGarmentSelected(g)"
                 (click)="toggleGarment(g)"
               >
                 <img [src]="g.image" [alt]="g.name" />
@@ -1122,11 +1141,6 @@
       <mat-icon>person</mat-icon>
       <span>Model</span>
       <span class="tab-count" *ngIf="(selectedModelCount$ | async)! > 0">{{ selectedModelCount$ | async }}</span>
-      <!-- Tutorial tooltip for model tab -->
-      <div class="mobile-tab-tooltip" *ngIf="tutorialStep() === 'model' && mobileActiveSection() === 'model'">
-        <span>Pick a model photo</span>
-        <div class="tooltip-arrow"></div>
-      </div>
       <div class="mobile-tab-tooltip walkthrough" *ngIf="tutorialStep() === 'models-full'">
         <span>Upload your own photos or use templates</span>
         <button class="tooltip-next" (click)="nextMobileWalkthroughStep($event)">Next</button>
@@ -1194,11 +1208,6 @@
       <mat-icon>checkroom</mat-icon>
       <span>Clothes</span>
       <span class="tab-count" *ngIf="(selectedGarmentCount$ | async)! > 0">{{ selectedGarmentCount$ | async }}</span>
-      <!-- Tutorial tooltip for garments tab -->
-      <div class="mobile-tab-tooltip" *ngIf="tutorialStep() === 'garment' && mobileActiveSection() === 'garments'">
-        <span>Pick clothes to try on</span>
-        <div class="tooltip-arrow"></div>
-      </div>
       <div class="mobile-tab-tooltip walkthrough finish" *ngIf="tutorialStep() === 'garments-full'">
         <span>Add your own garments</span>
         <button class="tooltip-next" (click)="nextMobileWalkthroughStep($event)">Done</button>
@@ -1209,6 +1218,11 @@
 
   <!-- Generate Button -->
   <div class="mobile-generate">
+    <!-- Tutorial tooltip for generate button -->
+    <div class="generate-tutorial-tooltip" *ngIf="tutorialStep() === 'garment' && (selectedGarmentCount$ | async)! > 0">
+      <span>Click here to generate your outfit once you have chosen your garments</span>
+      <div class="tooltip-arrow"></div>
+    </div>
     <app-luxe-button
       variant="primary"
       size="lg"
@@ -1226,6 +1240,9 @@
       </span>
     </app-luxe-button>
   </div>
+
+  <!-- AI Disclaimer (mobile) -->
+  <app-ai-disclaimer variant="compact"></app-ai-disclaimer>
 </div>
 
 <!-- Archive Panel -->
