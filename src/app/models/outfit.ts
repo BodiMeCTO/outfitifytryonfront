@@ -177,7 +177,7 @@ export interface OutfitDto {
 
 export interface CreateOutfitDto {
   modelImageId: string;
-  poseOptionId: string;
+  poseOptionId: string | null;
   backgroundOptionId: string | null;
   customBackgroundPrompt?: string | null;
   /** Name of the selected background preset for display purposes */
@@ -268,7 +268,7 @@ export interface BackgroundCategoryInfo {
 
 export const BACKGROUND_CATEGORIES: BackgroundCategoryInfo[] = [
   { id: 'original', label: 'Original', description: 'Keep the original background' },
-  { id: 'studio', label: 'Studio', description: 'Professional lighting setups' },
+  { id: 'studio', label: 'Studio', description: 'Professional studio setups' },
   { id: 'seamless', label: 'Seamless', description: 'Colored paper backdrops' },
   { id: 'commercial', label: 'Commercial', description: 'E-commerce & catalog' },
   { id: 'editorial', label: 'Editorial', description: 'Magazine & fashion' },
@@ -413,7 +413,7 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   // ===========================================
   // ABSTRACT - Artistic backgrounds
   // ===========================================
-  { id: 'bokeh-lights', name: 'Bokeh', prompt: 'dreamy bokeh background, soft blurred colorful orbs, ethereal magical atmosphere', category: 'abstract' },
+  { id: 'bokeh', name: 'Bokeh', prompt: 'dreamy bokeh background, soft blurred colorful orbs, ethereal magical atmosphere', category: 'abstract' },
   { id: 'watercolor', name: 'Watercolor', prompt: 'artistic watercolor wash background, soft pastel colors blending together, artistic fashion editorial', category: 'abstract' },
   { id: 'marble-texture', name: 'Marble', prompt: 'elegant white marble texture background, luxury fashion aesthetic, clean sophisticated look', category: 'abstract' },
   { id: 'gradient-pastel', name: 'Pastel Gradient', prompt: 'smooth pastel gradient background, soft pink and blue tones, dreamy fashion photography', category: 'abstract' },
