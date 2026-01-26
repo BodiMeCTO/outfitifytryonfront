@@ -200,10 +200,21 @@ export class TutorialService {
   }
 
   // Mark that user has created their first outfit - moves to gallery-return step
+  // Only changes step if still in simplified flow (model/garment steps)
   markFirstOutfitCreated(): void {
+    const alreadyCreated = localStorage.getItem(this.FIRST_OUTFIT_KEY) === 'true';
     localStorage.setItem(this.FIRST_OUTFIT_KEY, 'true');
-    this._tutorialStep.set('gallery-return');
-    this.saveToServer();
+
+    // Only transition to gallery-return if we're still in the simplified flow
+    // Don't reset if user is already in walkthrough or has completed tutorial
+    const currentStep = this._tutorialStep();
+    if (currentStep === 'model' || currentStep === 'garment') {
+      this._tutorialStep.set('gallery-return');
+      this.saveToServer();
+    } else if (!alreadyCreated) {
+      // First outfit but tutorial already advanced - just save the flag
+      this.saveToServer();
+    }
   }
 
   // Get current tutorial step

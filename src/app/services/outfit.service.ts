@@ -1374,9 +1374,11 @@ export class OutfitService {
     const backgroundPresetName = backgroundPreset?.name || null;
 
     // Build payload with all user selections
+    // Only include poseOptionId if we're actually changing the pose (has a pose prompt or preset)
+    const shouldIncludePoseOption = !!posePrompt || !!posePresetName;
     const payload: CreateOutfitDto = {
       modelImageId: modelId,
-      poseOptionId: poseId,
+      poseOptionId: shouldIncludePoseOption ? poseId : null,
       backgroundOptionId: null,
       customBackgroundPrompt: customBackgroundPrompt || null,
       backgroundPresetName: backgroundPresetName,
@@ -1479,6 +1481,9 @@ export class OutfitService {
       : null;
     const backgroundPresetName = backgroundPreset?.name || null;
 
+    // Only include poseOptionId if we're actually changing the pose (has a pose prompt or preset)
+    const shouldIncludePoseOption = !!posePrompt || !!posePresetName;
+
     // Execute sequentially to prevent race conditions with credit balance
     // Using from() + concatMap ensures each request completes before the next starts
     return from(models).pipe(
@@ -1489,7 +1494,7 @@ export class OutfitService {
 
         const payload: CreateOutfitDto = {
           modelImageId: model.id,
-          poseOptionId: poseId,
+          poseOptionId: shouldIncludePoseOption ? poseId : null,
           backgroundOptionId: null,
           customBackgroundPrompt: customBackgroundPrompt || null,
           backgroundPresetName: backgroundPresetName,
