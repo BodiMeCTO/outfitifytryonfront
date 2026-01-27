@@ -113,6 +113,10 @@ export class StudioComponent implements OnInit {
   // Handle mobile tab click with tutorial awareness
   onMobileTabClick(section: 'model' | 'pose' | 'background' | 'ratio' | 'garments'): void {
     this.setMobileSection(section);
+    // Auto-scroll to top when switching tabs (#24)
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
   }
 
   // Advance mobile walkthrough and switch to appropriate tab
@@ -331,6 +335,10 @@ export class StudioComponent implements OnInit {
   // Archive state
   readonly isArchivePanelOpen = signal(false);
 
+  // Mobile scene view state (#16) - collapsed after non-default selection
+  readonly isMobilePoseCollapsed = signal(false);
+  readonly isMobileBackgroundCollapsed = signal(false);
+
   // Selection history for recently deselected items (#24)
   readonly recentlyDeselectedModels = signal<SelectedInspiration[]>([]);
   private readonly MAX_RECENT_ITEMS = 5;
@@ -502,7 +510,14 @@ export class StudioComponent implements OnInit {
       this.activeBackgroundCategory.set(preset.category);
       this.outfitService.setSelectedBackgroundPresetId(preset.id);
       this.outfitService.setCustomBackgroundPrompt(preset.prompt);
+      // Collapse mobile background view after selection (#16)
+      this.isMobileBackgroundCollapsed.set(true);
     }
+  }
+
+  // Expand mobile background selection (#16)
+  expandMobileBackground(): void {
+    this.isMobileBackgroundCollapsed.set(false);
   }
 
   isPresetSelected(presetId: string): boolean {
@@ -549,10 +564,39 @@ export class StudioComponent implements OnInit {
   selectPose(poseId: string): void {
     this.selectedPoseId.set(poseId);
     this.outfitService.setSelectedPosePresetId(poseId);
+    // Collapse mobile pose view after non-default selection (#16)
+    if (poseId !== 'original') {
+      this.isMobilePoseCollapsed.set(true);
+    }
+  }
+
+  // Expand mobile pose selection (#16)
+  expandMobilePose(): void {
+    this.isMobilePoseCollapsed.set(false);
   }
 
   isPoseSelected(poseId: string): boolean {
     return this.selectedPoseId() === poseId;
+  }
+
+  // Get icon for pose (#15)
+  getPoseIcon(poseId: string): string {
+    const iconMap: Record<string, string> = {
+      'original': 'photo_camera',
+      'hands-hips': 'accessibility_new',
+      'arms-crossed': 'person',
+      'power-stance': 'fitness_center',
+      'one-hand-hip': 'accessibility',
+      'casual-standing': 'person_outline',
+      'leaning': 'airline_seat_recline_normal',
+      'walking': 'directions_walk',
+      'turning': '360',
+      'stepping': 'directions_run',
+      'model-pose': 'account_box',
+      'looking-away': 'person_pin',
+      'hand-on-chin': 'psychology'
+    };
+    return iconMap[poseId] || 'accessibility_new';
   }
 
   getSelectedPosePrompt(): string | null {

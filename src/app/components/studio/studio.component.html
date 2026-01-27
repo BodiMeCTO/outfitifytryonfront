@@ -28,7 +28,7 @@
           <div class="selection-section-header">
             <span class="section-title-small">
               <mat-icon>person</mat-icon>
-              Model{{ models.length !== 1 ? 's' : '' }}
+              {{ models.length === 1 ? 'Person' : 'People' }}
             </span>
             <button
               class="clear-btn-inline"
@@ -55,7 +55,7 @@
           </div>
           <div class="empty-selection" *ngIf="models.length === 0">
             <mat-icon>person_add</mat-icon>
-            <span>Select a model</span>
+            <span>Select a person to dress</span>
           </div>
         </div>
 
@@ -162,7 +162,7 @@
             <!-- Empty state -->
             <div class="empty-selection" *ngIf="(selectedGarmentCount$ | async) === 0">
               <mat-icon>checkroom</mat-icon>
-              <span>Select garments</span>
+              <span>Choose clothes to try on</span>
             </div>
           </ng-container>
         </div>
@@ -204,9 +204,15 @@
       <!-- Generate button (desktop) -->
       <div
         class="generate-button-wrapper desktop-only"
-        [matTooltip]="(canGenerate$ | async) ? '' : 'Select a model and at least one garment to generate'"
+        [class.tutorial-ready]="tutorialStep() === 'garment' && (canGenerate$ | async)"
+        [matTooltip]="(canGenerate$ | async) ? '' : 'Select a person and at least one garment to generate'"
         matTooltipPosition="above"
       >
+        <!-- Tutorial hint to click Generate -->
+        <div class="generate-tutorial-hint" *ngIf="tutorialStep() === 'garment' && (canGenerate$ | async)">
+          <mat-icon>arrow_downward</mat-icon>
+          <span>Click Generate to create your outfit!</span>
+        </div>
         <app-luxe-button
           class="generate-button"
           variant="primary"
@@ -231,6 +237,13 @@
 
   <!-- Workflow Sections -->
   <main class="workflow-sections">
+    <!-- Tutorial Mode Banner (desktop) -->
+    <div class="desktop-tutorial-banner" *ngIf="isTutorialActive() && isSimplifiedFlow()">
+      <mat-icon>school</mat-icon>
+      <span>TUTORIAL MODE - Follow the steps to create your first outfit</span>
+      <button class="skip-btn" (click)="skipWalkthrough()">Skip Tutorial</button>
+    </div>
+
     <!-- Walkthrough Header (shows during full walkthrough) -->
     <div class="walkthrough-header" *ngIf="isFullWalkthrough()">
       <div class="walkthrough-progress">
@@ -249,7 +262,7 @@
       <!-- Simplified flow: Pick a model -->
       <div class="tutorial-step-badge" *ngIf="isTutorialActive() && tutorialStep() === 'model'">
         <span class="step-number">1</span>
-        <span class="step-text">Start here: Pick a model photo</span>
+        <span class="step-text">Start here: Pick a person to dress</span>
       </div>
       <!-- Full walkthrough: Explain model features -->
       <div class="walkthrough-tooltip" *ngIf="tutorialStep() === 'models-full'">
@@ -257,7 +270,7 @@
           <mat-icon class="tooltip-icon">photo_camera</mat-icon>
           <div class="tooltip-text">
             <h4>Upload Your Own Photos</h4>
-            <p>Use the <strong>upload button</strong> to add your own photos, or choose from our <strong>template models</strong>. Full-body shots work best!</p>
+            <p>Use the <strong>upload button</strong> to add your own photos, or choose from our <strong>example images</strong>. Full-body shots work best!</p>
           </div>
         </div>
         <button class="tooltip-next-btn" (click)="nextWalkthroughStep()">
@@ -266,17 +279,17 @@
         </button>
       </div>
       <div class="section-header-row">
-        <h2 class="section-label-gold">Model Images</h2>
+        <h2 class="section-label-gold">People</h2>
         <div class="section-actions">
           <button
             class="template-toggle-btn"
             [class.active]="showTemplates()"
             (click)="toggleShowTemplates()"
-            [matTooltip]="showTemplates() ? 'Hide preloaded templates' : 'Show preloaded templates'"
-            aria-label="Toggle preloaded template visibility"
+            [matTooltip]="showTemplates() ? 'Hide example images' : 'Show example images'"
+            aria-label="Toggle example image visibility"
           >
             <mat-icon>{{ showTemplates() ? 'visibility' : 'visibility_off' }}</mat-icon>
-            <span class="toggle-label">Templates</span>
+            <span class="toggle-label">Examples</span>
           </button>
           <button
             class="archive-btn-small"
@@ -289,8 +302,8 @@
           <button
             class="upload-btn-small"
             (click)="modelUploadInput.click()"
-            aria-label="Upload model image"
-            matTooltip="Upload model image"
+            aria-label="Upload photo"
+            matTooltip="Upload photo"
           >
             <mat-icon>add_photo_alternate</mat-icon>
             <mat-spinner *ngIf="isUploadingModel()" [diameter]="16"></mat-spinner>
@@ -405,7 +418,7 @@
           <mat-icon class="tooltip-icon">accessibility_new</mat-icon>
           <div class="tooltip-text">
             <h4>Change the Pose</h4>
-            <p>Transform the model's pose! Choose from <strong>confident</strong>, <strong>casual</strong>, <strong>dynamic</strong>, or <strong>elegant</strong> poses to match your vision.</p>
+            <p>Transform the pose! Choose from <strong>confident</strong>, <strong>casual</strong>, <strong>dynamic</strong>, or <strong>elegant</strong> poses to match your vision.</p>
           </div>
         </div>
         <button class="tooltip-next-btn" (click)="nextWalkthroughStep()">
@@ -558,7 +571,7 @@
       <!-- Simplified flow: Pick garments -->
       <div class="tutorial-step-badge" *ngIf="tutorialStep() === 'garment'">
         <span class="step-number">2</span>
-        <span class="step-text">Now pick some clothes to try on</span>
+        <span class="step-text">Choose clothes to try on</span>
       </div>
       <!-- Full walkthrough: Explain garment features -->
       <div class="walkthrough-tooltip walkthrough-complete" *ngIf="tutorialStep() === 'garments-full'">
@@ -581,11 +594,11 @@
             class="template-toggle-btn"
             [class.active]="showTemplateGarments()"
             (click)="toggleShowTemplateGarments()"
-            [matTooltip]="showTemplateGarments() ? 'Hide preloaded template garments' : 'Show preloaded template garments'"
-            aria-label="Toggle preloaded template garment visibility"
+            [matTooltip]="showTemplateGarments() ? 'Hide example garments' : 'Show example garments'"
+            aria-label="Toggle example garment visibility"
           >
             <mat-icon>{{ showTemplateGarments() ? 'visibility' : 'visibility_off' }}</mat-icon>
-            <span class="toggle-label">Templates</span>
+            <span class="toggle-label">Examples</span>
           </button>
           <button
             class="clear-btn-small"
@@ -695,20 +708,27 @@
 <!-- MOBILE STUDIO LAYOUT (hidden on desktop)      -->
 <!-- ============================================== -->
 <div class="mobile-studio">
-  <!-- Selected Items Bar (sticky top) -->
-  <div class="mobile-selected-bar">
+  <!-- Tutorial Mode Banner -->
+  <div class="tutorial-mode-banner" *ngIf="isTutorialActive() && isSimplifiedFlow()">
+    <mat-icon>school</mat-icon>
+    <span>TUTORIAL MODE</span>
+    <button class="skip-tutorial-btn" (click)="skipWalkthrough()">Skip</button>
+  </div>
+
+  <!-- Selected Items Bar (sticky top) - Only show when selections exist -->
+  <div class="mobile-selected-bar" *ngIf="(selectedModels$ | async)?.length! > 0 || (selectedGarmentCount$ | async)! > 0 || selectedPoseId() !== 'original' || hasBackgroundSelection() || selectedAspectRatio() !== 'original'">
     <ng-container *ngIf="selectedModels$ | async as models">
       <ng-container *ngIf="selectedGarments$ | async as garments">
-        <!-- Show selected items or empty state -->
-        <div class="selected-items-scroll" *ngIf="models.length > 0 || (selectedGarmentCount$ | async)! > 0 || selectedPoseId() !== 'original' || hasBackgroundSelection() || selectedAspectRatio() !== 'original'">
+        <!-- Show selected items -->
+        <div class="selected-items-scroll">
           <!-- Selected Models -->
           <div
             class="selected-item"
             *ngFor="let model of models"
             (click)="selectModel(model)"
           >
-            <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
-            <span class="item-type">Model</span>
+            <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Person'" />
+            <span class="item-type">Person</span>
             <div class="remove-badge"><mat-icon>close</mat-icon></div>
           </div>
 
@@ -789,12 +809,6 @@
             </div>
           </ng-container>
         </div>
-
-        <!-- Empty state -->
-        <div class="selected-empty" *ngIf="models.length === 0 && (selectedGarmentCount$ | async) === 0 && selectedPoseId() === 'original' && !hasBackgroundSelection() && selectedAspectRatio() === 'original'">
-          <mat-icon>touch_app</mat-icon>
-          <span>Tap below to build your outfit</span>
-        </div>
       </ng-container>
     </ng-container>
   </div>
@@ -807,7 +821,7 @@
       <div class="mobile-tutorial-hint" *ngIf="tutorialStep() === 'model'">
         <div class="tutorial-hint-content">
           <mat-icon class="hint-icon">touch_app</mat-icon>
-          <span>Tap a model photo to select it. You can choose up to 5.</span>
+          <span>Select a person to dress (up to 5)</span>
         </div>
       </div>
       <div class="section-toolbar">
@@ -817,7 +831,20 @@
           (click)="toggleShowTemplates()"
         >
           <mat-icon>{{ showTemplates() ? 'visibility' : 'visibility_off' }}</mat-icon>
-          Templates
+          Examples
+        </button>
+        <button
+          class="toolbar-btn"
+          (click)="openArchivePanel()"
+          matTooltip="View archived items"
+        >
+          <mat-icon>inventory_2</mat-icon>
+        </button>
+        <button
+          class="toolbar-btn info-btn"
+          matTooltip="Best results: Full-body photos, good lighting, plain background, standing upright"
+        >
+          <mat-icon>info_outline</mat-icon>
         </button>
         <button class="toolbar-btn primary" (click)="modelUploadInput.click()">
           <mat-icon>add_photo_alternate</mat-icon>
@@ -833,10 +860,18 @@
             [class.tutorial-pulse]="tutorialStep() === 'model' && i === 0 && !isModelSelected(model)"
             (click)="selectModel(model)"
           >
-            <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Model'" />
+            <img [src]="model.previewUrl || model.remoteUrl" [alt]="model.name || 'Person'" />
             <div class="selected-check" *ngIf="isModelSelected(model)">
               <mat-icon>check</mat-icon>
             </div>
+            <!-- Archive button for model images on mobile (#23) -->
+            <button
+              class="mobile-archive-btn"
+              (click)="archiveModelImage($event, model)"
+              *ngIf="model.id && !model.isTemplate"
+            >
+              <mat-icon>inventory_2</mat-icon>
+            </button>
           </div>
         </ng-container>
       </div>
@@ -844,17 +879,34 @@
 
     <!-- POSE SECTION -->
     <div class="mobile-section" *ngIf="mobileActiveSection() === 'pose'">
-      <div class="mobile-grid poses">
-        <div
-          class="mobile-grid-item pose-item"
-          *ngFor="let pose of posePresets"
-          [class.selected]="isPoseSelected(pose.id)"
-          (click)="selectPose(pose.id)"
-        >
-          <mat-icon class="pose-icon">accessibility_new</mat-icon>
-          <span class="pose-name">{{ pose.name }}</span>
-          <div class="selected-check" *ngIf="isPoseSelected(pose.id)">
-            <mat-icon>check</mat-icon>
+      <!-- Collapsed banner view (after selection) -->
+      <div class="mobile-scene-collapsed" *ngIf="isMobilePoseCollapsed() && selectedPoseId() !== 'original'" (click)="expandMobilePose()">
+        <div class="collapsed-content">
+          <mat-icon>accessibility_new</mat-icon>
+          <span class="collapsed-label">Pose:</span>
+          <span class="collapsed-value">{{ selectedPoseId() }}</span>
+        </div>
+        <button class="collapsed-change-btn">
+          <mat-icon>edit</mat-icon>
+          Change
+        </button>
+      </div>
+
+      <!-- Full-screen selection view (initial or expanded) -->
+      <div class="mobile-scene-full" *ngIf="!isMobilePoseCollapsed() || selectedPoseId() === 'original'">
+        <h3 class="mobile-scene-title">Select a Pose</h3>
+        <div class="mobile-grid poses fullscreen">
+          <div
+            class="mobile-grid-item pose-item"
+            *ngFor="let pose of posePresets"
+            [class.selected]="isPoseSelected(pose.id)"
+            (click)="selectPose(pose.id)"
+          >
+            <mat-icon class="pose-icon">{{ getPoseIcon(pose.id) }}</mat-icon>
+            <span class="pose-name">{{ pose.name }}</span>
+            <div class="selected-check" *ngIf="isPoseSelected(pose.id)">
+              <mat-icon>check</mat-icon>
+            </div>
           </div>
         </div>
       </div>
@@ -862,46 +914,63 @@
 
     <!-- BACKGROUND SECTION -->
     <div class="mobile-section" *ngIf="mobileActiveSection() === 'background'">
-      <!-- Category pills -->
-      <div class="category-pills">
-        <button
-          class="category-pill"
-          *ngFor="let cat of backgroundCategories"
-          [class.active]="expandedCategory() === cat.id"
-          (click)="selectBackgroundCategory(cat.id)"
-        >
-          {{ cat.label }}
+      <!-- Collapsed banner view (after selection) -->
+      <div class="mobile-scene-collapsed" *ngIf="isMobileBackgroundCollapsed() && hasBackgroundSelection()" (click)="expandMobileBackground()">
+        <div class="collapsed-content">
+          <mat-icon>wallpaper</mat-icon>
+          <span class="collapsed-label">Scene:</span>
+          <span class="collapsed-value">{{ selectedPresetInfo?.name || 'Custom' }}</span>
+        </div>
+        <button class="collapsed-change-btn">
+          <mat-icon>edit</mat-icon>
+          Change
         </button>
       </div>
-      <!-- Presets grid -->
-      <div class="mobile-grid backgrounds" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
-        <div
-          class="mobile-grid-item bg-item"
-          *ngFor="let preset of filteredPresets"
-          [class.selected]="isPresetSelected(preset.id)"
-          (click)="selectPreset(preset)"
-        >
-          <mat-icon class="bg-icon">wallpaper</mat-icon>
-          <span class="bg-name">{{ preset.name }}</span>
-          <div class="selected-check" *ngIf="isPresetSelected(preset.id)">
-            <mat-icon>check</mat-icon>
+
+      <!-- Full-screen selection view (initial or expanded) -->
+      <div class="mobile-scene-full" *ngIf="!isMobileBackgroundCollapsed() || !hasBackgroundSelection()">
+        <h3 class="mobile-scene-title">Select a Background</h3>
+        <!-- Category pills -->
+        <div class="category-pills">
+          <button
+            class="category-pill"
+            *ngFor="let cat of backgroundCategories"
+            [class.active]="expandedCategory() === cat.id"
+            (click)="selectBackgroundCategory(cat.id)"
+          >
+            {{ cat.label }}
+          </button>
+        </div>
+        <!-- Presets grid -->
+        <div class="mobile-grid backgrounds fullscreen" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
+          <div
+            class="mobile-grid-item bg-item"
+            *ngFor="let preset of filteredPresets"
+            [class.selected]="isPresetSelected(preset.id)"
+            (click)="selectPreset(preset)"
+          >
+            <mat-icon class="bg-icon">wallpaper</mat-icon>
+            <span class="bg-name">{{ preset.name }}</span>
+            <div class="selected-check" *ngIf="isPresetSelected(preset.id)">
+              <mat-icon>check</mat-icon>
+            </div>
           </div>
         </div>
-      </div>
-      <!-- Original selected message -->
-      <div class="original-state" *ngIf="expandedCategory() === 'original'">
-        <mat-icon>photo_camera</mat-icon>
-        <p>Keep the original background from your photo</p>
-      </div>
-      <!-- Custom prompt -->
-      <div class="custom-prompt-mobile" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
-        <label>Or describe a custom background:</label>
-        <textarea
-          [value]="customBackgroundPrompt()"
-          (input)="onCustomPromptChange($any($event.target).value)"
-          placeholder="e.g., A sunny beach at sunset..."
-          rows="2"
-        ></textarea>
+        <!-- Original selected message -->
+        <div class="original-state" *ngIf="expandedCategory() === 'original'">
+          <mat-icon>photo_camera</mat-icon>
+          <p>Keep the original background from your photo</p>
+        </div>
+        <!-- Custom prompt -->
+        <div class="custom-prompt-mobile" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
+          <label>Or describe a custom background:</label>
+          <textarea
+            [value]="customBackgroundPrompt()"
+            (input)="onCustomPromptChange($any($event.target).value)"
+            placeholder="e.g., A sunny beach at sunset..."
+            rows="2"
+          ></textarea>
+        </div>
       </div>
     </div>
 
@@ -999,7 +1068,7 @@
           (click)="toggleShowTemplateGarments()"
         >
           <mat-icon>{{ showTemplateGarments() ? 'visibility' : 'visibility_off' }}</mat-icon>
-          Templates
+          Examples
         </button>
         <button class="toolbar-btn primary" (click)="openGarmentUploadDialog()">
           <mat-icon>add_photo_alternate</mat-icon>
@@ -1131,7 +1200,7 @@
 
   <!-- Section Tabs (bottom navigation) -->
   <div class="mobile-section-tabs" [class.tutorial-active]="isTutorialActive()">
-    <!-- Model Tab -->
+    <!-- People Tab -->
     <button
       class="section-tab"
       [class.active]="mobileActiveSection() === 'model'"
@@ -1139,10 +1208,10 @@
       (click)="onMobileTabClick('model')"
     >
       <mat-icon>person</mat-icon>
-      <span>Model</span>
+      <span>People</span>
       <span class="tab-count" *ngIf="(selectedModelCount$ | async)! > 0">{{ selectedModelCount$ | async }}</span>
       <div class="mobile-tab-tooltip walkthrough" *ngIf="tutorialStep() === 'models-full'">
-        <span>Upload your own photos or use templates</span>
+        <span>Upload your own photos or use examples</span>
         <button class="tooltip-next" (click)="nextMobileWalkthroughStep($event)">Next</button>
         <div class="tooltip-arrow"></div>
       </div>

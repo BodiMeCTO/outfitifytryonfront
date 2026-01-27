@@ -105,7 +105,7 @@
         <!-- Tap for details hint - always visible on ready images -->
         <div class="tap-hint" *ngIf="image.status === 'ready'">
           <mat-icon>touch_app</mat-icon>
-          <span>Tap for details</span>
+          <span>Tap to view & download</span>
         </div>
 
         <!-- Variants badge -->
@@ -138,11 +138,12 @@
           </span>
           <button
             mat-icon-button
+            class="archive-outfit-btn"
             (click)="archive(image); $event.stopPropagation()"
             aria-label="Archive outfit"
-            matTooltip="Archive"
+            matTooltip="Move to archive"
           >
-            <mat-icon>archive</mat-icon>
+            <mat-icon>inventory_2</mat-icon>
           </button>
         </div>
       </mat-card-content>

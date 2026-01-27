@@ -25,8 +25,14 @@ import { AiDisclaimerComponent } from '../shared/ai-disclaimer/ai-disclaimer.com
 export class ImageReviewComponent implements OnInit, OnDestroy {
   readonly image = signal<GeneratedImage | undefined>(undefined);
   readonly selectedVariantIndex = signal<number>(0);
+  readonly isZoomed = signal<boolean>(false); // Zoom toggle (#22)
   private readonly subscriptions = new Subscription();
   private readonly dialog = inject(MatDialog);
+
+  // Toggle zoom on image (#22)
+  toggleZoom(): void {
+    this.isZoomed.set(!this.isZoomed());
+  }
 
   // Computed: get the currently selected variant
   readonly currentVariant = computed(() => {

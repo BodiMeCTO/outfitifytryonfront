@@ -551,6 +551,114 @@
 // Progress overlay moved to GenerationProgressComponent
 
 // Workflow Sections
+// Desktop Tutorial Banner
+.desktop-tutorial-banner {
+  display: none;
+
+  @include lg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-3;
+    padding: $space-3 $space-6;
+    margin-bottom: $space-4;
+    background: linear-gradient(135deg, $color-accent-gold, darken($color-accent-gold, 10%));
+    border-radius: $radius-lg;
+    color: white;
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.05em;
+    animation: bannerGlow 2s ease-in-out infinite;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .skip-btn {
+      margin-left: $space-4;
+      padding: $space-2 $space-4;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: $radius-md;
+      color: white;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    @keyframes bannerGlow {
+      0%, 100% {
+        box-shadow: 0 4px 20px rgba($color-accent-gold, 0.3);
+      }
+      50% {
+        box-shadow: 0 4px 30px rgba($color-accent-gold, 0.5);
+      }
+    }
+  }
+}
+
+// Generate Tutorial Hint (desktop)
+.generate-tutorial-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+  margin-bottom: $space-2;
+  background: $color-accent-gold-light;
+  border: 1px solid $color-accent-gold;
+  border-radius: $radius-md;
+  color: $color-accent-gold-dark;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  animation: hintBounce 1s ease-in-out infinite;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    animation: arrowBounce 0.6s ease-in-out infinite;
+  }
+
+  @keyframes hintBounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+
+  @keyframes arrowBounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(3px);
+    }
+  }
+}
+
+.generate-button-wrapper.tutorial-ready {
+  animation: readyPulse 1.5s ease-in-out infinite;
+
+  @keyframes readyPulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+  }
+}
+
 .workflow-sections {
   flex: 1;
   display: flex;
@@ -1877,9 +1985,19 @@
     font-weight: $font-weight-semibold;
     color: $color-accent-gold-dark;
     line-height: 1.3;
+    animation: textFlash 1.5s ease-in-out infinite;
 
     @include md {
       font-size: $font-size-sm;
+    }
+
+    @keyframes textFlash {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
     }
   }
 }
@@ -2287,6 +2405,53 @@
   }
 }
 
+// Tutorial Mode Banner
+.tutorial-mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  background: linear-gradient(135deg, $color-accent-gold, darken($color-accent-gold, 10%));
+  color: white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.1em;
+  animation: bannerPulse 2s ease-in-out infinite;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .skip-tutorial-btn {
+    margin-left: auto;
+    padding: $space-1 $space-3;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: $radius-md;
+    color: white;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover, &:active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  @keyframes bannerPulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+}
+
 // Selected Items Bar (sticky top)
 .mobile-selected-bar {
   position: sticky;
@@ -2433,6 +2598,87 @@
   padding: $space-4;
 }
 
+// Mobile Scene Collapsed Banner (#16)
+.mobile-scene-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-4;
+  background: $color-accent-gold-light;
+  border: 2px solid $color-accent-gold;
+  border-radius: $radius-lg;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  .collapsed-content {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: $color-accent-gold;
+    }
+
+    .collapsed-label {
+      font-size: $font-size-sm;
+      color: $color-text-muted;
+    }
+
+    .collapsed-value {
+      font-size: $font-size-md;
+      font-weight: $font-weight-semibold;
+      color: $color-accent-gold-dark;
+    }
+  }
+
+  .collapsed-change-btn {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    padding: $space-2 $space-3;
+    background: $color-accent-gold;
+    border: none;
+    border-radius: $radius-md;
+    color: white;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    cursor: pointer;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+// Mobile Scene Full-screen View (#16)
+.mobile-scene-full {
+  .mobile-scene-title {
+    margin: 0 0 $space-4;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    text-align: center;
+  }
+
+  .mobile-grid.fullscreen {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $space-4;
+
+    .mobile-grid-item {
+      min-height: 100px;
+    }
+  }
+}
+
 .section-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -2534,6 +2780,39 @@
     font-weight: $font-weight-semibold;
     border-radius: $radius-sm;
     text-transform: uppercase;
+  }
+
+  // Mobile archive button (#23)
+  .mobile-archive-btn {
+    position: absolute;
+    bottom: $space-2;
+    right: $space-2;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: $radius-full;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    z-index: 1;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &:active {
+      opacity: 1;
+      background: rgba(0, 0, 0, 0.8);
+      transform: scale(0.95);
+    }
   }
 }
 

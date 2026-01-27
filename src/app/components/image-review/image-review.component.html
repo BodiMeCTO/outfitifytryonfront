@@ -1,7 +1,20 @@
 <section class="section-card image-review">
+  <!-- Back to Gallery Header -->
+  <header class="review-header">
+    <button class="back-to-gallery-btn" routerLink="/generated-gallery">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Back to Gallery</span>
+    </button>
+  </header>
+
   <ng-container *ngIf="image() as current">
-    <figure class="preview">
+    <!-- Zoomable preview (#22) -->
+    <figure class="preview" [class.zoomed]="isZoomed()" (click)="toggleZoom()">
       <img [src]="displayImageUrl()" alt="Selected generated outfit" />
+      <div class="zoom-hint" *ngIf="!isZoomed()">
+        <mat-icon>zoom_in</mat-icon>
+        <span>Tap to zoom</span>
+      </div>
     </figure>
 
     <!-- AI Disclaimer -->

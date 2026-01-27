@@ -7,6 +7,43 @@
   padding: 1rem;
 }
 
+// Back to Gallery Header
+.review-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  padding-bottom: $space-2;
+  border-bottom: 1px solid $color-border;
+  margin-bottom: $space-2;
+}
+
+.back-to-gallery-btn {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  background: transparent;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: rgba($color-accent-gold, 0.1);
+    border-color: $color-accent-gold;
+    color: $color-accent-gold;
+  }
+}
+
 .preview {
   margin: 0;
   width: min(100%, 420px);
@@ -18,6 +55,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  cursor: zoom-in;
+  transition: all 0.3s ease;
+
+  // Zoomed state (#22)
+  &.zoomed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.95);
+    cursor: zoom-out;
+
+    img {
+      max-height: 100vh;
+      max-width: 100vw;
+      object-fit: contain;
+    }
+
+    .zoom-hint {
+      display: none;
+    }
+  }
 }
 
 .preview img {
@@ -26,6 +92,28 @@
   height: auto;
   max-height: 60vh;
   object-fit: contain;
+}
+
+// Zoom hint overlay (#22)
+.zoom-hint {
+  position: absolute;
+  bottom: $space-3;
+  right: $space-3;
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-1 $space-2;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: $radius-md;
+  color: white;
+  font-size: $font-size-xs;
+  pointer-events: none;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .controls {
