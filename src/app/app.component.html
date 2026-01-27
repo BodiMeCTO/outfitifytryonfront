@@ -22,15 +22,6 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <!-- Gallery button (mobile only) -->
-        <a
-          routerLink="/generated-gallery"
-          class="mobile-gallery-button"
-          aria-label="View gallery"
-          *ngIf="(isLoggedIn$ | async)"
-        >
-          <mat-icon>collections</mat-icon>
-        </a>
         <!-- Menu button (desktop only) -->
         <button
           mat-icon-button

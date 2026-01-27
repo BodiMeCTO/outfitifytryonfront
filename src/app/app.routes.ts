@@ -59,6 +59,13 @@ export const routes: Routes = [
         title: 'Generated Outfits'
       },
       {
+        path: 'archive',
+        loadComponent: () =>
+          import('./components/archive-page/archive-page.component')
+            .then((m) => m.ArchivePageComponent),
+        title: 'Archive'
+      },
+      {
         path: 'review-image/:id',
         loadComponent: () =>
           import('./components/image-review/image-review.component')

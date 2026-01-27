@@ -31,8 +31,14 @@
 }
 
 .back-to-studio-btn {
+  // Hidden on mobile - use bottom nav instead
+  display: none;
   color: $color-accent-gold-dark;
   border-color: $color-accent-gold;
+
+  @media (min-width: 1024px) {
+    display: inline-flex;
+  }
 
   mat-icon {
     margin-right: 0.25rem;
@@ -44,7 +50,13 @@
 }
 
 .archive-btn {
+  // Hidden on mobile - use bottom nav instead
+  display: none;
   color: $color-text-secondary;
+
+  @media (min-width: 1024px) {
+    display: inline-flex;
+  }
 
   &:hover {
     color: $color-accent-gold;

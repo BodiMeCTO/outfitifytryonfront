@@ -94,7 +94,8 @@
       </button>
     </div>
 
-    <div class="actions">
+    <!-- Desktop actions (hidden on mobile) -->
+    <div class="actions desktop-actions">
       <button class="action-btn primary" (click)="share()">
         <mat-icon>ios_share</mat-icon>
         Share
@@ -111,9 +112,33 @@
         <mat-icon>verified</mat-icon>
         With Watermark
       </button>
+      <button class="action-btn" (click)="archive()">
+        <mat-icon>inventory_2</mat-icon>
+        Archive
+      </button>
       <button class="action-btn secondary" routerLink="/generated-gallery">
         <mat-icon>grid_view</mat-icon>
         Gallery
+      </button>
+    </div>
+
+    <!-- Mobile bottom action bar (fixed, 4 buttons) -->
+    <div class="mobile-action-bar">
+      <button class="mobile-action-btn" (click)="share()">
+        <mat-icon>ios_share</mat-icon>
+        <span>Share</span>
+      </button>
+      <button class="mobile-action-btn" (click)="download()">
+        <mat-icon>download</mat-icon>
+        <span>Download</span>
+      </button>
+      <button class="mobile-action-btn" (click)="openEditDialog()">
+        <mat-icon>auto_fix_high</mat-icon>
+        <span>Enhance</span>
+      </button>
+      <button class="mobile-action-btn" (click)="archive()">
+        <mat-icon>inventory_2</mat-icon>
+        <span>Archive</span>
       </button>
     </div>
   </ng-container>

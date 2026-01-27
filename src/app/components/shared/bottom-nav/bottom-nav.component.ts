@@ -24,7 +24,7 @@ export interface BottomNavItem {
   imports: [CommonModule, RouterModule, MatIconModule, MatRippleModule],
   template: `
     <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
-      @for (item of items; track item.route) {
+      @for (item of items; track item.label) {
         <a
           [routerLink]="item.route"
           routerLinkActive="is-active"

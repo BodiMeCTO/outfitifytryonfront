@@ -1,0 +1,152 @@
+<div class="archive-page">
+  <!-- Header -->
+  <header class="archive-header">
+    <button mat-icon-button class="back-btn" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>Archive</h1>
+  </header>
+
+  <!-- Tabs -->
+  <mat-tab-group class="archive-tabs" animationDuration="200ms">
+    <!-- Model Images Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">person</mat-icon>
+        <span class="tab-label">Models</span>
+        <span class="tab-badge" *ngIf="archivedModelImages().length > 0">
+          {{ archivedModelImages().length }}
+        </span>
+      </ng-template>
+
+      <div class="tab-content">
+        <div class="loading-container" *ngIf="isLoadingModelImages()">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+
+        <div class="empty-state" *ngIf="!isLoadingModelImages() && archivedModelImages().length === 0">
+          <mat-icon class="empty-icon">inventory_2</mat-icon>
+          <p class="empty-text">No archived model images</p>
+        </div>
+
+        <div class="archive-grid" *ngIf="!isLoadingModelImages() && archivedModelImages().length > 0">
+          <div
+            class="archive-item"
+            *ngFor="let item of archivedModelImages()"
+          >
+            <div class="item-image">
+              <img [src]="item.imageUrl" [alt]="item.name" />
+            </div>
+            <div class="item-info">
+              <span class="item-name">{{ item.name }}</span>
+              <span class="item-date">{{ formatDate(item.archivedAtUtc) }}</span>
+            </div>
+            <button
+              mat-icon-button
+              class="unarchive-button"
+              (click)="unarchiveModelImage(item)"
+              [disabled]="isUnarchiving()"
+              aria-label="Restore"
+            >
+              <mat-icon>unarchive</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Garments Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">checkroom</mat-icon>
+        <span class="tab-label">Garments</span>
+        <span class="tab-badge" *ngIf="archivedGarments().length > 0">
+          {{ archivedGarments().length }}
+        </span>
+      </ng-template>
+
+      <div class="tab-content">
+        <div class="loading-container" *ngIf="isLoadingGarments()">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+
+        <div class="empty-state" *ngIf="!isLoadingGarments() && archivedGarments().length === 0">
+          <mat-icon class="empty-icon">inventory_2</mat-icon>
+          <p class="empty-text">No archived garments</p>
+        </div>
+
+        <div class="archive-grid" *ngIf="!isLoadingGarments() && archivedGarments().length > 0">
+          <div
+            class="archive-item"
+            *ngFor="let item of archivedGarments()"
+          >
+            <div class="item-image">
+              <img [src]="item.imageUrl" [alt]="item.name" />
+            </div>
+            <div class="item-info">
+              <span class="item-name">{{ item.name }}</span>
+              <span class="item-category">{{ item.category }}</span>
+              <span class="item-date">{{ formatDate(item.archivedAtUtc) }}</span>
+            </div>
+            <button
+              mat-icon-button
+              class="unarchive-button"
+              (click)="unarchiveGarment(item)"
+              [disabled]="isUnarchiving()"
+              aria-label="Restore"
+            >
+              <mat-icon>unarchive</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Outfits Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">photo_library</mat-icon>
+        <span class="tab-label">Outfits</span>
+        <span class="tab-badge" *ngIf="archivedOutfits().length > 0">
+          {{ archivedOutfits().length }}
+        </span>
+      </ng-template>
+
+      <div class="tab-content">
+        <div class="loading-container" *ngIf="isLoadingOutfits()">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+
+        <div class="empty-state" *ngIf="!isLoadingOutfits() && archivedOutfits().length === 0">
+          <mat-icon class="empty-icon">inventory_2</mat-icon>
+          <p class="empty-text">No archived outfits</p>
+        </div>
+
+        <div class="archive-grid" *ngIf="!isLoadingOutfits() && archivedOutfits().length > 0">
+          <div
+            class="archive-item"
+            *ngFor="let item of archivedOutfits()"
+          >
+            <div class="item-image">
+              <img [src]="item.imageUrl" alt="Archived outfit" />
+            </div>
+            <div class="item-info">
+              <span class="item-name">Generated Outfit</span>
+              <span class="item-date">Created: {{ formatDate(item.createdAt) }}</span>
+              <span class="item-date">Archived: {{ formatDate(item.archivedAtUtc) }}</span>
+            </div>
+            <button
+              mat-icon-button
+              class="unarchive-button"
+              (click)="unarchiveOutfit(item)"
+              [disabled]="isUnarchiving()"
+              aria-label="Restore"
+            >
+              <mat-icon>unarchive</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

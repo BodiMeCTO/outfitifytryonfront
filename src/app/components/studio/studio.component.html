@@ -300,6 +300,14 @@
             <mat-icon>inventory_2</mat-icon>
           </button>
           <button
+            class="info-btn-small"
+            (click)="showPhotoTips()"
+            matTooltip="Best results: Full-body photos, good lighting, plain background, standing upright"
+            aria-label="Photo tips"
+          >
+            <mat-icon>info_outline</mat-icon>
+          </button>
+          <button
             class="upload-btn-small"
             (click)="modelUploadInput.click()"
             aria-label="Upload photo"
@@ -834,7 +842,7 @@
           Examples
         </button>
         <button
-          class="toolbar-btn"
+          class="toolbar-btn archive-toolbar-btn"
           (click)="openArchivePanel()"
           matTooltip="View archived items"
         >
@@ -842,6 +850,7 @@
         </button>
         <button
           class="toolbar-btn info-btn"
+          (click)="showPhotoTips()"
           matTooltip="Best results: Full-body photos, good lighting, plain background, standing upright"
         >
           <mat-icon>info_outline</mat-icon>
@@ -929,9 +938,24 @@
 
       <!-- Full-screen selection view (initial or expanded) -->
       <div class="mobile-scene-full" *ngIf="!isMobileBackgroundCollapsed() || !hasBackgroundSelection()">
-        <h3 class="mobile-scene-title">Select a Background</h3>
-        <!-- Category pills -->
-        <div class="category-pills">
+        <!-- Category grid when Original is selected or no category selected -->
+        <div class="mobile-category-grid" *ngIf="!expandedCategory() || expandedCategory() === 'original'">
+          <div
+            class="mobile-category-item"
+            *ngFor="let cat of backgroundCategories"
+            [class.selected]="expandedCategory() === cat.id"
+            (click)="selectBackgroundCategory(cat.id)"
+          >
+            <mat-icon class="category-icon">{{ getCategoryIcon(cat.id) }}</mat-icon>
+            <span class="category-name">{{ cat.label }}</span>
+            <div class="selected-check" *ngIf="expandedCategory() === cat.id">
+              <mat-icon>check</mat-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category pills (shown when viewing presets) -->
+        <div class="category-pills" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
           <button
             class="category-pill"
             *ngFor="let cat of backgroundCategories"
@@ -955,11 +979,6 @@
               <mat-icon>check</mat-icon>
             </div>
           </div>
-        </div>
-        <!-- Original selected message -->
-        <div class="original-state" *ngIf="expandedCategory() === 'original'">
-          <mat-icon>photo_camera</mat-icon>
-          <p>Keep the original background from your photo</p>
         </div>
         <!-- Custom prompt -->
         <div class="custom-prompt-mobile" *ngIf="expandedCategory() && expandedCategory() !== 'original'">
@@ -1313,6 +1332,7 @@
   <!-- AI Disclaimer (mobile) -->
   <app-ai-disclaimer variant="compact"></app-ai-disclaimer>
 </div>
+
 
 <!-- Archive Panel -->
 <app-archive-panel

@@ -56,6 +56,7 @@ export class AppComponent implements OnInit {
   readonly bottomNavItems: BottomNavItem[] = [
     { label: 'Studio', route: '/studio', icon: 'auto_awesome', activeIcon: 'auto_awesome' },
     { label: 'Gallery', route: '/generated-gallery', icon: 'collections', activeIcon: 'collections' },
+    { label: 'Archive', route: '/archive', icon: 'inventory_2', activeIcon: 'inventory_2' },
     { label: 'Credits', route: '/credits', icon: 'toll', activeIcon: 'toll' }
   ];
 

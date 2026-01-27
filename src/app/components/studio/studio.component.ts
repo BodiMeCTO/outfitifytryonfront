@@ -9,7 +9,7 @@ import {
   effect
 } from '@angular/core';
 import { CommonModule, LowerCasePipe } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -68,6 +68,7 @@ const GARMENT_GROUPS: GroupConfig[] = [
     CommonModule,
     LowerCasePipe,
     FormsModule,
+    RouterLink,
     MatIconModule,
     MatButtonModule,
     MatSnackBarModule,
@@ -335,6 +336,15 @@ export class StudioComponent implements OnInit {
   // Archive state
   readonly isArchivePanelOpen = signal(false);
 
+  // Generated images for quick actions
+  readonly generatedImages$ = this.outfitService.generatedImages$;
+  readonly latestOutfit$ = this.generatedImages$.pipe(
+    map(images => images.length > 0 ? images[0] : null)
+  );
+  readonly hasGeneratedOutfits$ = this.generatedImages$.pipe(
+    map(images => images.length > 0)
+  );
+
   // Mobile scene view state (#16) - collapsed after non-default selection
   readonly isMobilePoseCollapsed = signal(false);
   readonly isMobileBackgroundCollapsed = signal(false);
@@ -493,6 +503,21 @@ export class StudioComponent implements OnInit {
         });
       }, 100);
     }
+  }
+
+  getCategoryIcon(categoryId: string): string {
+    const icons: Record<string, string> = {
+      'original': 'photo_camera',
+      'studio': 'photo_library',
+      'seamless': 'gradient',
+      'urban': 'location_city',
+      'outdoor': 'park',
+      'interior': 'chair',
+      'luxury': 'diamond',
+      'artistic': 'palette',
+      'seasonal': 'ac_unit'
+    };
+    return icons[categoryId] || 'wallpaper';
   }
 
   selectPreset(preset: BackgroundPromptPreset): void {
@@ -964,6 +989,16 @@ export class StudioComponent implements OnInit {
     });
   }
 
+  // --- Info/Tips Methods ---
+
+  showPhotoTips(): void {
+    this.snackBar.open(
+      'Best results: Full-body photos, good lighting, plain background, standing upright',
+      'Got it',
+      { duration: 6000 }
+    );
+  }
+
   // --- Archive Methods ---
 
   openArchivePanel(): void {
@@ -1070,5 +1105,83 @@ export class StudioComponent implements OnInit {
   // Expand advanced options (user wants to see them)
   expandAdvancedOptions(): void {
     this.showAdvancedOptions.set(true);
+  }
+
+  // ===== Quick Outfit Actions (for mobile action bar) =====
+
+  // Share the latest outfit
+  async shareLatestOutfit(): Promise<void> {
+    this.latestOutfit$.pipe(take(1)).subscribe(async (outfit) => {
+      if (!outfit?.imageUrl) return;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Outfitify Generated Outfit',
+            text: 'Check out this outfit I created!',
+            url: outfit.imageUrl
+          });
+        } catch (error) {
+          if ((error as DOMException).name !== 'AbortError') {
+            this.snackBar.open('Unable to share right now.', 'Dismiss', { duration: 3000 });
+          }
+        }
+      } else {
+        this.snackBar.open('Sharing not supported on this device.', 'Got it', { duration: 3000 });
+      }
+    });
+  }
+
+  // Download the latest outfit
+  async downloadLatestOutfit(): Promise<void> {
+    this.latestOutfit$.pipe(take(1)).subscribe(async (outfit) => {
+      if (!outfit?.imageUrl) return;
+
+      try {
+        const response = await fetch(outfit.imageUrl, { mode: 'cors', credentials: 'omit' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `outfitify-outfit-${outfit.id}.png`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 100);
+      } catch {
+        this.snackBar.open('Download failed. Try from gallery.', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  // Navigate to enhance the latest outfit
+  enhanceLatestOutfit(): void {
+    this.latestOutfit$.pipe(take(1)).subscribe((outfit) => {
+      if (!outfit) return;
+      this.router.navigate(['/review-image', outfit.id]);
+    });
+  }
+
+  // Archive the latest outfit
+  archiveLatestOutfit(): void {
+    this.latestOutfit$.pipe(take(1)).subscribe((outfit) => {
+      if (!outfit) return;
+
+      this.apiService.archiveOutfit(outfit.id).pipe(take(1)).subscribe({
+        next: () => {
+          this.outfitService.removeGeneratedImage(outfit.id);
+          this.snackBar.open('Outfit archived.', 'Dismiss', { duration: 2500 });
+        },
+        error: () => {
+          this.snackBar.open('Failed to archive outfit.', 'Dismiss', { duration: 3000 });
+        }
+      });
+    });
   }
 }

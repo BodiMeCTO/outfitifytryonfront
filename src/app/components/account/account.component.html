@@ -90,6 +90,31 @@
       </mat-card-actions>
     </mat-card>
 
+    <!-- Tutorial Settings -->
+    <mat-card class="account-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="avatar-icon tutorial-icon">school</mat-icon>
+        <mat-card-title>Tutorial</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-row">
+          <span class="info-label">Status</span>
+          <span class="info-value tutorial-status" [class.completed]="isTutorialCompleted">
+            {{ isTutorialCompleted ? 'Completed' : 'In Progress' }}
+          </span>
+        </div>
+        <p class="tutorial-description">
+          Reset the tutorial to learn about all the features again.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button (click)="resetTutorial()">
+          <mat-icon>refresh</mat-icon>
+          Reset Tutorial
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
     <!-- Sign Out -->
     <mat-card class="account-card logout-card">
       <mat-card-content>

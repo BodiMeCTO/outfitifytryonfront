@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
+import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { GeneratedImage, OutfitImageVariant } from '../../models/outfit';
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
 import { AiDisclaimerComponent } from '../shared/ai-disclaimer/ai-disclaimer.component';
@@ -59,8 +60,26 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly outfitService: OutfitService,
+    private readonly apiService: OutfitifyApiService,
     private readonly snackBar: MatSnackBar
   ) {}
+
+  // Archive the current outfit and return to gallery
+  archive(): void {
+    const current = this.image();
+    if (!current) return;
+
+    this.apiService.archiveOutfit(current.id).pipe(take(1)).subscribe({
+      next: () => {
+        this.outfitService.removeGeneratedImage(current.id);
+        this.snackBar.open('Outfit archived.', 'Dismiss', { duration: 2500 });
+        this.router.navigate(['/generated-gallery']);
+      },
+      error: () => {
+        this.snackBar.open('Failed to archive outfit.', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
 
   ngOnInit(): void {
     const sub = this.route.paramMap.subscribe((params) => {
