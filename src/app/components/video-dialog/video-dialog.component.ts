@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { take } from 'rxjs/operators';
 
 import { VideoService, VideoDto, MotionPresetDto, CreateVideoRequest } from '../../services/video.service';
+import { DownloadService } from '../../services/download.service';
 
 export interface VideoDialogData {
   outfitId: string;
@@ -49,6 +50,7 @@ export class VideoDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<VideoDialogComponent>);
   readonly videoService = inject(VideoService); // Public for template access
   private readonly snackBar = inject(MatSnackBar);
+  private readonly downloadService = inject(DownloadService);
   readonly data: VideoDialogData = inject(MAT_DIALOG_DATA);
 
   // Options state
@@ -178,18 +180,13 @@ export class VideoDialogComponent implements OnInit {
     });
   }
 
-  downloadVideo(): void {
+  async downloadVideo(): Promise<void> {
     const video = this.currentVideo();
     if (!video?.videoUrl) return;
 
     const fullUrl = this.videoService.getFullVideoUrl(video.videoUrl);
-    const link = document.createElement('a');
-    link.href = fullUrl;
-    link.download = `outfitify-video-${video.id}.mp4`;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const filename = `outfitify-video-${video.id}.mp4`;
+    await this.downloadService.downloadVideo(fullUrl, filename);
   }
 
   close(): void {

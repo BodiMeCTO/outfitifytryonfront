@@ -13,6 +13,7 @@ import { OutfitService } from '../../services/outfit.service';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { CreditsService } from '../../services/credits.service';
 import { VideoService, VideoDto } from '../../services/video.service';
+import { DownloadService } from '../../services/download.service';
 import { GeneratedImage, OutfitImageVariant } from '../../models/outfit';
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
 import { VideoDialogComponent, VideoDialogData, VideoDialogResult } from '../video-dialog/video-dialog.component';
@@ -35,6 +36,7 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
   private readonly subscriptions = new Subscription();
   private readonly dialog = inject(MatDialog);
   private readonly videoService = inject(VideoService);
+  private readonly downloadService = inject(DownloadService);
 
   // Toggle zoom on image (#22)
   toggleZoom(): void {
@@ -195,49 +197,7 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     const variantSuffix = variant?.editType ? `-${variant.editType}` : '';
     const filename = `outfitify-outfit-${image.id}${variantSuffix}.png`;
 
-    try {
-      // Fetch the image as a blob
-      const response = await fetch(imageUrl, {
-        mode: 'cors',
-        credentials: 'omit'
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup after a short delay to ensure download starts
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      }, 100);
-    } catch (error) {
-      console.error('Download failed:', error);
-
-      // Fallback: Direct link (may just navigate instead of download for cross-origin)
-      const link = document.createElement('a');
-      link.href = imageUrl;
-      link.download = filename;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      this.snackBar.open('If download didn\'t start, right-click the image to save.', 'Got it', {
-        duration: 4000
-      });
-    }
+    await this.downloadService.downloadImage(imageUrl, filename);
   }
 
   /**
@@ -252,90 +212,10 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    try {
-      // Fetch the image as a blob
-      const response = await fetch(imageUrl, {
-        mode: 'cors',
-        credentials: 'omit'
-      });
+    const variantSuffix = variant?.editType ? `-${variant.editType}` : '';
+    const filename = `outfitify-outfit-${image.id}${variantSuffix}-watermarked.png`;
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const imageBitmap = await createImageBitmap(blob);
-
-      // Create canvas and draw image
-      const canvas = document.createElement('canvas');
-      canvas.width = imageBitmap.width;
-      canvas.height = imageBitmap.height;
-      const ctx = canvas.getContext('2d');
-
-      if (!ctx) {
-        throw new Error('Could not get canvas context');
-      }
-
-      // Draw the original image
-      ctx.drawImage(imageBitmap, 0, 0);
-
-      // Add watermark
-      const watermarkText = 'AI-Generated Content';
-      const padding = 20;
-      const fontSize = Math.max(24, Math.floor(canvas.width / 40)); // Responsive font size
-
-      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-      ctx.textBaseline = 'bottom';
-
-      // Measure text for background
-      const textMetrics = ctx.measureText(watermarkText);
-      const textWidth = textMetrics.width;
-      const textHeight = fontSize * 1.2;
-
-      // Position in bottom-right corner
-      const x = canvas.width - textWidth - padding * 2;
-      const y = canvas.height - padding;
-
-      // Draw semi-transparent background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(x - padding / 2, y - textHeight, textWidth + padding, textHeight + padding / 2);
-
-      // Draw watermark text
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText(watermarkText, x, y);
-
-      // Convert to blob and download
-      canvas.toBlob((watermarkedBlob) => {
-        if (!watermarkedBlob) {
-          this.snackBar.open('Failed to create watermarked image.', 'Dismiss', { duration: 3000 });
-          return;
-        }
-
-        const variantSuffix = variant?.editType ? `-${variant.editType}` : '';
-        const filename = `outfitify-outfit-${image.id}${variantSuffix}-watermarked.png`;
-
-        const blobUrl = URL.createObjectURL(watermarkedBlob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = filename;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-
-        setTimeout(() => {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        }, 100);
-
-        this.snackBar.open('Downloaded with AI watermark.', 'OK', { duration: 2500 });
-      }, 'image/png');
-
-    } catch (error) {
-      console.error('Watermark download failed:', error);
-      this.snackBar.open('Failed to add watermark. Try regular download instead.', 'Dismiss', {
-        duration: 4000
-      });
-    }
+    await this.downloadService.downloadImageWithWatermark(imageUrl, filename);
   }
 
   openEditDialog(): void {
@@ -459,15 +339,10 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
   /**
    * Download a video
    */
-  downloadVideo(video: VideoDto): void {
+  async downloadVideo(video: VideoDto): Promise<void> {
     const fullUrl = this.videoService.getFullVideoUrl(video.videoUrl!);
-    const link = document.createElement('a');
-    link.href = fullUrl;
-    link.download = `outfitify-video-${video.id}.mp4`;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const filename = `outfitify-video-${video.id}.mp4`;
+    await this.downloadService.downloadVideo(fullUrl, filename);
   }
 
   /**
