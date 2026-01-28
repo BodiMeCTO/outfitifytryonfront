@@ -2,6 +2,19 @@
   <header class="header">
     <h1>Generated outfits</h1>
     <div class="header-actions">
+      <!-- Filter toggle -->
+      <mat-button-toggle-group
+        class="filter-toggle"
+        [value]="activeFilter()"
+        (change)="setFilter($event.value)"
+        aria-label="Filter outfits"
+      >
+        <mat-button-toggle value="all">All</mat-button-toggle>
+        <mat-button-toggle value="with-videos">
+          <mat-icon>videocam</mat-icon>
+          Videos
+        </mat-button-toggle>
+      </mat-button-toggle-group>
       <!-- Back to Studio button - always visible -->
       <button
         mat-stroked-button
@@ -70,8 +83,19 @@
     </button>
   </div>
 
+  <!-- Empty filter state -->
+  <div class="empty" *ngIf="(generatedImages$ | async)?.length! > 0 && (filteredImages$ | async)?.length === 0">
+    <mat-icon>videocam_off</mat-icon>
+    <h3>No outfits with videos</h3>
+    <p>None of your outfits have videos yet. Open an outfit and create a video!</p>
+    <button mat-stroked-button (click)="setFilter('all')">
+      <mat-icon>filter_alt_off</mat-icon>
+      Show all outfits
+    </button>
+  </div>
+
   <!-- Gallery grid -->
-  <div class="grid" *ngIf="(generatedImages$ | async) as images">
+  <div class="grid" *ngIf="(filteredImages$ | async) as images">
     <mat-card
       class="gallery-item"
       [class.clickable]="image.status === 'ready'"
@@ -107,6 +131,11 @@
           <mat-icon>touch_app</mat-icon>
           <span>Tap to view & download</span>
         </div>
+
+        <!-- Video badge -->
+        <span class="video-badge" *ngIf="image.videoCount && image.videoCount > 0">
+          <mat-icon>videocam</mat-icon>
+        </span>
 
         <!-- Variants badge -->
         <span class="variants-badge" *ngIf="image.variantCount && image.variantCount > 1">

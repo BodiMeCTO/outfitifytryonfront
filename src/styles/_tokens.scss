@@ -26,6 +26,12 @@ $color-accent-gold-text: #7A6548; // Even darker for small text (5.5:1 contrast)
 $color-accent-rose: #E8C3C8;
 $color-accent-rose-light: rgba(232, 195, 200, 0.2);
 
+// Tutorial accent colors (green for better visibility)
+$color-accent-tutorial: #4CAF50;
+$color-accent-tutorial-hover: #43A047;
+$color-accent-tutorial-light: rgba(76, 175, 80, 0.12);
+$color-accent-tutorial-dark: #2E7D32; // WCAG AA compliant for text
+
 // UI colors
 $color-border: rgba(0, 0, 0, 0.08);
 $color-border-strong: rgba(0, 0, 0, 0.16);

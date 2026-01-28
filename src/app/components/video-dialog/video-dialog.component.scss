@@ -288,6 +288,15 @@ mat-dialog-actions {
     color: $color-text-secondary;
   }
 
+  .processing-hint {
+    font-size: 0.8rem;
+    color: $color-text-hint;
+    background: $color-bg-secondary;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+  }
+
   .processing-details {
     display: flex;
     gap: 1rem;

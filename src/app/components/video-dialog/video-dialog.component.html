@@ -107,6 +107,7 @@
     <mat-spinner diameter="48"></mat-spinner>
     <h3>Generating your video</h3>
     <p>This typically takes 1-3 minutes</p>
+    <p class="processing-hint">You can close this dialog and continue browsing. We'll notify you when it's ready!</p>
     <div class="processing-details">
       <span class="detail-item">
         <mat-icon>timer</mat-icon>
@@ -178,9 +179,17 @@
     </button>
   </ng-container>
 
-  <!-- Processing state actions -->
-  <ng-container *ngIf="status() === 'creating' || status() === 'processing'">
-    <button mat-button disabled>Processing...</button>
+  <!-- Creating state actions -->
+  <ng-container *ngIf="status() === 'creating'">
+    <button mat-button disabled>Submitting...</button>
+  </ng-container>
+
+  <!-- Processing state actions - allow user to continue in background -->
+  <ng-container *ngIf="status() === 'processing'">
+    <button mat-raised-button color="primary" (click)="continueInBackground()">
+      <mat-icon>open_in_new</mat-icon>
+      Continue in Background
+    </button>
   </ng-container>
 
   <!-- Ready state actions -->

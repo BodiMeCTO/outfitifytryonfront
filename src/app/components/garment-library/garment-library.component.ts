@@ -347,7 +347,6 @@ export class GarmentLibraryComponent implements OnInit {
       }
     });
   }
-}
 
   // --- Archive Methods ---
 
@@ -371,58 +370,7 @@ export class GarmentLibraryComponent implements OnInit {
           .onAction()
           .pipe(take(1))
           .subscribe(() => this.unarchiveGarmentById(garment.id));
-        
-        // Reload garments to reflect the change
-        this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
-      },
-      error: () => {
-        this.isArchivingGarment.set(false);
-        this.snackBar.open('Failed to archive garment', 'Dismiss', { duration: 3000 });
-      }
-    });
-  }
 
-  private unarchiveGarmentById(id: string): void {
-    this.apiService.unarchiveGarment(id).pipe(take(1)).subscribe({
-      next: () => {
-        this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
-        this.snackBar.open('Garment restored', 'Dismiss', { duration: 3000 });
-      },
-      error: () => {
-        this.snackBar.open('Failed to restore garment', 'Dismiss', { duration: 3000 });
-      }
-    });
-  }
-
-  onArchiveItemRestored(): void {
-    // Refresh garments when an item is restored from the archive panel
-    this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
-  }
-}
-
-  // --- Archive Methods ---
-
-  openArchivePanel(): void {
-    this.isArchivePanelOpen.set(true);
-  }
-
-  closeArchivePanel(): void {
-    this.isArchivePanelOpen.set(false);
-  }
-
-  archiveGarment(event: Event, garment: Garment): void {
-    event.stopPropagation();
-    if (this.isArchivingGarment()) return;
-
-    this.isArchivingGarment.set(true);
-    this.apiService.archiveGarment(garment.id).pipe(take(1)).subscribe({
-      next: () => {
-        this.isArchivingGarment.set(false);
-        this.snackBar.open('Garment archived', 'Undo', { duration: 5000 })
-          .onAction()
-          .pipe(take(1))
-          .subscribe(() => this.unarchiveGarmentById(garment.id));
-        
         // Reload garments to reflect the change
         this.outfitService.forceReloadGarments().pipe(take(1)).subscribe();
       },

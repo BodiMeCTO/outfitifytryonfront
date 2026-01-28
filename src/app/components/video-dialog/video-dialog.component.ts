@@ -22,6 +22,7 @@ export interface VideoDialogData {
 export interface VideoDialogResult {
   created: boolean;
   video?: VideoDto;
+  continuedInBackground?: boolean;
 }
 
 type VideoStatus = 'options' | 'creating' | 'processing' | 'ready' | 'error';
@@ -196,6 +197,20 @@ export class VideoDialogComponent implements OnInit {
     this.dialogRef.close({
       created: video?.status === 'ready',
       video: video?.status === 'ready' ? video : undefined
+    } as VideoDialogResult);
+  }
+
+  continueInBackground(): void {
+    this.snackBar.open('Video generation will continue in the background. You\'ll be notified when it\'s ready!', 'OK', {
+      duration: 4000,
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom'
+    });
+    // Close without waiting for completion - generation continues server-side
+    this.dialogRef.close({
+      created: false,
+      video: undefined,
+      continuedInBackground: true
     } as VideoDialogResult);
   }
 

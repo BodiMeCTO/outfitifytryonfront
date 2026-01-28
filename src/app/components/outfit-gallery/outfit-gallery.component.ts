@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, signal, computed } from '@angular/core';
 import { AsyncPipe, CommonModule, DatePipe, NgForOf, NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -8,8 +8,9 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { Subscription, timer } from 'rxjs';
-import { switchMap, take, pairwise, startWith } from 'rxjs/operators';
+import { switchMap, take, pairwise, startWith, map } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
@@ -19,6 +20,8 @@ import { SmartGarmentUploadDialogComponent } from '../smart-garment-upload-dialo
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
 import { ArchivePanelComponent } from '../archive-panel/archive-panel.component';
 import { AiDisclaimerComponent } from '../shared/ai-disclaimer/ai-disclaimer.component';
+
+export type GalleryFilter = 'all' | 'with-videos';
 
 @Component({
   selector: 'app-outfit-gallery',
@@ -36,6 +39,7 @@ import { AiDisclaimerComponent } from '../shared/ai-disclaimer/ai-disclaimer.com
     MatSnackBarModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    MatButtonToggleModule,
     ArchivePanelComponent,
     AiDisclaimerComponent
   ],
@@ -55,6 +59,20 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
   readonly generatedImages$ = this.outfitService.generatedImages$;
   private readonly subscription = new Subscription();
 
+  // Filter state
+  readonly activeFilter = signal<GalleryFilter>('all');
+
+  // Filtered images based on active filter
+  readonly filteredImages$ = this.generatedImages$.pipe(
+    map(images => {
+      const filter = this.activeFilter();
+      if (filter === 'with-videos') {
+        return images.filter(img => img.videoCount && img.videoCount > 0);
+      }
+      return images;
+    })
+  );
+
   // Archive panel state
   readonly isArchivePanelOpen = signal(false);
 
@@ -63,6 +81,10 @@ export class OutfitGalleryComponent implements OnInit, OnDestroy {
 
   // Track processing images for banner (#13) and notifications (#22)
   private processingImageIds = new Set<string>();
+
+  setFilter(filter: GalleryFilter): void {
+    this.activeFilter.set(filter);
+  }
 
   // Navigate to studio - completes gallery-return step if in tutorial
   goToStudio(): void {

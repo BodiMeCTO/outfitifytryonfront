@@ -1700,6 +1700,7 @@ export class OutfitService {
       failureReason: response.failureReason,
       variants,
       variantCount: variants.length,
+      videoCount: response.videoCount ?? 0,
       archivedAtUtc: response.archivedAtUtc,
       // Input details for display
       modelImageUrl: response.modelImageUrl ? this.resolveAssetUrl(response.modelImageUrl) : null,

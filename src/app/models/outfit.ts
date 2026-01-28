@@ -77,6 +77,7 @@ export interface GeneratedImage {
   failureReason?: string | null;  // Human-readable reason when status is 'failed', 'pending_retry', or 'permanently_failed'
   variants?: OutfitImageVariant[];  // All images for this outfit (original + enhanced)
   variantCount?: number;   // Quick count for badge display
+  videoCount?: number;     // Number of videos generated for this outfit
   archivedAtUtc?: string | null;  // When archived, null if active
   // Input details for display
   modelImageUrl?: string | null;
@@ -173,6 +174,7 @@ export interface OutfitDto {
   backgroundName?: string | null;
   garments?: OutfitGarmentInfoDto[] | null;
   outfitImages?: OutfitImage[] | null;
+  videoCount?: number | null;  // Number of videos generated for this outfit
 }
 
 export interface CreateOutfitDto {
