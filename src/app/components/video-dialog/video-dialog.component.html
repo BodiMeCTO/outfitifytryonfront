@@ -1,0 +1,203 @@
+<h2 mat-dialog-title>
+  <mat-icon>videocam</mat-icon>
+  <span>Create Video</span>
+</h2>
+
+<mat-dialog-content>
+  <!-- Loading options -->
+  <div class="loading-container" *ngIf="isLoadingOptions()">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading options...</p>
+  </div>
+
+  <!-- Options selection -->
+  <ng-container *ngIf="!isLoadingOptions() && status() === 'options'">
+    <!-- Preview image -->
+    <div class="preview-section">
+      <img [src]="data.imageUrl" alt="Source image" class="preview-image" />
+    </div>
+
+    <!-- Duration selection -->
+    <div class="option-section">
+      <h3>Duration</h3>
+      <div class="option-buttons">
+        <button
+          *ngFor="let opt of durationOptions"
+          class="option-btn"
+          [class.selected]="selectedDuration() === opt.value"
+          (click)="selectDuration(opt.value)"
+        >
+          <span class="option-label">{{ opt.label }}</span>
+          <span class="option-desc">{{ opt.description }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Resolution selection -->
+    <div class="option-section">
+      <h3>Resolution</h3>
+      <div class="option-buttons resolution-buttons">
+        <button
+          *ngFor="let opt of resolutionOptions"
+          class="option-btn"
+          [class.selected]="selectedResolution() === opt.value"
+          (click)="selectResolution(opt.value)"
+        >
+          <span class="option-label">{{ opt.label }}</span>
+          <span class="option-desc">{{ opt.description }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Motion preset selection -->
+    <div class="option-section">
+      <h3>Motion Style</h3>
+      <div class="preset-grid">
+        <button
+          *ngFor="let preset of motionPresets()"
+          class="preset-btn"
+          [class.selected]="selectedPreset() === preset.id"
+          (click)="selectPreset(preset.id)"
+          [matTooltip]="preset.description"
+        >
+          <mat-icon>{{ getPresetIcon(preset.id) }}</mat-icon>
+          <span>{{ preset.name }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Custom prompt input -->
+    <div class="custom-prompt-section" *ngIf="isCustomPreset()">
+      <label for="customPrompt">Describe the motion you want:</label>
+      <textarea
+        id="customPrompt"
+        [ngModel]="customPrompt()"
+        (ngModelChange)="customPrompt.set($event)"
+        placeholder="E.g., Model slowly turns to show the back of the outfit, then faces forward again"
+        rows="3"
+      ></textarea>
+    </div>
+
+    <!-- Cost summary -->
+    <div class="cost-summary" [class.insufficient]="!canAfford()">
+      <div class="cost-row">
+        <span class="cost-label">Cost:</span>
+        <span class="cost-value">{{ creditCost() }} credits</span>
+      </div>
+      <div class="cost-row balance">
+        <span class="cost-label">Your balance:</span>
+        <span class="cost-value">{{ data.userCredits }} credits</span>
+      </div>
+      <div class="insufficient-warning" *ngIf="!canAfford()">
+        <mat-icon>warning</mat-icon>
+        <span>Insufficient credits</span>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Creating state -->
+  <div class="processing-container" *ngIf="status() === 'creating'">
+    <mat-spinner diameter="48"></mat-spinner>
+    <h3>Submitting request...</h3>
+    <p>Please wait while we queue your video</p>
+  </div>
+
+  <!-- Processing state -->
+  <div class="processing-container" *ngIf="status() === 'processing'">
+    <mat-spinner diameter="48"></mat-spinner>
+    <h3>Generating your video</h3>
+    <p>This typically takes 1-3 minutes</p>
+    <div class="processing-details">
+      <span class="detail-item">
+        <mat-icon>timer</mat-icon>
+        {{ currentVideo()?.durationSeconds }}s
+      </span>
+      <span class="detail-item">
+        <mat-icon>high_quality</mat-icon>
+        {{ currentVideo()?.resolution }}
+      </span>
+    </div>
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </div>
+
+  <!-- Ready state -->
+  <div class="ready-container" *ngIf="status() === 'ready'">
+    <div class="success-icon">
+      <mat-icon>check_circle</mat-icon>
+    </div>
+    <h3>Video Ready!</h3>
+
+    <video
+      *ngIf="currentVideo()?.videoUrl"
+      [src]="videoService.getFullVideoUrl(currentVideo()!.videoUrl!)"
+      controls
+      autoplay
+      loop
+      class="video-preview"
+    ></video>
+
+    <div class="video-details">
+      <span class="detail-item">
+        <mat-icon>timer</mat-icon>
+        {{ currentVideo()?.durationSeconds }} seconds
+      </span>
+      <span class="detail-item">
+        <mat-icon>high_quality</mat-icon>
+        {{ currentVideo()?.resolution }}
+      </span>
+      <span class="detail-item" *ngIf="currentVideo()?.fileSizeBytes">
+        <mat-icon>storage</mat-icon>
+        {{ (currentVideo()!.fileSizeBytes! / 1024 / 1024).toFixed(1) }} MB
+      </span>
+    </div>
+  </div>
+
+  <!-- Error state -->
+  <div class="error-container" *ngIf="status() === 'error'">
+    <div class="error-icon">
+      <mat-icon>error</mat-icon>
+    </div>
+    <h3>Generation Failed</h3>
+    <p class="error-message">{{ errorMessage() }}</p>
+    <p class="error-note">Your credits have not been charged.</p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <!-- Options state actions -->
+  <ng-container *ngIf="status() === 'options'">
+    <button mat-button (click)="close()">Cancel</button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="createVideo()"
+      [disabled]="!canAfford() || (isCustomPreset() && !customPrompt().trim())"
+    >
+      <mat-icon>videocam</mat-icon>
+      Create Video ({{ creditCost() }} credits)
+    </button>
+  </ng-container>
+
+  <!-- Processing state actions -->
+  <ng-container *ngIf="status() === 'creating' || status() === 'processing'">
+    <button mat-button disabled>Processing...</button>
+  </ng-container>
+
+  <!-- Ready state actions -->
+  <ng-container *ngIf="status() === 'ready'">
+    <button mat-button (click)="close()">Close</button>
+    <button mat-raised-button color="primary" (click)="downloadVideo()">
+      <mat-icon>download</mat-icon>
+      Download
+    </button>
+  </ng-container>
+
+  <!-- Error state actions -->
+  <ng-container *ngIf="status() === 'error'">
+    <button mat-button (click)="close()">Close</button>
+    <button mat-raised-button color="primary" (click)="retry()">
+      <mat-icon>refresh</mat-icon>
+      Try Again
+    </button>
+  </ng-container>
+</mat-dialog-actions>

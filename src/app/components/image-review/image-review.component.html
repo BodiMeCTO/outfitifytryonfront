@@ -100,6 +100,10 @@
         <mat-icon>ios_share</mat-icon>
         Share
       </button>
+      <button class="action-btn" (click)="openVideoDialog()">
+        <mat-icon>videocam</mat-icon>
+        Video
+      </button>
       <button class="action-btn" (click)="openEditDialog()">
         <mat-icon>auto_fix_high</mat-icon>
         Enhance
@@ -122,15 +126,19 @@
       </button>
     </div>
 
-    <!-- Mobile bottom action bar (fixed, 4 buttons) -->
+    <!-- Mobile bottom action bar (fixed, 5 buttons) -->
     <div class="mobile-action-bar">
       <button class="mobile-action-btn" (click)="share()">
         <mat-icon>ios_share</mat-icon>
         <span>Share</span>
       </button>
+      <button class="mobile-action-btn" (click)="openVideoDialog()">
+        <mat-icon>videocam</mat-icon>
+        <span>Video</span>
+      </button>
       <button class="mobile-action-btn" (click)="download()">
         <mat-icon>download</mat-icon>
-        <span>Download</span>
+        <span>Save</span>
       </button>
       <button class="mobile-action-btn" (click)="openEditDialog()">
         <mat-icon>auto_fix_high</mat-icon>

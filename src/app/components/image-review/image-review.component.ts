@@ -11,8 +11,10 @@ import { take } from 'rxjs/operators';
 
 import { OutfitService } from '../../services/outfit.service';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
+import { CreditsService } from '../../services/credits.service';
 import { GeneratedImage, OutfitImageVariant } from '../../models/outfit';
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
+import { VideoDialogComponent, VideoDialogData, VideoDialogResult } from '../video-dialog/video-dialog.component';
 import { AiDisclaimerComponent } from '../shared/ai-disclaimer/ai-disclaimer.component';
 
 @Component({
@@ -55,6 +57,8 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     const img = this.image();
     return (img?.variants?.length ?? 0) > 1;
   });
+
+  private readonly creditsService = inject(CreditsService);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -375,6 +379,42 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
             }
           }
         });
+      }
+    });
+  }
+
+  openVideoDialog(): void {
+    const image = this.image();
+    const variant = this.currentVariant();
+
+    if (!image) {
+      return;
+    }
+
+    // Get the current credits balance
+    const userCredits = this.creditsService.balance ?? 0;
+
+    // Use the current variant's ID, or fall back to the primary outfitImageId
+    const imageId = variant?.id ?? image.outfitImageId ?? image.id;
+    const imageUrl = this.displayImageUrl();
+
+    const dialogRef = this.dialog.open(VideoDialogComponent, {
+      width: '550px',
+      maxWidth: '95vw',
+      disableClose: true,
+      data: {
+        outfitId: image.id,
+        outfitImageId: imageId,
+        imageUrl: imageUrl,
+        userCredits: userCredits
+      } as VideoDialogData
+    });
+
+    dialogRef.afterClosed().pipe(take(1)).subscribe((result: VideoDialogResult | undefined) => {
+      if (result?.created && result.video) {
+        this.snackBar.open('Video created successfully!', 'OK', { duration: 3000 });
+        // Refresh credits balance
+        this.creditsService.refresh().pipe(take(1)).subscribe();
       }
     });
   }
