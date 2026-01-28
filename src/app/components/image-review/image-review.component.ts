@@ -12,6 +12,7 @@ import { take } from 'rxjs/operators';
 import { OutfitService } from '../../services/outfit.service';
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { CreditsService } from '../../services/credits.service';
+import { VideoService, VideoDto } from '../../services/video.service';
 import { GeneratedImage, OutfitImageVariant } from '../../models/outfit';
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
 import { VideoDialogComponent, VideoDialogData, VideoDialogResult } from '../video-dialog/video-dialog.component';
@@ -29,8 +30,11 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
   readonly image = signal<GeneratedImage | undefined>(undefined);
   readonly selectedVariantIndex = signal<number>(0);
   readonly isZoomed = signal<boolean>(false); // Zoom toggle (#22)
+  readonly videos = signal<VideoDto[]>([]);
+  readonly isLoadingVideos = signal<boolean>(false);
   private readonly subscriptions = new Subscription();
   private readonly dialog = inject(MatDialog);
+  private readonly videoService = inject(VideoService);
 
   // Toggle zoom on image (#22)
   toggleZoom(): void {
@@ -94,6 +98,7 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
       const image = this.outfitService.getGeneratedImageById(id);
       if (image) {
         this.image.set(image);
+        this.loadVideos(id);
         return;
       }
 
@@ -104,7 +109,9 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
           next: (images) => {
             const match = images.find((item) => item.id === id);
             this.image.set(match);
-            if (!match) {
+            if (match) {
+              this.loadVideos(id);
+            } else {
               this.snackBar.open('Unable to find that generated outfit. Returning to gallery.', 'Dismiss', {
                 duration: 3000
               });
@@ -413,10 +420,72 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().pipe(take(1)).subscribe((result: VideoDialogResult | undefined) => {
       if (result?.created && result.video) {
         this.snackBar.open('Video created successfully!', 'OK', { duration: 3000 });
-        // Refresh credits balance
+        // Refresh credits balance and videos list
         this.creditsService.refresh().pipe(take(1)).subscribe();
+        this.loadVideos(image.id);
       }
     });
+  }
+
+  /**
+   * Load videos for the current outfit
+   */
+  private loadVideos(outfitId: string): void {
+    this.isLoadingVideos.set(true);
+    this.videoService.getVideos(outfitId).pipe(take(1)).subscribe({
+      next: (videos) => {
+        // Only show ready videos, sorted by newest first
+        const readyVideos = videos
+          .filter(v => v.status === 'ready')
+          .sort((a, b) => new Date(b.createdAtUtc).getTime() - new Date(a.createdAtUtc).getTime());
+        this.videos.set(readyVideos);
+        this.isLoadingVideos.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load videos:', err);
+        this.videos.set([]);
+        this.isLoadingVideos.set(false);
+      }
+    });
+  }
+
+  /**
+   * Get the full video URL for playback
+   */
+  getVideoUrl(video: VideoDto): string {
+    return this.videoService.getFullVideoUrl(video.videoUrl!);
+  }
+
+  /**
+   * Download a video
+   */
+  downloadVideo(video: VideoDto): void {
+    const fullUrl = this.videoService.getFullVideoUrl(video.videoUrl!);
+    const link = document.createElement('a');
+    link.href = fullUrl;
+    link.download = `outfitify-video-${video.id}.mp4`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  /**
+   * Format video duration for display
+   */
+  formatDuration(seconds: number): string {
+    return `${seconds}s`;
+  }
+
+  /**
+   * Format file size for display
+   */
+  formatFileSize(bytes: number | null): string {
+    if (!bytes) return '';
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(0)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   ngOnDestroy(): void {

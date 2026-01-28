@@ -85,6 +85,44 @@
       </div>
     </div>
 
+    <!-- Videos section -->
+    <div class="videos-section" *ngIf="videos().length > 0">
+      <div class="videos-header">
+        <mat-icon>videocam</mat-icon>
+        <span>Videos ({{ videos().length }})</span>
+      </div>
+      <div class="videos-list">
+        <div class="video-card" *ngFor="let video of videos()">
+          <video
+            class="video-player"
+            [src]="getVideoUrl(video)"
+            controls
+            playsinline
+            preload="metadata"
+          ></video>
+          <div class="video-info">
+            <div class="video-specs">
+              <span class="video-spec">
+                <mat-icon>timer</mat-icon>
+                {{ formatDuration(video.durationSeconds) }}
+              </span>
+              <span class="video-spec">
+                <mat-icon>high_quality</mat-icon>
+                {{ video.resolution }}
+              </span>
+              <span class="video-spec" *ngIf="video.fileSizeBytes">
+                <mat-icon>storage</mat-icon>
+                {{ formatFileSize(video.fileSizeBytes) }}
+              </span>
+            </div>
+            <button class="video-download-btn" (click)="downloadVideo(video)" matTooltip="Download video">
+              <mat-icon>download</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="controls">
       <button class="nav-btn" (click)="navigate(-1)" aria-label="Previous image">
         <mat-icon>chevron_left</mat-icon>

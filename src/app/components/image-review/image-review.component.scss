@@ -470,3 +470,106 @@
     }
   }
 }
+
+// Videos section
+.videos-section {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.videos-header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: $color-text-muted;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: $color-accent-gold;
+  }
+}
+
+.videos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.video-card {
+  background: $color-bg-secondary;
+  border-radius: 12px;
+  border: 1px solid $color-border;
+  overflow: hidden;
+}
+
+.video-player {
+  width: 100%;
+  max-height: 240px;
+  background: #000;
+  display: block;
+}
+
+.video-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0.875rem;
+  border-top: 1px solid $color-border;
+}
+
+.video-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.video-spec {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: $color-text-secondary;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: $color-accent-gold;
+  }
+}
+
+.video-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid $color-border;
+  border-radius: 50%;
+  background: transparent;
+  color: $color-accent-gold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: $color-accent-gold;
+    color: $color-bg-primary;
+    border-color: $color-accent-gold;
+  }
+}
