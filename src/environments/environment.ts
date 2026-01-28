@@ -1,13 +1,13 @@
 export const environment = {
-  production: false,
+  production: true,
 
   // ============================================================
   // API URL CONFIGURATION
   // ============================================================
-  // For LOCAL development, use localhost:
-  apiBaseUrl: 'http://localhost:5042/',
-  // For PRODUCTION, uncomment the line below and comment out localhost:
-  // apiBaseUrl: 'https://api.outfitify.ai/',
+  // PRODUCTION (default on this server):
+  apiBaseUrl: 'https://api.outfitify.ai/',
+  // For LOCAL development, comment out production and uncomment localhost:
+  // apiBaseUrl: 'http://localhost:5042/',
 
   /**
    * Bearer token used for OutfitifyAPI requests. Replace with a real token in deployment.

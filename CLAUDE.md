@@ -74,7 +74,9 @@ Both models and garments have toggle buttons to show/hide pre-loaded templates:
 - Defaults to `true` (visible) on first visit
 - Template items have `isTemplate: true` flag from API
 
-## Production Deployment
+## Environment Configuration
+
+This is the **PRODUCTION** server.
 
 ### API URL Configuration
 
@@ -82,46 +84,36 @@ File: `src/environments/environment.ts`
 
 ```typescript
 export const environment = {
-  production: false,
+  production: true,
 
   // ============================================================
   // API URL CONFIGURATION
   // ============================================================
-  // For LOCAL development, use localhost:
-  apiBaseUrl: 'http://localhost:5042/',
-  // For PRODUCTION, uncomment the line below and comment out localhost:
-  // apiBaseUrl: 'https://api.outfitify.ai/',
+  // PRODUCTION (default on this server):
+  apiBaseUrl: 'https://api.outfitify.ai/',
+  // For LOCAL development, comment out production and uncomment localhost:
+  // apiBaseUrl: 'http://localhost:5042/',
 
   apiAccessToken: '',
   apiFunctionsKey: ''
 };
 ```
 
-### To Switch to Production
+### Build for Production
 
-1. Open `src/environments/environment.ts`
-2. Comment out the localhost line
-3. Uncomment the production line:
-
-```typescript
-// apiBaseUrl: 'http://localhost:5042/',
-apiBaseUrl: 'https://api.outfitify.ai/',
-```
-
-4. Build for production:
 ```bash
 npm run build -- --configuration production
 ```
 
-### To Switch Back to Development
+### To Switch to Local Development (if needed)
 
 1. Open `src/environments/environment.ts`
 2. Comment out the production line
 3. Uncomment the localhost line:
 
 ```typescript
-apiBaseUrl: 'http://localhost:5042/',
 // apiBaseUrl: 'https://api.outfitify.ai/',
+apiBaseUrl: 'http://localhost:5042/',
 ```
 
 ## Stripe Billing URLs
