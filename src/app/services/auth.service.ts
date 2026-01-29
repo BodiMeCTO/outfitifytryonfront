@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, catchError, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, catchError, filter, first, map, of, switchMap, tap } from 'rxjs';
 import { OutfitifyApiService } from './outfitify-api.service';
 import { ForgotPasswordRequest, SignupRequest } from '../models/auth';
 import { UserProfile } from '../models/user';
@@ -15,6 +15,10 @@ export class AuthService {
   private readonly emailSubject = new BehaviorSubject<string | null>(null);
   readonly email$ = this.emailSubject.asObservable();
 
+  // Emits once when initial auth state is determined (token validated or cleared)
+  private readonly authReadySubject = new ReplaySubject<boolean>(1);
+  readonly authReady$ = this.authReadySubject.asObservable();
+
   constructor(private readonly api: OutfitifyApiService) {
     // On app start, restore token from localStorage if it exists
     const saved = localStorage.getItem('access_token')?.trim();
@@ -25,19 +29,41 @@ export class AuthService {
     const isValidEmail = savedEmail && savedEmail.length > 0 && savedEmail !== 'null' && savedEmail !== 'undefined';
 
     if (isValidToken && isValidEmail) {
+      // Temporarily set token/email to make the API call
       this.tokenSubject.next(saved);
       this.emailSubject.next(savedEmail);
+
+      // Validate token by attempting to load user profile
       this.refreshCurrentUser().subscribe({
-        error: (err) => console.error('Unable to load current user', err)
+        next: (user) => {
+          if (!user) {
+            // Token is invalid/expired - clear session
+            console.warn('Token exists but user profile could not be loaded. Clearing session.');
+            this.logout();
+          }
+          // Auth state is now determined
+          this.authReadySubject.next(true);
+        },
+        error: (err) => {
+          console.error('Unable to load current user, clearing session', err);
+          this.logout();
+          this.authReadySubject.next(true);
+        }
       });
-    } else if (isValidToken && !isValidEmail) {
-      // No stored email means we cannot call the email-based profile endpoint; force re-login.
-      console.warn('Access token found without stored email. Clearing session and requiring login.');
-      this.logout();
     } else {
-      // No valid token - ensure clean state
+      // No valid token or missing email - ensure clean state
+      if (isValidToken && !isValidEmail) {
+        console.warn('Access token found without stored email. Clearing session.');
+      }
       this.logout();
+      // Auth state is determined immediately (not logged in)
+      this.authReadySubject.next(true);
     }
+  }
+
+  /** Returns an observable that completes once auth state is determined */
+  waitForAuthReady(): Observable<boolean> {
+    return this.authReady$.pipe(first());
   }
 
   /**

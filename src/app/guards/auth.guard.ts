@@ -1,5 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateChildFn, CanActivateFn, Router, UrlTree } from '@angular/router';
+import { map } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 
@@ -15,22 +16,30 @@ export const authGuard: CanActivateChildFn = (_childRoute, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.isLoggedIn()) {
-    return true;
-  }
-
-  return redirectToLogin(router, state.url);
+  // Wait for auth state to be determined before checking
+  return auth.waitForAuthReady().pipe(
+    map(() => {
+      if (auth.isLoggedIn()) {
+        return true;
+      }
+      return redirectToLogin(router, state.url);
+    })
+  );
 };
 
 export const redirectToLoginGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.isLoggedIn()) {
-    return true;
-  }
-
-  return redirectToLogin(router, state.url);
+  // Wait for auth state to be determined before checking
+  return auth.waitForAuthReady().pipe(
+    map(() => {
+      if (auth.isLoggedIn()) {
+        return true;
+      }
+      return redirectToLogin(router, state.url);
+    })
+  );
 };
 
 /**
@@ -41,9 +50,13 @@ export const noAuthGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.isLoggedIn()) {
-    return redirectToStudio(router);
-  }
-
-  return true;
+  // Wait for auth state to be determined before checking
+  return auth.waitForAuthReady().pipe(
+    map(() => {
+      if (auth.isLoggedIn()) {
+        return redirectToStudio(router);
+      }
+      return true;
+    })
+  );
 };
