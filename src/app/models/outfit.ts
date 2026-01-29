@@ -259,7 +259,8 @@ export type BackgroundCategory =
   | 'lifestyle'
   | 'seasonal'
   | 'abstract'
-  | 'luxury';
+  | 'luxury'
+  | 'landmarks';
 
 // Category metadata for UI display
 export interface BackgroundCategoryInfo {
@@ -279,7 +280,8 @@ export const BACKGROUND_CATEGORIES: BackgroundCategoryInfo[] = [
   { id: 'lifestyle', label: 'Lifestyle', description: 'Real-world settings' },
   { id: 'seasonal', label: 'Seasonal', description: 'Holiday & seasonal' },
   { id: 'abstract', label: 'Abstract', description: 'Artistic backgrounds' },
-  { id: 'luxury', label: 'Luxury', description: 'High-end locations' }
+  { id: 'luxury', label: 'Luxury', description: 'High-end locations' },
+  { id: 'landmarks', label: 'Landmarks', description: 'Famous world landmarks' }
 ];
 
 export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
@@ -446,7 +448,36 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   { id: 'rooftop-pool', name: 'Rooftop Pool', prompt: 'infinity rooftop pool, city skyline view, sunset ambiance, luxury lifestyle fashion', category: 'luxury' },
   { id: 'wine-cellar', name: 'Wine Cellar', prompt: 'elegant wine cellar, barrel-vaulted ceiling, ambient candle glow, sophisticated atmosphere', category: 'luxury' },
   { id: 'casino-floor', name: 'Casino Floor', prompt: 'glamorous casino floor, bright atmosphere, elegant evening atmosphere, high roller fashion', category: 'luxury' },
-  { id: 'opera-house', name: 'Opera House', prompt: 'grand opera house interior, red velvet seats, ornate architecture, cultural elegance', category: 'luxury' }
+  { id: 'opera-house', name: 'Opera House', prompt: 'grand opera house interior, red velvet seats, ornate architecture, cultural elegance', category: 'luxury' },
+
+  // ===========================================
+  // LANDMARKS - Famous world landmarks
+  // ===========================================
+  { id: 'eiffel-tower', name: 'Eiffel Tower', prompt: 'Eiffel Tower in Paris, iconic iron lattice structure, romantic Parisian atmosphere, clear sky backdrop', category: 'landmarks' },
+  { id: 'colosseum', name: 'Colosseum', prompt: 'Roman Colosseum in Rome, ancient stone arches, historic grandeur, warm Mediterranean atmosphere', category: 'landmarks' },
+  { id: 'taj-mahal', name: 'Taj Mahal', prompt: 'Taj Mahal in India, white marble domes and minarets, reflecting pools, majestic Mughal architecture', category: 'landmarks' },
+  { id: 'big-ben', name: 'Big Ben', prompt: 'Big Ben and Westminster in London, iconic clock tower, British elegance, classic London atmosphere', category: 'landmarks' },
+  { id: 'golden-gate', name: 'Golden Gate Bridge', prompt: 'Golden Gate Bridge in San Francisco, iconic red suspension bridge, bay waters, misty California atmosphere', category: 'landmarks' },
+  { id: 'sydney-opera', name: 'Sydney Opera House', prompt: 'Sydney Opera House, white sail-shaped roof shells, harbor waterfront, modern architectural marvel', category: 'landmarks' },
+  { id: 'santorini', name: 'Santorini', prompt: 'Santorini Greece, white-washed buildings with blue domes, Aegean Sea backdrop, Mediterranean paradise', category: 'landmarks' },
+  { id: 'machu-picchu', name: 'Machu Picchu', prompt: 'Machu Picchu in Peru, ancient Incan citadel, terraced ruins, dramatic Andean mountain backdrop', category: 'landmarks' },
+  { id: 'pyramids-giza', name: 'Pyramids of Giza', prompt: 'Pyramids of Giza in Egypt, ancient stone pyramids, golden desert sands, timeless wonder of the world', category: 'landmarks' },
+  { id: 'venice-canal', name: 'Venice Grand Canal', prompt: 'Grand Canal in Venice, gondolas on water, historic palazzos, romantic Italian waterway atmosphere', category: 'landmarks' },
+  { id: 'statue-liberty', name: 'Statue of Liberty', prompt: 'Statue of Liberty in New York, copper green patina, torch raised high, iconic American freedom symbol', category: 'landmarks' },
+  { id: 'burj-khalifa', name: 'Burj Khalifa', prompt: 'Burj Khalifa in Dubai, towering modern skyscraper, gleaming glass facade, futuristic Arabian cityscape', category: 'landmarks' },
+  { id: 'great-wall', name: 'Great Wall of China', prompt: 'Great Wall of China, ancient stone fortification, winding through misty mountains, historic grandeur', category: 'landmarks' },
+  { id: 'christ-redeemer', name: 'Christ the Redeemer', prompt: 'Christ the Redeemer in Rio de Janeiro, iconic statue atop Corcovado mountain, dramatic sky backdrop', category: 'landmarks' },
+  { id: 'petra', name: 'Petra Treasury', prompt: 'Treasury at Petra in Jordan, rose-red carved rock facade, ancient Nabataean architecture, desert canyon', category: 'landmarks' },
+  { id: 'angkor-wat', name: 'Angkor Wat', prompt: 'Angkor Wat in Cambodia, ancient temple complex, ornate stone towers, mystical jungle atmosphere', category: 'landmarks' },
+  { id: 'tokyo-tower', name: 'Tokyo Tower', prompt: 'Tokyo Tower in Japan, red and white lattice structure, neon city backdrop, modern Japanese cityscape', category: 'landmarks' },
+  { id: 'stonehenge', name: 'Stonehenge', prompt: 'Stonehenge in England, prehistoric stone circle, dramatic sky, mystical ancient monument', category: 'landmarks' },
+  { id: 'acropolis', name: 'Acropolis', prompt: 'Acropolis in Athens, ancient Parthenon temple, white marble columns, classical Greek architecture', category: 'landmarks' },
+  { id: 'sagrada-familia', name: 'Sagrada Familia', prompt: 'Sagrada Familia in Barcelona, Gaudi masterpiece, ornate Gothic spires, unique modernist architecture', category: 'landmarks' },
+  { id: 'niagara-falls', name: 'Niagara Falls', prompt: 'Niagara Falls, powerful cascading waterfalls, misty atmosphere, natural wonder backdrop', category: 'landmarks' },
+  { id: 'mount-fuji', name: 'Mount Fuji', prompt: 'Mount Fuji in Japan, snow-capped volcanic peak, cherry blossoms in foreground, serene Japanese landscape', category: 'landmarks' },
+  { id: 'tower-pisa', name: 'Leaning Tower of Pisa', prompt: 'Leaning Tower of Pisa in Italy, iconic tilted white marble tower, Romanesque architecture, Italian piazza', category: 'landmarks' },
+  { id: 'arc-triomphe', name: 'Arc de Triomphe', prompt: 'Arc de Triomphe in Paris, monumental stone arch, Champs-Elysees backdrop, French neoclassical grandeur', category: 'landmarks' },
+  { id: 'northern-lights', name: 'Northern Lights', prompt: 'Northern Lights aurora borealis, dancing green and purple lights, Arctic night sky, magical natural phenomenon', category: 'landmarks' }
 ];
 
 export type CreateOutfitResponse = OutfitDto;
