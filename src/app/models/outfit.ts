@@ -357,7 +357,7 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   { id: 'lavender-field', name: 'Lavender Field', prompt: 'purple lavender field in Provence, soft sun, romantic countryside setting', category: 'outdoor' },
   { id: 'garden-flowers', name: 'Flower Garden', prompt: 'beautiful flower garden, colorful blooming flowers, soft natural brightness, romantic garden setting', category: 'outdoor' },
   { id: 'tropical-paradise', name: 'Tropical', prompt: 'lush tropical paradise, palm trees, crystal blue water, warm sun, vacation resort atmosphere', category: 'outdoor' },
-  { id: 'cherry-blossoms', name: 'Cherry Blossoms', prompt: 'dreamy cherry blossom garden, soft pink petals falling, spring sunshine, romantic Japanese garden', category: 'outdoor' },
+  { id: 'cherry-blossoms', name: 'Cherry Blossoms', prompt: 'dreamy cherry blossom garden, soft pink petals falling, spring day, romantic Japanese garden', category: 'outdoor' },
   { id: 'desert-dunes', name: 'Desert Dunes', prompt: 'golden desert sand dunes at golden hour, warm dramatic glow, vast open landscape, artistic aesthetic', category: 'outdoor' },
   { id: 'autumn-park', name: 'Autumn Park', prompt: 'beautiful autumn park, golden and red fallen leaves, warm afternoon sun filtering through trees', category: 'outdoor' },
   { id: 'vineyard', name: 'Vineyard', prompt: 'beautiful vineyard landscape, rolling hills of grapevines, warm Tuscan sun, wine country atmosphere', category: 'outdoor' },
@@ -401,16 +401,16 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   // ===========================================
   { id: 'christmas-cozy', name: 'Christmas Cozy', prompt: 'cozy Christmas interior, decorated tree, warm festive glow, festive holiday atmosphere, winter fashion', category: 'seasonal' },
   { id: 'christmas-elegant', name: 'Christmas Elegant', prompt: 'elegant Christmas setting, sophisticated decorations, champagne gold tones, luxury holiday fashion', category: 'seasonal' },
-  { id: 'winter-snow', name: 'Winter Snow', prompt: 'beautiful winter snow scene, fresh white snow, soft winter glow, cold weather fashion photography', category: 'seasonal' },
+  { id: 'winter-snow', name: 'Winter Snow', prompt: 'beautiful winter snow scene, fresh white snow, soft winter glow, cold weather fashion aesthetic', category: 'seasonal' },
   { id: 'spring-garden', name: 'Spring Garden', prompt: 'blooming spring garden, fresh flowers, soft sun, renewal and fresh beginnings, spring fashion', category: 'seasonal' },
-  { id: 'summer-beach', name: 'Summer Beach', prompt: 'perfect summer beach day, bright sunshine, blue sky, vacation vibes, summer fashion photography', category: 'seasonal' },
-  { id: 'autumn-foliage', name: 'Autumn Foliage', prompt: 'stunning autumn foliage, red and gold leaves, warm afternoon glow, fall fashion photography', category: 'seasonal' },
+  { id: 'summer-beach', name: 'Summer Beach', prompt: 'perfect summer beach day, bright sunny day, blue sky, vacation vibes, summer fashion aesthetic', category: 'seasonal' },
+  { id: 'autumn-foliage', name: 'Autumn Foliage', prompt: 'stunning autumn foliage, red and gold leaves, warm afternoon glow, fall fashion aesthetic', category: 'seasonal' },
   { id: 'valentines', name: 'Valentines', prompt: 'romantic Valentines setting, red roses, soft pink tones, love and romance atmosphere, date night fashion', category: 'seasonal' },
   { id: 'halloween-moody', name: 'Halloween Moody', prompt: 'moody Halloween atmosphere, dramatic shadows, orange and black tones, mysterious spooky aesthetic', category: 'seasonal' },
-  { id: 'new-years-eve', name: 'New Years Eve', prompt: 'glamorous New Years Eve setting, sparkling decorations, champagne celebration, party fashion photography', category: 'seasonal' },
+  { id: 'new-years-eve', name: 'New Years Eve', prompt: 'glamorous New Years Eve setting, sparkling decorations, champagne celebration, party fashion aesthetic', category: 'seasonal' },
   { id: 'spring-rain', name: 'Spring Rain', prompt: 'soft spring rain, city streets glistening, moody reflective atmosphere, rainy day fashion', category: 'seasonal' },
   { id: 'summer-festival', name: 'Summer Festival', prompt: 'summer music festival atmosphere, colorful decorations, sunny outdoor vibes, festival fashion', category: 'seasonal' },
-  { id: 'cozy-fall', name: 'Cozy Fall', prompt: 'cozy fall interior, warm blankets, pumpkins, candles, autumn comfort, fall fashion photography', category: 'seasonal' },
+  { id: 'cozy-fall', name: 'Cozy Fall', prompt: 'cozy fall interior, warm blankets, pumpkins, candles, autumn comfort, fall fashion aesthetic', category: 'seasonal' },
 
   // ===========================================
   // ABSTRACT - Artistic backgrounds
@@ -418,17 +418,17 @@ export const BACKGROUND_PROMPT_PRESETS: BackgroundPromptPreset[] = [
   { id: 'bokeh', name: 'Bokeh', prompt: 'dreamy bokeh background, soft blurred colorful orbs, ethereal magical atmosphere', category: 'abstract' },
   { id: 'watercolor', name: 'Watercolor', prompt: 'artistic watercolor wash background, soft pastel colors blending together, artistic fashion editorial', category: 'abstract' },
   { id: 'marble-texture', name: 'Marble', prompt: 'elegant white marble texture background, luxury fashion aesthetic, clean sophisticated look', category: 'abstract' },
-  { id: 'gradient-pastel', name: 'Pastel Gradient', prompt: 'smooth pastel gradient background, soft pink and blue tones, dreamy fashion photography', category: 'abstract' },
-  { id: 'gradient-sunset', name: 'Sunset Gradient', prompt: 'warm sunset gradient background, orange to purple transition, dramatic fashion photography', category: 'abstract' },
+  { id: 'gradient-pastel', name: 'Pastel Gradient', prompt: 'smooth pastel gradient background, soft pink and blue tones, dreamy fashion aesthetic', category: 'abstract' },
+  { id: 'gradient-sunset', name: 'Sunset Gradient', prompt: 'warm sunset gradient background, orange to purple transition, dramatic fashion aesthetic', category: 'abstract' },
   { id: 'smoke-mist', name: 'Smoke & Mist', prompt: 'ethereal smoke and mist background, soft swirling wisps, mysterious atmospheric mood, artistic editorial', category: 'abstract' },
   { id: 'geometric', name: 'Geometric', prompt: 'modern geometric abstract background, clean lines and shapes, minimalist contemporary design aesthetic', category: 'abstract' },
   { id: 'holographic', name: 'Holographic', prompt: 'iridescent holographic background, rainbow reflections, futuristic dreamy atmosphere', category: 'abstract' },
   { id: 'gold-shimmer', name: 'Gold Shimmer', prompt: 'luxurious shimmering gold background, elegant metallic reflections, glamorous high-fashion aesthetic', category: 'abstract' },
-  { id: 'prism-rainbow', name: 'Prism Rainbow', prompt: 'prismatic rainbow prism effects, colorful refractions, artistic creative fashion photography', category: 'abstract' },
+  { id: 'prism-rainbow', name: 'Prism Rainbow', prompt: 'prismatic rainbow prism effects, colorful refractions, artistic creative fashion aesthetic', category: 'abstract' },
   { id: 'textured-concrete', name: 'Textured Concrete', prompt: 'raw textured concrete background, industrial minimalist aesthetic, dramatic shadows', category: 'abstract' },
-  { id: 'silk-fabric', name: 'Silk Fabric', prompt: 'flowing silk fabric background, soft luxurious folds, elegant fashion photography backdrop', category: 'abstract' },
+  { id: 'silk-fabric', name: 'Silk Fabric', prompt: 'flowing silk fabric background, soft luxurious folds, elegant fashion aesthetic backdrop', category: 'abstract' },
   { id: 'digital-glitch', name: 'Digital Glitch', prompt: 'digital glitch art background, distorted pixels, futuristic cyberpunk aesthetic, edgy fashion', category: 'abstract' },
-  { id: 'paint-splatter', name: 'Paint Splatter', prompt: 'artistic paint splatter background, colorful abstract expressionism, creative fashion photography', category: 'abstract' },
+  { id: 'paint-splatter', name: 'Paint Splatter', prompt: 'artistic paint splatter background, colorful abstract expressionism, creative fashion aesthetic', category: 'abstract' },
 
   // ===========================================
   // LUXURY - High-end locations
