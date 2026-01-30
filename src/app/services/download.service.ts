@@ -3,7 +3,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 /**
  * Service to handle file downloads that work properly on both desktop and mobile.
- * On mobile, uses Web Share API to allow saving to camera roll/gallery.
+ * On Android, uses Web Share API to allow saving to camera roll/gallery.
+ * On iOS, opens blob URL with instructions to save (since download attribute is ignored).
  * On desktop, uses traditional anchor download.
  */
 @Injectable({
@@ -13,10 +14,26 @@ export class DownloadService {
   private readonly snackBar = inject(MatSnackBar);
 
   /**
+   * Detect if running on iOS (Safari ignores download attribute)
+   */
+  private isIOS(): boolean {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  /**
+   * Detect if running on Android
+   */
+  private isAndroid(): boolean {
+    return /Android/i.test(navigator.userAgent);
+  }
+
+  /**
    * Detect if running on a mobile device
    */
   private isMobile(): boolean {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return this.isIOS() || this.isAndroid() ||
+      /webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
 
   /**
@@ -27,7 +44,7 @@ export class DownloadService {
   }
 
   /**
-   * Download an image - uses share on mobile for gallery save, anchor on desktop
+   * Download an image - uses share on Android for gallery save, blob URL on iOS, anchor on desktop
    */
   async downloadImage(imageUrl: string, filename: string): Promise<void> {
     try {
@@ -43,8 +60,8 @@ export class DownloadService {
 
       const blob = await response.blob();
 
-      // On mobile, try to use share API which allows saving to gallery
-      if (this.isMobile() && this.canShareFiles()) {
+      // On Android, try to use share API which allows saving to gallery
+      if (this.isAndroid() && this.canShareFiles()) {
         const file = new File([blob], filename, { type: blob.type || 'image/png' });
         const shareData = { files: [file] };
 
@@ -62,6 +79,18 @@ export class DownloadService {
         }
       }
 
+      // On iOS, open blob URL and show instructions (download attribute is ignored)
+      if (this.isIOS()) {
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        this.snackBar.open('Long-press the image and tap "Add to Photos" to save.', 'Got it', {
+          duration: 5000
+        });
+        // Cleanup after a longer delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        return;
+      }
+
       // Desktop or fallback: use anchor download
       this.downloadBlob(blob, filename);
 
@@ -73,23 +102,24 @@ export class DownloadService {
   }
 
   /**
-   * Download a video - uses share on mobile for gallery save, anchor on desktop
+   * Download a video - uses share on Android for gallery save, blob URL on iOS, blob download on desktop
    */
   async downloadVideo(videoUrl: string, filename: string): Promise<void> {
     try {
-      // On mobile, try to use share API which allows saving to gallery
-      if (this.isMobile() && this.canShareFiles()) {
-        // Fetch the video as a blob
-        const response = await fetch(videoUrl, {
-          mode: 'cors',
-          credentials: 'omit'
-        });
+      // Fetch the video as a blob (needed for all platforms for CORS)
+      const response = await fetch(videoUrl, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
 
-        const blob = await response.blob();
+      const blob = await response.blob();
+
+      // On Android, try to use share API which allows saving to gallery
+      if (this.isAndroid() && this.canShareFiles()) {
         const file = new File([blob], filename, { type: blob.type || 'video/mp4' });
         const shareData = { files: [file] };
 
@@ -105,19 +135,41 @@ export class DownloadService {
             console.warn('Share failed, falling back to download:', err);
           }
         }
+      }
 
-        // Fallback: use anchor download with the blob we already have
-        this.downloadBlob(blob, filename);
+      // On iOS, open video directly and instruct to long-press
+      // iOS shows "Save Video" in the long-press context menu, not the share sheet
+      if (this.isIOS()) {
+        window.open(videoUrl, '_blank');
+        this.snackBar.open('Tap and hold on the video, then tap "Save Video".', 'Got it', {
+          duration: 6000
+        });
         return;
       }
 
-      // Desktop: use anchor download directly (don't fetch, just link)
-      this.anchorDownload(videoUrl, filename);
+      // Desktop or fallback: use blob download
+      this.downloadBlob(blob, filename);
 
     } catch (error) {
       console.error('Download failed:', error);
-      // Fallback: direct link
-      this.anchorDownload(videoUrl, filename);
+      // Fallback for iOS
+      if (this.isIOS()) {
+        window.open(videoUrl, '_blank');
+        this.snackBar.open('Tap and hold on the video, then tap "Save Video".', 'Got it', {
+          duration: 6000
+        });
+      } else {
+        // Fallback: try direct anchor without target="_blank"
+        const link = document.createElement('a');
+        link.href = videoUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.snackBar.open('If download didn\'t start, long-press the video to save.', 'Got it', {
+          duration: 4000
+        });
+      }
     }
   }
 
@@ -133,22 +185,20 @@ export class DownloadService {
     document.body.appendChild(link);
     link.click();
 
-    // Cleanup after a short delay to ensure download starts
+    // Cleanup after a longer delay to ensure download completes
     setTimeout(() => {
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
-    }, 100);
+    }, 1000);
   }
 
   /**
-   * Download using an anchor element with a URL
+   * Download using an anchor element with a URL (no target="_blank" to avoid opening in new tab)
    */
   private anchorDownload(url: string, filename: string): void {
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -158,13 +208,19 @@ export class DownloadService {
    * Fallback: open URL and show help message
    */
   private fallbackDownload(url: string, filename: string): void {
-    this.anchorDownload(url, filename);
-
-    if (this.isMobile()) {
+    if (this.isIOS()) {
+      // On iOS, open in new tab so user can long-press to save
+      window.open(url, '_blank');
+      this.snackBar.open('Long-press the image and tap "Add to Photos" to save.', 'Got it', {
+        duration: 5000
+      });
+    } else if (this.isMobile()) {
+      this.anchorDownload(url, filename);
       this.snackBar.open('Long-press the image to save to your gallery.', 'Got it', {
         duration: 5000
       });
     } else {
+      this.anchorDownload(url, filename);
       this.snackBar.open('If download didn\'t start, right-click to save.', 'Got it', {
         duration: 4000
       });
@@ -238,8 +294,8 @@ export class DownloadService {
         }, 'image/png');
       });
 
-      // On mobile, try share API
-      if (this.isMobile() && this.canShareFiles()) {
+      // On Android, try share API
+      if (this.isAndroid() && this.canShareFiles()) {
         const file = new File([watermarkedBlob], filename, { type: 'image/png' });
         const shareData = { files: [file] };
 
@@ -255,6 +311,17 @@ export class DownloadService {
             console.warn('Share failed, falling back to download:', err);
           }
         }
+      }
+
+      // On iOS, open blob URL and show instructions
+      if (this.isIOS()) {
+        const blobUrl = URL.createObjectURL(watermarkedBlob);
+        window.open(blobUrl, '_blank');
+        this.snackBar.open('Long-press the image and tap "Add to Photos" to save.', 'Got it', {
+          duration: 5000
+        });
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        return;
       }
 
       // Desktop or fallback
