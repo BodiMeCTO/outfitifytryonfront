@@ -375,18 +375,21 @@ export class StudioComponent implements OnInit {
 
   /**
    * Calculate credit cost for generation:
-   * - Base try-on: 2 credits per model
-   * - Pose change: +1 credit per model
-   * - Background change: +1 credit per model
-   * Total = (base + pose + background) * modelCount
+   * - Base try-on: 2 credits per model (Vertex AI + face restoration)
+   * - Pose OR Background change: +1 credit per model (single Seedream call)
+   * - Footwear: +1 credit per model (Seedream footwear enhancement)
+   * Total = (base + poseOrBg + footwear) * modelCount
    */
   get generationCreditCost(): number {
     let perModelCost = 2; // Base try-on cost
-    if (this.selectedPoseId() !== 'original') {
-      perModelCost += 1; // Pose change
+    // +1 if pose OR background is changed (single Seedream call handles both)
+    if (this.selectedPoseId() !== 'original' || this.hasBackgroundSelection()) {
+      perModelCost += 1;
     }
-    if (this.hasBackgroundSelection()) {
-      perModelCost += 1; // Background change
+    // +1 if footwear is selected (triggers Seedream footwear enhancement)
+    const garments = this.outfitService.getSelectedGarments();
+    if (garments.footwear.length > 0) {
+      perModelCost += 1;
     }
     const modelCount = this.outfitService.getSelectedModels().length;
     return perModelCost * Math.max(modelCount, 1);

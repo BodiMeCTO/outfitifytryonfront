@@ -1030,6 +1030,24 @@ export class OutfitService {
     return this.customBackgroundPromptSubject.value;
   }
 
+  getSelectedGarments(): {
+    top: Garment[];
+    bottom: Garment[];
+    fullBody: Garment[];
+    jacket: Garment[];
+    footwear: Garment[];
+    accessories: Garment[];
+  } {
+    return {
+      top: this.topGarmentsSubject.value,
+      bottom: this.bottomGarmentsSubject.value,
+      fullBody: this.fullBodyGarmentsSubject.value,
+      jacket: this.jacketGarmentsSubject.value,
+      footwear: this.footwearGarmentsSubject.value,
+      accessories: this.accessoriesGarmentsSubject.value
+    };
+  }
+
   ensureBackgroundOptionsLoaded(): Observable<CatalogueOption[]> {
     if (this.backgroundOptionsLoaded) {
       return of(this.backgroundOptionsSubject.value);
