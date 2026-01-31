@@ -208,13 +208,78 @@ export class VideoDialogComponent implements OnInit {
     });
   }
 
+  // Signal for download loading state
+  readonly isDownloading = signal(false);
+
   async downloadVideo(): Promise<void> {
     const video = this.currentVideo();
     if (!video?.videoUrl) return;
 
     const fullUrl = this.videoService.getFullVideoUrl(video.videoUrl);
     const filename = `outfitify-video-${video.id}.mp4`;
-    await this.downloadService.downloadVideo(fullUrl, filename);
+
+    // On iOS, use Web Share API to save to Photos
+    if (this.isIOSDevice) {
+      await this.downloadVideoIOS(fullUrl, filename);
+    } else {
+      await this.downloadService.downloadVideo(fullUrl, filename);
+    }
+  }
+
+  /**
+   * iOS-specific download using Web Share API.
+   * This shows the native share sheet with "Save Video" option that saves to Photos.
+   */
+  private async downloadVideoIOS(videoUrl: string, filename: string): Promise<void> {
+    this.isDownloading.set(true);
+    this.snackBar.open('Preparing video...', undefined, { duration: 30000 });
+
+    try {
+      // Fetch video as blob
+      const response = await fetch(videoUrl, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch video: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], filename, { type: 'video/mp4' });
+
+      // Check if Web Share API with files is supported
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        this.snackBar.dismiss();
+        await navigator.share({
+          files: [file],
+          title: 'Save Video'
+        });
+        // User either saved or cancelled - no error means success
+        return;
+      }
+
+      // Fallback: Open download endpoint (saves to Files app)
+      this.snackBar.open('Tap "Save Video" in the share menu to save to Photos', 'OK', { duration: 5000 });
+      const downloadUrl = this.videoService.getVideoDownloadUrl(this.data.outfitId, this.currentVideo()!.id);
+      window.location.href = downloadUrl;
+
+    } catch (error) {
+      console.error('iOS video download failed:', error);
+
+      // Check if user just cancelled the share
+      if ((error as DOMException)?.name === 'AbortError') {
+        this.snackBar.dismiss();
+        return;
+      }
+
+      // Fallback to download endpoint
+      this.snackBar.open('Opening video for download...', undefined, { duration: 3000 });
+      const downloadUrl = this.videoService.getVideoDownloadUrl(this.data.outfitId, this.currentVideo()!.id);
+      window.location.href = downloadUrl;
+    } finally {
+      this.isDownloading.set(false);
+    }
   }
 
   close(): void {

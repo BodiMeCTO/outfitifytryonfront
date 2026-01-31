@@ -195,26 +195,16 @@
   <!-- Ready state actions -->
   <ng-container *ngIf="status() === 'ready'">
     <button mat-button (click)="close()">Close</button>
-    <!-- iOS: Use direct anchor link to download endpoint (sets Content-Disposition: attachment) -->
-    <a
-      *ngIf="isIOSDevice"
-      mat-raised-button
-      color="primary"
-      [href]="getVideoDownloadUrl()"
-      class="download-link"
-    >
-      <mat-icon>download</mat-icon>
-      Download
-    </a>
-    <!-- Non-iOS: Use JavaScript download -->
+    <!-- All platforms: Use button with platform-specific download logic -->
     <button
-      *ngIf="!isIOSDevice"
       mat-raised-button
       color="primary"
       (click)="downloadVideo()"
+      [disabled]="isDownloading()"
     >
-      <mat-icon>download</mat-icon>
-      Download
+      <mat-spinner *ngIf="isDownloading()" diameter="20" class="button-spinner"></mat-spinner>
+      <mat-icon *ngIf="!isDownloading()">download</mat-icon>
+      {{ isDownloading() ? 'Preparing...' : (isIOSDevice ? 'Save to Photos' : 'Download') }}
     </button>
   </ng-container>
 

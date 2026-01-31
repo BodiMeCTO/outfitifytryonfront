@@ -36,6 +36,15 @@ mat-dialog-actions {
     display: inline-flex;
     align-items: center;
   }
+
+  // Spinner inside button
+  .button-spinner {
+    margin-right: 0.5rem;
+
+    ::ng-deep circle {
+      stroke: currentColor;
+    }
+  }
 }
 
 // Loading state
