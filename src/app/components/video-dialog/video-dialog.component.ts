@@ -11,7 +11,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { take } from 'rxjs/operators';
 
 import { VideoService, VideoDto, MotionPresetDto, CreateVideoRequest } from '../../services/video.service';
-import { DownloadService } from '../../services/download.service';
 
 export interface VideoDialogData {
   outfitId: string;
@@ -26,7 +25,7 @@ export interface VideoDialogResult {
   continuedInBackground?: boolean;
 }
 
-type VideoStatus = 'options' | 'creating' | 'processing' | 'ready' | 'error';
+type VideoStatus = 'options' | 'creating' | 'processing' | 'ready' | 'error' | 'ios_save';
 
 /**
  * Detect if running on iOS (Safari ignores JS-triggered downloads)
@@ -58,7 +57,6 @@ export class VideoDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<VideoDialogComponent>);
   readonly videoService = inject(VideoService); // Public for template access
   private readonly snackBar = inject(MatSnackBar);
-  private readonly downloadService = inject(DownloadService);
   readonly data: VideoDialogData = inject(MAT_DIALOG_DATA);
 
   // Options state
@@ -75,6 +73,9 @@ export class VideoDialogComponent implements OnInit {
   readonly status = signal<VideoStatus>('options');
   readonly currentVideo = signal<VideoDto | null>(null);
   readonly errorMessage = signal<string>('');
+
+  // iOS save mode - shows video inline for long-press saving
+  readonly iosSaveUrl = signal<string>('');
 
   // Computed: credit cost
   readonly creditCost = computed(() => {
@@ -211,6 +212,29 @@ export class VideoDialogComponent implements OnInit {
   // Signal for download loading state
   readonly isDownloading = signal(false);
 
+  /**
+   * Detect if running on iOS
+   */
+  private isIOS(): boolean {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  /**
+   * Detect if running on Android
+   */
+  private isAndroid(): boolean {
+    return /Android/i.test(navigator.userAgent);
+  }
+
+  /**
+   * Check if Web Share API supports sharing files
+   */
+  private canShareFiles(): boolean {
+    return typeof navigator.share === 'function' &&
+      typeof navigator.canShare === 'function';
+  }
+
   async downloadVideo(): Promise<void> {
     const video = this.currentVideo();
     if (!video?.videoUrl) return;
@@ -218,65 +242,108 @@ export class VideoDialogComponent implements OnInit {
     const fullUrl = this.videoService.getFullVideoUrl(video.videoUrl);
     const filename = `outfitify-video-${video.id}.mp4`;
 
-    // On iOS, use Web Share API to save to Photos
-    if (this.isIOSDevice) {
-      await this.downloadVideoIOS(fullUrl, filename);
-    } else {
-      await this.downloadService.downloadVideo(fullUrl, filename);
-    }
-  }
-
-  /**
-   * iOS-specific download using Web Share API.
-   * This shows the native share sheet with "Save Video" option that saves to Photos.
-   */
-  private async downloadVideoIOS(videoUrl: string, filename: string): Promise<void> {
+    // Show loading indicator on mobile since video fetch can take time
+    const isMobile = this.isIOS() || this.isAndroid();
     this.isDownloading.set(true);
-    this.snackBar.open('Preparing video...', undefined, { duration: 30000 });
+    if (isMobile) {
+      this.snackBar.open('Preparing video for save...', undefined, { duration: 30000 });
+    }
 
     try {
-      // Fetch video as blob
-      const response = await fetch(videoUrl, {
+      // Fetch video as blob for proper download
+      const response = await fetch(fullUrl, {
         mode: 'cors',
         credentials: 'omit'
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch video: ${response.status}`);
+        throw new Error(`HTTP ${response.status}`);
       }
 
       const blob = await response.blob();
-      const file = new File([blob], filename, { type: 'video/mp4' });
 
-      // Check if Web Share API with files is supported
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        this.snackBar.dismiss();
-        await navigator.share({
-          files: [file],
-          title: 'Save Video'
-        });
-        // User either saved or cancelled - no error means success
+      // On mobile (iOS and Android), try Web Share API first
+      // Web Share API Level 2 supports file sharing and shows "Save to Photos/Gallery" option
+      if (isMobile && this.canShareFiles()) {
+        try {
+          const file = new File([blob], filename, { type: 'video/mp4' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Save Video'
+            });
+            this.snackBar.dismiss();
+            return; // Success - user chose where to save
+          }
+        } catch (shareError) {
+          // User cancelled or share failed - fall through to fallback
+          if ((shareError as DOMException).name === 'AbortError') {
+            this.snackBar.dismiss();
+            return; // User cancelled, don't show error
+          }
+          console.log('Video file share not supported, falling back:', shareError);
+        }
+      }
+
+      this.snackBar.dismiss();
+
+      // iOS fallback: show video in fullscreen save mode
+      // User can use the Share button in the video player
+      if (this.isIOS()) {
+        this.iosSaveUrl.set(fullUrl);
+        this.status.set('ios_save');
         return;
       }
 
-      // Fallback: Open download endpoint (saves to Files app)
-      this.snackBar.open('Tap "Save Video" in the share menu to save to Photos', 'OK', { duration: 5000 });
-      const downloadUrl = this.videoService.getVideoDownloadUrl(this.data.outfitId, this.currentVideo()!.id);
-      window.location.href = downloadUrl;
+      // Android fallback: blob download
+      if (this.isAndroid()) {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 1000);
+        this.snackBar.open('Video saved to Downloads folder.', 'OK', { duration: 3000 });
+        return;
+      }
 
+      // Standard blob download for desktop
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 1000);
     } catch (error) {
-      console.error('iOS video download failed:', error);
+      console.error('Video download failed:', error);
+      this.snackBar.dismiss();
 
-      // Check if user just cancelled the share
-      if ((error as DOMException)?.name === 'AbortError') {
-        this.snackBar.dismiss();
-        return;
+      // Fallback
+      if (this.isIOS()) {
+        this.iosSaveUrl.set(fullUrl);
+        this.status.set('ios_save');
+      } else {
+        const link = document.createElement('a');
+        link.href = fullUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.snackBar.open('If download didn\'t start, long-press the video to save.', 'Got it', {
+          duration: 4000
+        });
       }
-
-      // Fallback to download endpoint
-      this.snackBar.open('Opening video for download...', undefined, { duration: 3000 });
-      const downloadUrl = this.videoService.getVideoDownloadUrl(this.data.outfitId, this.currentVideo()!.id);
-      window.location.href = downloadUrl;
     } finally {
       this.isDownloading.set(false);
     }
@@ -302,6 +369,14 @@ export class VideoDialogComponent implements OnInit {
       video: undefined,
       continuedInBackground: true
     } as VideoDialogResult);
+  }
+
+  /**
+   * Return from iOS save mode back to ready state
+   */
+  backFromIosSave(): void {
+    this.iosSaveUrl.set('');
+    this.status.set('ready');
   }
 
   retry(): void {

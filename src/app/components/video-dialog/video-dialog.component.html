@@ -162,6 +162,31 @@
     <p class="error-message">{{ errorMessage() }}</p>
     <p class="error-note">Your credits have not been charged.</p>
   </div>
+
+  <!-- iOS Save Mode -->
+  <div class="ios-save-container" *ngIf="status() === 'ios_save'">
+    <div class="ios-save-instructions">
+      <mat-icon>ios_share</mat-icon>
+      <h3>Save to Photos</h3>
+      <p>Play the video, then tap the <strong>Share button</strong> (box with arrow) and select <strong>"Save to Files"</strong> or <strong>"Save Video"</strong></p>
+    </div>
+
+    <video
+      *ngIf="iosSaveUrl()"
+      [src]="iosSaveUrl()"
+      controls
+      playsinline
+      autoplay
+      loop
+      muted
+      class="ios-save-video"
+    ></video>
+
+    <p class="ios-save-tip">
+      <mat-icon>info</mat-icon>
+      The Share button appears when playing the video in full screen
+    </p>
+  </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
@@ -214,6 +239,17 @@
     <button mat-raised-button color="primary" (click)="retry()">
       <mat-icon>refresh</mat-icon>
       Try Again
+    </button>
+  </ng-container>
+
+  <!-- iOS save state actions -->
+  <ng-container *ngIf="status() === 'ios_save'">
+    <button mat-button (click)="backFromIosSave()">
+      <mat-icon>arrow_back</mat-icon>
+      Back
+    </button>
+    <button mat-raised-button color="primary" (click)="close()">
+      Done
     </button>
   </ng-container>
 </mat-dialog-actions>

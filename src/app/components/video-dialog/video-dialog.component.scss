@@ -435,3 +435,77 @@ mat-dialog-actions {
     color: $color-text-hint;
   }
 }
+
+// iOS Save Mode
+.ios-save-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+  text-align: center;
+
+  .ios-save-instructions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: rgba($color-accent-gold, 0.1);
+    border-radius: 12px;
+    border: 2px dashed $color-accent-gold;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: $color-accent-gold;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: $color-text-primary;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1rem;
+      color: $color-text-secondary;
+      line-height: 1.5;
+
+      strong {
+        color: $color-accent-gold-dark;
+      }
+    }
+  }
+
+  .ios-save-video {
+    width: 100%;
+    max-width: 400px;
+    max-height: 50vh;
+    border-radius: 12px;
+    background: #000;
+    // Make video easier to long-press
+    -webkit-touch-callout: default;
+    -webkit-user-select: auto;
+  }
+
+  .ios-save-tip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    color: $color-text-hint;
+    background: $color-bg-secondary;
+    border-radius: 8px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
