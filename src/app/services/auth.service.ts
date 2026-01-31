@@ -120,8 +120,12 @@ export class AuthService {
     return this.api.checkEmailVerified();
   }
 
-  requestPasswordReset(payload: ForgotPasswordRequest): Observable<void> {
+  requestPasswordReset(payload: ForgotPasswordRequest): Observable<{ message: string }> {
     return this.api.requestPasswordReset(payload);
+  }
+
+  resetPassword(email: string, token: string, newPassword: string): Observable<{ message: string }> {
+    return this.api.resetPassword(email, token, newPassword);
   }
 
   logout(): void {

@@ -12,6 +12,15 @@ export const routes: Routes = [
       ),
     title: 'Verify Email'
   },
+  // Password reset - public route (no auth required)
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./components/auth/reset-password/reset-password.component').then(
+        (m) => m.ResetPasswordComponent
+      ),
+    title: 'Reset Password'
+  },
   {
     path: 'auth',
     canActivate: [noAuthGuard],

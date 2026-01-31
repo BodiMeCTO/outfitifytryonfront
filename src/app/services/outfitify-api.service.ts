@@ -69,8 +69,16 @@ export class OutfitifyApiService {
     );
   }
 
-  requestPasswordReset(payload: ForgotPasswordRequest): Observable<void> {
-    return this.http.post<void>(this.buildUrl('/api/auth/forgot-password'), payload);
+  requestPasswordReset(payload: ForgotPasswordRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(this.buildUrl('/api/auth/forgot-password'), payload);
+  }
+
+  resetPassword(email: string, token: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(this.buildUrl('/api/auth/reset-password'), {
+      email,
+      token,
+      newPassword
+    });
   }
 
   getUserModelProfileByEmail(email: string): Observable<ModelProfileDto> {
