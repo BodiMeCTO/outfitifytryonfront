@@ -102,10 +102,16 @@ export class DownloadService {
   }
 
   /**
-   * Download a video - uses share on Android for gallery save, blob URL on iOS, blob download on desktop
+   * Download a video - uses Web Share API on mobile (both iOS and Android) for gallery save,
+   * blob download on desktop. Web Share API shows "Save to Photos" on iOS for videos.
    */
   async downloadVideo(videoUrl: string, filename: string): Promise<void> {
     try {
+      // Show loading indicator for mobile since video fetch can take time
+      if (this.isMobile()) {
+        this.snackBar.open('Preparing video for save...', undefined, { duration: 10000 });
+      }
+
       // Fetch the video as a blob (needed for all platforms for CORS)
       const response = await fetch(videoUrl, {
         mode: 'cors',
@@ -118,48 +124,67 @@ export class DownloadService {
 
       const blob = await response.blob();
 
-      // On Android, try to use share API which allows saving to gallery
-      if (this.isAndroid() && this.canShareFiles()) {
+      // On mobile (iOS and Android), try Web Share API which allows saving to Photos/Gallery
+      // Web Share API Level 2 supports file sharing and shows "Save to Photos" option
+      if (this.isMobile() && this.canShareFiles()) {
         const file = new File([blob], filename, { type: blob.type || 'video/mp4' });
         const shareData = { files: [file] };
 
         if (navigator.canShare(shareData)) {
           try {
             await navigator.share(shareData);
+            this.snackBar.dismiss();
             return; // Success - user chose where to save
           } catch (err) {
-            // User cancelled or share failed - fall through to download
+            // User cancelled or share failed - fall through to fallback
             if ((err as DOMException).name === 'AbortError') {
+              this.snackBar.dismiss();
               return; // User cancelled, don't show error
             }
-            console.warn('Share failed, falling back to download:', err);
+            console.warn('Share failed, falling back to alternative method:', err);
           }
         }
       }
 
-      // On iOS, open video directly and instruct to long-press
-      // iOS shows "Save Video" in the long-press context menu, not the share sheet
+      // iOS fallback: try opening blob URL directly (may work better than remote URL)
+      // User can then use Share button in Safari's video player to save
       if (this.isIOS()) {
-        window.open(videoUrl, '_blank');
-        this.snackBar.open('Tap and hold on the video, then tap "Save Video".', 'Got it', {
-          duration: 6000
-        });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        this.snackBar.open(
+          'Tap the Share button (box with arrow) in Safari, then "Save to Files" or "Save Video".',
+          'Got it',
+          { duration: 8000 }
+        );
+        // Cleanup after delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
         return;
       }
 
-      // Desktop or fallback: use blob download
+      // Android fallback: try blob download
+      if (this.isAndroid()) {
+        this.downloadBlob(blob, filename);
+        this.snackBar.open('Video saved to Downloads folder.', 'OK', { duration: 3000 });
+        return;
+      }
+
+      // Desktop: use blob download
       this.downloadBlob(blob, filename);
 
     } catch (error) {
       console.error('Download failed:', error);
-      // Fallback for iOS
+      this.snackBar.dismiss();
+
+      // Fallback: open original URL and provide instructions
       if (this.isIOS()) {
         window.open(videoUrl, '_blank');
-        this.snackBar.open('Tap and hold on the video, then tap "Save Video".', 'Got it', {
-          duration: 6000
-        });
-      } else {
-        // Fallback: try direct anchor without target="_blank"
+        this.snackBar.open(
+          'Tap the Share button in Safari, then "Save to Files" or "Save Video".',
+          'Got it',
+          { duration: 8000 }
+        );
+      } else if (this.isAndroid()) {
+        // Try direct link download
         const link = document.createElement('a');
         link.href = videoUrl;
         link.download = filename;
@@ -169,6 +194,14 @@ export class DownloadService {
         this.snackBar.open('If download didn\'t start, long-press the video to save.', 'Got it', {
           duration: 4000
         });
+      } else {
+        // Desktop fallback
+        const link = document.createElement('a');
+        link.href = videoUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
     }
   }
