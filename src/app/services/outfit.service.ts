@@ -395,26 +395,28 @@ export class OutfitService {
     distinctUntilChanged()
   );
 
-  // Credits cost calculation: (2 base + 1 pose + 1 background) * modelCount
+  // Credits cost calculation: (2 base + 1 poseOrBg + 1 footwear) * modelCount
+  // This matches the backend formula in OutfitService.cs and studio.component.ts:generationCreditCost
   readonly estimatedCreditsCost$ = combineLatest([
-    this.posePromptSubject,
-    this.selectedBackgroundId$,
-    this.customBackgroundPrompt$,
+    this.selectedPosePresetIdSubject,
+    this.selectedBackgroundPresetIdSubject,
+    this.customBackgroundPromptSubject,
+    this.footwearGarmentsSubject,
     this.selectedModelCount$
   ]).pipe(
-    map(([posePrompt, backgroundId, customPrompt, modelCount]) => {
+    map(([posePresetId, backgroundPresetId, customPrompt, footwear, modelCount]) => {
       // Per-model cost
-      let perModelCost = 2;
+      let perModelCost = 2; // Base try-on cost (Vertex AI + face restoration)
 
-      // +1 if pose is changed
-      const hasPoseChange = !!posePrompt;
-      if (hasPoseChange) {
+      // +1 if pose OR background is changed (single Seedream call handles both)
+      const hasPoseChange = posePresetId !== 'original';
+      const hasBackgroundChange = !!backgroundPresetId || !!customPrompt?.trim();
+      if (hasPoseChange || hasBackgroundChange) {
         perModelCost += 1;
       }
 
-      // +1 if background is changed (either preset or custom prompt)
-      const hasBackgroundChange = !!backgroundId || !!customPrompt;
-      if (hasBackgroundChange) {
+      // +1 if footwear is selected (triggers Seedream footwear enhancement)
+      if (footwear.length > 0) {
         perModelCost += 1;
       }
 
