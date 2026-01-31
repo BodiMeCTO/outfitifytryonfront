@@ -1,0 +1,81 @@
+@use '../../../../styles/tokens' as *;
+
+.auth-shell {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.auth-card {
+  width: min(520px, 100%);
+  padding: 2rem;
+  box-shadow: $shadow-xl;
+}
+
+.verify-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem 0;
+
+  mat-spinner {
+    margin-bottom: 1.5rem;
+  }
+
+  .verify-icon {
+    font-size: 72px;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 1rem;
+
+    &.success {
+      color: #4caf50;
+    }
+
+    &.error {
+      color: $color-error;
+    }
+
+    &.info {
+      color: $color-accent-gold;
+    }
+  }
+
+  h1 {
+    margin: 0 0 1rem;
+    font-size: 1.75rem;
+  }
+
+  p {
+    margin: 0 0 0.75rem;
+    color: $color-text-secondary;
+    max-width: 400px;
+
+    &:last-of-type {
+      margin-bottom: 1.5rem;
+    }
+  }
+
+  .error-message {
+    color: $color-error;
+    font-weight: 500;
+  }
+
+  button, a[mat-flat-button], a[mat-stroked-button] {
+    min-height: 44px;
+    min-width: 200px;
+  }
+
+  .error-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    a {
+      text-decoration: none;
+    }
+  }
+}

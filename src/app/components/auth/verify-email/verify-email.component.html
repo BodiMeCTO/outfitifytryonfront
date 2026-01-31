@@ -1,0 +1,44 @@
+<div class="auth-shell">
+  <mat-card class="auth-card">
+    <!-- Loading State -->
+    <div class="verify-container" *ngIf="state === 'loading'">
+      <mat-spinner diameter="48"></mat-spinner>
+      <h1>Verifying your email...</h1>
+      <p>Please wait while we verify your email address.</p>
+    </div>
+
+    <!-- Success State -->
+    <div class="verify-container" *ngIf="state === 'success'">
+      <mat-icon class="verify-icon success">check_circle</mat-icon>
+      <h1>Email Verified!</h1>
+      <p>Your email has been verified successfully.</p>
+      <p>You can now sign in to your account and start using Outfitify.</p>
+      <button mat-flat-button color="primary" (click)="goToLogin()">
+        Sign in to your account
+      </button>
+    </div>
+
+    <!-- Already Verified State -->
+    <div class="verify-container" *ngIf="state === 'already_verified'">
+      <mat-icon class="verify-icon info">info</mat-icon>
+      <h1>Already Verified</h1>
+      <p>Your email address has already been verified.</p>
+      <p>You can sign in to your account.</p>
+      <button mat-flat-button color="primary" (click)="goToLogin()">
+        Sign in to your account
+      </button>
+    </div>
+
+    <!-- Error State -->
+    <div class="verify-container" *ngIf="state === 'error'">
+      <mat-icon class="verify-icon error">error</mat-icon>
+      <h1>Verification Failed</h1>
+      <p class="error-message">{{ errorMessage }}</p>
+      <p>Please try signing up again or contact support if the problem persists.</p>
+      <div class="error-actions">
+        <a mat-stroked-button routerLink="/auth/signup">Sign up again</a>
+        <a mat-flat-button color="primary" routerLink="/auth/login">Sign in</a>
+      </div>
+    </div>
+  </mat-card>
+</div>

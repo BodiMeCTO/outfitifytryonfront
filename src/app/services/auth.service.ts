@@ -101,11 +101,23 @@ export class AuthService {
     );
   }
 
-  signup(payload: SignupRequest): Observable<void> {
+  signup(payload: SignupRequest): Observable<{ id: string; clientId: string; modelId?: string; emailVerificationRequired?: boolean }> {
     if (payload.email) {
       this.setEmail(payload.email);
     }
     return this.api.register(payload);
+  }
+
+  verifyEmail(userId: string, token: string): Observable<{ message: string; verified?: boolean; alreadyVerified?: boolean }> {
+    return this.api.verifyEmail(userId, token);
+  }
+
+  resendVerificationEmail(email: string): Observable<{ message: string; alreadyVerified?: boolean }> {
+    return this.api.resendVerificationEmail(email);
+  }
+
+  checkEmailVerified(): Observable<{ emailVerified: boolean; email: string }> {
+    return this.api.checkEmailVerified();
   }
 
   requestPasswordReset(payload: ForgotPasswordRequest): Observable<void> {

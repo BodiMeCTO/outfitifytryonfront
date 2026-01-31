@@ -75,3 +75,62 @@ button[mat-flat-button] {
   color: $color-error;
   margin: 0.75rem 0 0;
 }
+
+// Email verification message styles
+.verification-message {
+  text-align: center;
+  padding: 1rem 0;
+
+  .verification-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: $color-accent-gold;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    margin: 0 0 1rem;
+  }
+
+  p {
+    margin: 0 0 0.5rem;
+    color: $color-text-secondary;
+  }
+
+  .email-highlight {
+    font-weight: 600;
+    color: $color-text-primary;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .verification-instructions {
+    margin-bottom: 1.5rem;
+  }
+
+  .verification-actions {
+    margin: 1.5rem 0;
+
+    .resend-text {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .resend-success {
+      color: #4caf50;
+      font-weight: 500;
+      margin-top: 0.75rem;
+    }
+  }
+
+  mat-divider {
+    margin: 1.5rem 0;
+  }
+}

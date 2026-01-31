@@ -67,6 +67,12 @@ export class SignupComponent {
   hidePassword = true;
   hideConfirmPassword = true;
 
+  // Email verification state
+  showVerificationMessage = false;
+  registeredEmail: string | null = null;
+  resendingVerification = false;
+  resendSuccess = false;
+
   onSubmit(): void {
     if (this.form.invalid || this.loading) {
       return;
@@ -84,23 +90,69 @@ export class SignupComponent {
     this.auth
       .signup({ email, password, confirmPassword, fullName: fullName || undefined })
       .pipe(
-        switchMap(() => this.auth.login(email, password)),
         finalize(() => {
           this.loading = false;
           this.cdr.markForCheck();
         })
       )
       .subscribe({
-        next: () => {
-          // Set flag to show welcome dialog for new users
-          localStorage.setItem('outfitify_new_user', 'true');
-          this.router.navigateByUrl('/studio');
+        next: (result) => {
+          if (result.emailVerificationRequired) {
+            // Show verification message instead of auto-login
+            this.registeredEmail = email;
+            this.showVerificationMessage = true;
+            this.cdr.markForCheck();
+          } else {
+            // Legacy flow (if verification is disabled) - auto login
+            this.autoLogin(email, password);
+          }
         },
         error: (err) => {
           this.error = this.buildErrorMessage(err);
           this.cdr.markForCheck();
         }
       });
+  }
+
+  private autoLogin(email: string, password: string): void {
+    this.loading = true;
+    this.auth.login(email, password).pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        localStorage.setItem('outfitify_new_user', 'true');
+        this.router.navigateByUrl('/studio');
+      },
+      error: (err) => {
+        this.error = this.buildErrorMessage(err);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  resendVerification(): void {
+    if (!this.registeredEmail || this.resendingVerification) return;
+
+    this.resendingVerification = true;
+    this.resendSuccess = false;
+    this.error = null;
+
+    this.auth.resendVerificationEmail(this.registeredEmail).pipe(
+      finalize(() => {
+        this.resendingVerification = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        this.resendSuccess = true;
+      },
+      error: (err) => {
+        this.error = 'Failed to resend verification email. Please try again.';
+      }
+    });
   }
 
   private buildErrorMessage(err: any): string {

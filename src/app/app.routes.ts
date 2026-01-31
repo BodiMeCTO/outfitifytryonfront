@@ -3,6 +3,15 @@ import { Routes } from '@angular/router';
 import { authGuard, noAuthGuard, redirectToLoginGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
+  // Email verification - public route (no auth required)
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./components/auth/verify-email/verify-email.component').then(
+        (m) => m.VerifyEmailComponent
+      ),
+    title: 'Verify Email'
+  },
   {
     path: 'auth',
     canActivate: [noAuthGuard],

@@ -43,8 +43,30 @@ export class OutfitifyApiService {
     });
   }
 
-  register(payload: SignupRequest): Observable<void> {
-    return this.http.post<void>(this.buildUrl('/api/users/register'), payload);
+  register(payload: SignupRequest): Observable<{ id: string; clientId: string; modelId?: string; emailVerificationRequired?: boolean }> {
+    return this.http.post<{ id: string; clientId: string; modelId?: string; emailVerificationRequired?: boolean }>(
+      this.buildUrl('/api/users/register'), payload
+    );
+  }
+
+  verifyEmail(userId: string, token: string): Observable<{ message: string; verified?: boolean; alreadyVerified?: boolean }> {
+    return this.http.post<{ message: string; verified?: boolean; alreadyVerified?: boolean }>(
+      this.buildUrl('/api/users/verify-email'),
+      { userId, token }
+    );
+  }
+
+  resendVerificationEmail(email: string): Observable<{ message: string; alreadyVerified?: boolean }> {
+    return this.http.post<{ message: string; alreadyVerified?: boolean }>(
+      this.buildUrl('/api/users/resend-verification'),
+      { email }
+    );
+  }
+
+  checkEmailVerified(): Observable<{ emailVerified: boolean; email: string }> {
+    return this.http.get<{ emailVerified: boolean; email: string }>(
+      this.buildUrl('/api/users/me/email-verified')
+    );
   }
 
   requestPasswordReset(payload: ForgotPasswordRequest): Observable<void> {
