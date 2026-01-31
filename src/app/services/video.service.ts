@@ -147,4 +147,13 @@ export class VideoService {
     const path = videoUrl.startsWith('/') ? videoUrl.slice(1) : videoUrl;
     return `${this.apiBaseUrl}${path}`;
   }
+
+  /**
+   * Get the download endpoint URL for a video.
+   * This endpoint serves the video with Content-Disposition: attachment header,
+   * which is required for iOS Safari to properly download files.
+   */
+  getVideoDownloadUrl(outfitId: string, videoId: string): string {
+    return `${this.apiBaseUrl}api/outfits/${outfitId}/videos/${videoId}/download`;
+  }
 }

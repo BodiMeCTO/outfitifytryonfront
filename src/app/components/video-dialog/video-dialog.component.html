@@ -195,14 +195,12 @@
   <!-- Ready state actions -->
   <ng-container *ngIf="status() === 'ready'">
     <button mat-button (click)="close()">Close</button>
-    <!-- iOS: Use direct anchor link for native download behavior -->
+    <!-- iOS: Use direct anchor link to download endpoint (sets Content-Disposition: attachment) -->
     <a
       *ngIf="isIOSDevice"
       mat-raised-button
       color="primary"
       [href]="getVideoDownloadUrl()"
-      [download]="getVideoFilename()"
-      target="_blank"
       class="download-link"
     >
       <mat-icon>download</mat-icon>

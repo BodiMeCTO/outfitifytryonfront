@@ -94,11 +94,14 @@ export class VideoDialogComponent implements OnInit {
   // Check if iOS for download link behavior
   readonly isIOSDevice = isIOS();
 
-  // Get the full video download URL for iOS direct link
+  /**
+   * Get the download endpoint URL for iOS direct link.
+   * Uses the API download endpoint which sets Content-Disposition: attachment header.
+   */
   getVideoDownloadUrl(): string {
     const video = this.currentVideo();
-    if (!video?.videoUrl) return '';
-    return this.videoService.getFullVideoUrl(video.videoUrl);
+    if (!video) return '';
+    return this.videoService.getVideoDownloadUrl(this.data.outfitId, video.id);
   }
 
   // Get filename for download
