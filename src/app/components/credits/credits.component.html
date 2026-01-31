@@ -31,17 +31,7 @@
         <mat-icon>shopping_cart</mat-icon>
         Purchase Credits
       </button>
-      <button
-        mat-stroked-button
-        (click)="grantCredits()"
-        [disabled]="isGranting()"
-      >
-        <mat-icon>add_circle</mat-icon>
-        {{ isGranting() ? 'Adding...' : 'Add 100 Credits (Demo)' }}
-      </button>
     </mat-card-actions>
-
-    <mat-progress-bar *ngIf="isGranting()" mode="indeterminate"></mat-progress-bar>
   </mat-card>
 
   <!-- TRANSACTION HISTORY -->
