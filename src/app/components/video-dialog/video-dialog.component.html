@@ -195,7 +195,26 @@
   <!-- Ready state actions -->
   <ng-container *ngIf="status() === 'ready'">
     <button mat-button (click)="close()">Close</button>
-    <button mat-raised-button color="primary" (click)="downloadVideo()">
+    <!-- iOS: Use direct anchor link for native download behavior -->
+    <a
+      *ngIf="isIOSDevice"
+      mat-raised-button
+      color="primary"
+      [href]="getVideoDownloadUrl()"
+      [download]="getVideoFilename()"
+      target="_blank"
+      class="download-link"
+    >
+      <mat-icon>download</mat-icon>
+      Download
+    </a>
+    <!-- Non-iOS: Use JavaScript download -->
+    <button
+      *ngIf="!isIOSDevice"
+      mat-raised-button
+      color="primary"
+      (click)="downloadVideo()"
+    >
       <mat-icon>download</mat-icon>
       Download
     </button>

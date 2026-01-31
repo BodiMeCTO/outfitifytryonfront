@@ -28,6 +28,14 @@ export interface VideoDialogResult {
 
 type VideoStatus = 'options' | 'creating' | 'processing' | 'ready' | 'error';
 
+/**
+ * Detect if running on iOS (Safari ignores JS-triggered downloads)
+ */
+function isIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
 @Component({
   selector: 'app-video-dialog',
   standalone: true,
@@ -82,6 +90,23 @@ export class VideoDialogComponent implements OnInit {
   readonly isCustomPreset = computed(() => {
     return this.selectedPreset() === 'custom';
   });
+
+  // Check if iOS for download link behavior
+  readonly isIOSDevice = isIOS();
+
+  // Get the full video download URL for iOS direct link
+  getVideoDownloadUrl(): string {
+    const video = this.currentVideo();
+    if (!video?.videoUrl) return '';
+    return this.videoService.getFullVideoUrl(video.videoUrl);
+  }
+
+  // Get filename for download
+  getVideoFilename(): string {
+    const video = this.currentVideo();
+    if (!video) return 'video.mp4';
+    return `outfitify-video-${video.id}.mp4`;
+  }
 
   // Duration options
   readonly durationOptions = [

@@ -25,8 +25,16 @@ mat-dialog-actions {
   border-top: 1px solid $color-border;
   gap: 0.5rem;
 
-  button mat-icon {
+  button mat-icon,
+  a mat-icon {
     margin-right: 0.25rem;
+  }
+
+  // Style anchor links to look like buttons
+  a.download-link {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
   }
 }
 
