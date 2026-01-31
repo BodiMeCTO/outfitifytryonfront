@@ -266,7 +266,7 @@ export class DownloadService {
   async downloadImageWithWatermark(
     imageUrl: string,
     filename: string,
-    watermarkText: string = 'AI-Generated Content'
+    watermarkText: string = 'Created with OUTFITIFY.AI'
   ): Promise<void> {
     try {
       // Fetch the image as a blob
