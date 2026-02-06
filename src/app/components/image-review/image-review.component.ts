@@ -75,6 +75,11 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     private readonly snackBar: MatSnackBar
   ) {}
 
+  // Navigate to gallery
+  goToGallery(): void {
+    this.router.navigate(['/generated-gallery']);
+  }
+
   // Archive the current outfit and return to gallery
   archive(): void {
     const current = this.image();
