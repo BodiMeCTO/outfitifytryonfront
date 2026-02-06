@@ -99,11 +99,14 @@ export const environment = {
 };
 ```
 
-### Build for Production
+### Deploy to Production
 
 ```bash
-npm run build -- --configuration production
+# Build and deploy directly to IIS folder (C:\WebSites\tryon.outfitify.ai)
+npm run build
 ```
+
+The build output is configured in `angular.json` to deploy directly to the IIS website folder.
 
 ### To Switch to Local Development (if needed)
 

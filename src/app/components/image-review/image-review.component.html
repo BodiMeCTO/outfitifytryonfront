@@ -138,6 +138,14 @@
         <mat-icon>ios_share</mat-icon>
         Share
       </button>
+      <button class="action-btn" (click)="redo()" *ngIf="current.status === 'ready'" matTooltip="Create a new outfit with the same settings">
+        <mat-icon>replay</mat-icon>
+        Redo
+      </button>
+      <button class="action-btn" (click)="openAddGarmentsDialog()" *ngIf="current.status === 'ready'" matTooltip="Add more items to this outfit">
+        <mat-icon>add_circle</mat-icon>
+        Add Items
+      </button>
       <button class="action-btn" (click)="openVideoDialog()">
         <mat-icon>videocam</mat-icon>
         Video
@@ -164,11 +172,19 @@
       </button>
     </div>
 
-    <!-- Mobile bottom action bar (fixed, 5 buttons) -->
+    <!-- Mobile bottom action bar (fixed, 6 buttons for ready outfits, 5 otherwise) -->
     <div class="mobile-action-bar">
       <button class="mobile-action-btn" (click)="share()">
         <mat-icon>ios_share</mat-icon>
         <span>Share</span>
+      </button>
+      <button class="mobile-action-btn" (click)="redo()" *ngIf="current.status === 'ready'">
+        <mat-icon>replay</mat-icon>
+        <span>Redo</span>
+      </button>
+      <button class="mobile-action-btn" (click)="openAddGarmentsDialog()" *ngIf="current.status === 'ready'">
+        <mat-icon>add_circle</mat-icon>
+        <span>Add</span>
       </button>
       <button class="mobile-action-btn" (click)="openVideoDialog()">
         <mat-icon>videocam</mat-icon>

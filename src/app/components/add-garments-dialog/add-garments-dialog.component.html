@@ -1,0 +1,84 @@
+<h2 mat-dialog-title>Add Items to Outfit</h2>
+
+<mat-dialog-content>
+  <!-- Existing garments (read-only) -->
+  <div class="existing-section" *ngIf="data.existingGarments.length > 0">
+    <h3>Current Items</h3>
+    <div class="existing-garments">
+      <div class="existing-garment" *ngFor="let garment of data.existingGarments">
+        <img [src]="garment.imageUrl" [alt]="garment.name" />
+        <span class="garment-name">{{ garment.name }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <mat-progress-bar *ngIf="isLoading()" mode="indeterminate"></mat-progress-bar>
+
+  <!-- Selected additional garments -->
+  <div class="selected-section" *ngIf="selectedGarments().length > 0">
+    <h3>Adding ({{ selectedGarments().length }})</h3>
+    <div class="selected-garments">
+      <mat-chip-set>
+        <mat-chip *ngFor="let garment of selectedGarments()" (removed)="removeSelected(garment)">
+          <img matChipAvatar [src]="garment.image" [alt]="garment.name" />
+          {{ garment.name }}
+          <button matChipRemove>
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip>
+      </mat-chip-set>
+    </div>
+  </div>
+
+  <!-- Garment picker -->
+  <div class="picker-section" *ngIf="!isLoading()">
+    <h3>Select Additional Items</h3>
+
+    <!-- Group tabs -->
+    <div class="group-tabs">
+      <button
+        *ngFor="let tab of groupTabs"
+        class="tab-btn"
+        [class.active]="selectedTab() === tab.value"
+        (click)="selectTab(tab.value)"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+
+    <!-- Garments grid -->
+    <div class="garments-grid" *ngIf="filteredGarments().length > 0; else noGarments">
+      <div
+        class="garment-card"
+        *ngFor="let garment of filteredGarments()"
+        [class.selected]="isSelected(garment)"
+        (click)="toggleGarment(garment)"
+      >
+        <img [src]="garment.image" [alt]="garment.name" />
+        <span class="garment-name">{{ garment.name }}</span>
+        <mat-icon class="check-icon" *ngIf="isSelected(garment)">check_circle</mat-icon>
+      </div>
+    </div>
+
+    <ng-template #noGarments>
+      <div class="no-garments">
+        <mat-icon>checkroom</mat-icon>
+        <p>No {{ selectedTab() }} available to add</p>
+      </div>
+    </ng-template>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button
+    mat-flat-button
+    color="primary"
+    [disabled]="!hasSelections() || isCreating()"
+    (click)="createOutfit()"
+  >
+    <mat-icon *ngIf="isCreating()">sync</mat-icon>
+    {{ isCreating() ? 'Creating...' : 'Create New Outfit' }}
+  </button>
+</mat-dialog-actions>

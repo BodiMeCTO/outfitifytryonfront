@@ -17,6 +17,7 @@ import { DownloadService } from '../../services/download.service';
 import { GeneratedImage, OutfitImageVariant } from '../../models/outfit';
 import { ImageEditDialogComponent, ImageEditDialogData, ImageEditDialogResult } from '../image-edit-dialog/image-edit-dialog.component';
 import { VideoDialogComponent, VideoDialogData, VideoDialogResult } from '../video-dialog/video-dialog.component';
+import { AddGarmentsDialogComponent, AddGarmentsDialogData, AddGarmentsDialogResult } from '../add-garments-dialog/add-garments-dialog.component';
 import { AiDisclaimerComponent } from '../shared/ai-disclaimer/ai-disclaimer.component';
 
 @Component({
@@ -87,6 +88,70 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.snackBar.open('Failed to archive outfit.', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  // Redo the current outfit (create a new one with same settings)
+  redo(): void {
+    const current = this.image();
+    if (!current) return;
+
+    // Only allow redo on ready outfits
+    if (current.status !== 'ready') {
+      this.snackBar.open('Can only redo completed outfits.', 'Dismiss', { duration: 3000 });
+      return;
+    }
+
+    this.apiService.redoOutfit(current.id).pipe(take(1)).subscribe({
+      next: (newOutfit) => {
+        this.snackBar.open('New outfit queued! Check the gallery for progress.', 'View', { duration: 4000 })
+          .onAction().pipe(take(1)).subscribe(() => {
+            this.router.navigate(['/generated-gallery']);
+          });
+        // Refresh the gallery to show the new outfit
+        this.outfitService.refreshGeneratedImages().pipe(take(1)).subscribe();
+        // Refresh credits as redo costs credits
+        this.creditsService.refresh().pipe(take(1)).subscribe();
+      },
+      error: (err) => {
+        const message = err?.error?.error || 'Failed to redo outfit. Please try again.';
+        this.snackBar.open(message, 'Dismiss', { duration: 4000 });
+      }
+    });
+  }
+
+  // Open the Add Garments dialog
+  openAddGarmentsDialog(): void {
+    const current = this.image();
+    if (!current) return;
+
+    // Only allow on ready outfits
+    if (current.status !== 'ready') {
+      this.snackBar.open('Can only add items to completed outfits.', 'Dismiss', { duration: 3000 });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(AddGarmentsDialogComponent, {
+      width: '600px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: {
+        outfitId: current.id,
+        existingGarments: current.garments ?? []
+      } as AddGarmentsDialogData
+    });
+
+    dialogRef.afterClosed().pipe(take(1)).subscribe((result: AddGarmentsDialogResult | undefined) => {
+      if (result?.created) {
+        this.snackBar.open('New outfit queued! Check the gallery for progress.', 'View', { duration: 4000 })
+          .onAction().pipe(take(1)).subscribe(() => {
+            this.router.navigate(['/generated-gallery']);
+          });
+        // Refresh the gallery to show the new outfit
+        this.outfitService.refreshGeneratedImages().pipe(take(1)).subscribe();
+        // Refresh credits as add-garments costs credits
+        this.creditsService.refresh().pipe(take(1)).subscribe();
       }
     });
   }

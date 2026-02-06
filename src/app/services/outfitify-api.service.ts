@@ -175,6 +175,21 @@ export class OutfitifyApiService {
     return this.http.patch<void>(this.buildUrl(`/api/outfits/${id}/unarchive`), {});
   }
 
+  /**
+   * Creates a new outfit with the same settings as an existing outfit.
+   * The new outfit is queued for processing.
+   */
+  redoOutfit(id: string): Observable<OutfitDto> {
+    return this.http.post<OutfitDto>(this.buildUrl(`/api/outfits/${id}/redo`), {});
+  }
+
+  /**
+   * Creates a new outfit with the source outfit's garments plus additional garments.
+   */
+  addGarmentsToOutfit(id: string, additionalGarments: { garmentEntityId: string; garmentSizeEntityId?: number }[]): Observable<OutfitDto> {
+    return this.http.post<OutfitDto>(this.buildUrl(`/api/outfits/${id}/add-garments`), { additionalGarments });
+  }
+
   // --- User uploaded model images ---
   listModelImages(isBackgroundVariant?: boolean, includeArchived: boolean = false): Observable<ModelImageDto[]> {
     let url = '/api/model-images';
