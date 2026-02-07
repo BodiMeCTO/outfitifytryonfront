@@ -113,23 +113,7 @@ h3 {
 }
 
 .tab-btn {
-  padding: $space-2 $space-3;
-  border: 1px solid $color-border;
-  border-radius: $radius-full;
-  background: transparent;
-  @include type-ui-label;
-  cursor: pointer;
-  transition: all $transition-fast;
-
-  &:hover {
-    background: $color-bg-secondary;
-  }
-
-  &.active {
-    background: $color-accent-gold;
-    color: white;
-    border-color: $color-accent-gold;
-  }
+  @include btn-tab;
 }
 
 // Garments grid

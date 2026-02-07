@@ -366,3 +366,275 @@ $safe-area-right: env(safe-area-inset-right, 0px);
     outline-offset: $offset;
   }
 }
+
+// =============================================================================
+// BUTTON MIXINS - Consolidated Button System
+// =============================================================================
+// Use these mixins instead of defining custom button styles per component.
+//
+// BUTTON TYPES:
+// - btn-base: Core button properties (always include this first)
+// - btn-icon: Icon-only square button
+// - btn-icon-text: Icon + text button
+// - btn-text: Text-only button
+// - btn-nav: Circular navigation button
+//
+// BUTTON VARIANTS:
+// - btn-ghost: Subtle border, muted color (for secondary actions)
+// - btn-outline: Gold border, gold color (for prominent secondary actions)
+// - btn-filled: Gold background (for primary CTAs)
+// - btn-subtle: Light gold background (for soft emphasis)
+//
+// BUTTON SIZES:
+// - btn-size-sm: Small (for toolbars, headers)
+// - btn-size-md: Medium (standard, 44px touch target)
+// - btn-size-lg: Large (prominent CTAs)
+//
+// EXAMPLES:
+// .my-button {
+//   @include btn-base;
+//   @include btn-icon-text;
+//   @include btn-outline;
+//   @include btn-size-md;
+// }
+// -----------------------------------------------------------------------------
+
+// Base button properties (always include this)
+@mixin btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all $transition-fast;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  @include focus-ring;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Button Types
+// -----------------------------------------------------------------------------
+
+// Icon-only button (square)
+@mixin btn-icon {
+  padding: $space-2;
+  border-radius: $radius-md;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// Icon + text button
+@mixin btn-icon-text {
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  border-radius: $radius-full;
+  @include type-ui-label;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Text-only button
+@mixin btn-text {
+  padding: $space-2 $space-4;
+  border-radius: $radius-full;
+  @include type-ui-label;
+}
+
+// Circular navigation button
+@mixin btn-nav {
+  padding: 0;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Button Variants (appearance/color)
+// -----------------------------------------------------------------------------
+
+// Ghost: Subtle border, muted - for tertiary/utility actions
+@mixin btn-ghost {
+  background: transparent;
+  border-color: $color-border;
+  color: $color-text-muted;
+
+  &:hover:not(:disabled) {
+    border-color: $color-accent-gold;
+    color: $color-accent-gold;
+    background: $color-accent-gold-light;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
+// Outline: Gold border - for secondary actions
+@mixin btn-outline {
+  background: transparent;
+  border-color: $color-accent-gold;
+  color: $color-accent-gold;
+
+  &:hover:not(:disabled) {
+    background: $color-accent-gold;
+    color: $color-bg-primary;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// Filled: Gold background - for primary CTAs
+@mixin btn-filled {
+  background: $color-accent-gold;
+  border-color: $color-accent-gold;
+  color: $color-bg-primary;
+
+  &:hover:not(:disabled) {
+    background: $color-accent-gold-hover;
+    border-color: $color-accent-gold-hover;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// Subtle: Light gold background - for soft emphasis
+@mixin btn-subtle {
+  background: $color-accent-gold-light;
+  border-color: $color-accent-gold;
+  color: $color-accent-gold-dark;
+
+  &:hover:not(:disabled) {
+    background: $color-accent-gold;
+    color: $color-bg-primary;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Button Sizes
+// -----------------------------------------------------------------------------
+
+// Small: For toolbars, section headers (32-36px)
+@mixin btn-size-sm {
+  min-height: 36px;
+  font-size: $font-size-xs;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Medium: Standard size, meets touch target (44px)
+@mixin btn-size-md {
+  min-height: $touch-target-min;
+}
+
+// Large: Prominent CTAs (48-52px)
+@mixin btn-size-lg {
+  min-height: $touch-target-comfortable;
+  padding: $space-3 $space-6;
+  font-size: $font-size-sm;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Pre-composed Button Styles (common combinations)
+// -----------------------------------------------------------------------------
+
+// Icon button ghost (for header utilities like archive, info, upload)
+@mixin btn-icon-ghost {
+  @include btn-base;
+  @include btn-icon;
+  @include btn-ghost;
+  @include btn-size-md;
+}
+
+// Icon button outline (for more prominent icon actions)
+@mixin btn-icon-outline {
+  @include btn-base;
+  @include btn-icon;
+  @include btn-outline;
+  @include btn-size-md;
+}
+
+// Action button outline (icon+text, for secondary actions)
+@mixin btn-action-outline {
+  @include btn-base;
+  @include btn-icon-text;
+  @include btn-outline;
+  @include btn-size-md;
+}
+
+// Action button filled (icon+text, for primary actions)
+@mixin btn-action-filled {
+  @include btn-base;
+  @include btn-icon-text;
+  @include btn-filled;
+  @include btn-size-md;
+}
+
+// Action button subtle (icon+text, for soft emphasis)
+@mixin btn-action-subtle {
+  @include btn-base;
+  @include btn-icon-text;
+  @include btn-subtle;
+  @include btn-size-md;
+}
+
+// Navigation button (circular prev/next)
+@mixin btn-navigation {
+  @include btn-base;
+  @include btn-nav;
+  @include btn-outline;
+}
+
+// Tab/chip button (for category selection)
+@mixin btn-tab {
+  @include btn-base;
+  @include btn-text;
+  @include btn-ghost;
+  @include btn-size-sm;
+
+  &.active {
+    background: $color-accent-gold;
+    border-color: $color-accent-gold;
+    color: $color-bg-primary;
+  }
+}

@@ -23,31 +23,13 @@
   margin-bottom: $space-2;
 }
 
+// Back button uses ghost icon+text style
 .back-to-gallery-btn {
-  display: flex;
-  align-items: center;
-  gap: $space-2;
-  padding: $space-2 $space-4;
-  background: transparent;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  color: $color-text-secondary;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-  }
-
-  &:hover {
-    background: rgba($color-accent-gold, 0.1);
-    border-color: $color-accent-gold;
-    color: $color-accent-gold;
-  }
+  @include btn-base;
+  @include btn-icon-text;
+  @include btn-ghost;
+  @include btn-size-sm;
+  border-radius: $radius-md; // Override pill radius for this context
 }
 
 .preview {
@@ -129,33 +111,15 @@
   align-items: center;
 }
 
+// Navigation buttons use circular outline style
 .nav-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  border: 1.5px solid $color-accent-gold;
-  border-radius: 50%;
-  background: $color-bg-primary;
-  color: $color-accent-gold;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  @include btn-navigation;
 
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-  }
-
-  &:hover {
-    background: $color-accent-gold;
-    color: $color-bg-primary;
+  &:hover:not(:disabled) {
     transform: scale(1.05);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: scale(0.98);
   }
 }
@@ -415,59 +379,18 @@
   }
 }
 
+// Action buttons - default is outline style
 .action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  border: 1.5px solid $color-accent-gold;
-  border-radius: 24px;
-  background: $color-bg-primary;
-  color: $color-accent-gold;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  @include btn-action-outline;
 
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-  }
-
-  &:hover {
-    background: $color-accent-gold-light;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  // Primary filled button
+  // Primary variant - filled gold
   &.primary {
-    background: $color-accent-gold;
-    color: $color-bg-primary;
-    border-color: $color-accent-gold;
-
-    &:hover {
-      background: $color-accent-gold-hover;
-      border-color: $color-accent-gold-hover;
-    }
+    @include btn-filled;
   }
 
-  // Secondary/subtle button
+  // Secondary variant - ghost/subtle
   &.secondary {
-    border-color: $color-border;
-    color: $color-text-muted;
-
-    &:hover {
-      border-color: $color-accent-gold;
-      color: $color-accent-gold;
-      background: $color-accent-gold-light;
-    }
+    @include btn-ghost;
   }
 }
 

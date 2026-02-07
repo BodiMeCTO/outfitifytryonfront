@@ -183,6 +183,42 @@ The app uses a strict 3-role typography system based on Inter font. Use the mixi
 
 This removes role confusion and creates visual consistency across the app.
 
+## Button System
+
+Use the consolidated button mixins from `_tokens.scss` instead of custom button styles per component.
+
+### Button Mixins
+
+```scss
+@use '../../../styles/tokens' as *;
+
+// Pre-composed styles (use these for most cases):
+@include btn-icon-ghost;      // Icon-only, subtle (archive, info buttons)
+@include btn-icon-outline;    // Icon-only, gold border
+@include btn-action-outline;  // Icon+text, gold border (most action buttons)
+@include btn-action-filled;   // Icon+text, gold background (primary CTAs)
+@include btn-action-subtle;   // Icon+text, light gold background
+@include btn-navigation;      // Circular prev/next buttons
+@include btn-tab;             // Category tabs/chips
+
+// Or compose your own:
+.my-button {
+  @include btn-base;          // Always include first
+  @include btn-icon-text;     // Type: icon, icon-text, text, nav
+  @include btn-outline;       // Variant: ghost, outline, filled, subtle
+  @include btn-size-md;       // Size: sm, md, lg
+}
+```
+
+### Button Variants
+
+| Variant | Use Case | Appearance |
+|---------|----------|------------|
+| `ghost` | Tertiary actions (archive, clear) | Subtle border, muted text |
+| `outline` | Secondary actions (share, download) | Gold border, gold text |
+| `filled` | Primary CTAs (Generate, Create) | Gold background |
+| `subtle` | Soft emphasis | Light gold background |
+
 ## Related Repos
 
 - **OutfitifyAPI**: Backend API (port 5042)

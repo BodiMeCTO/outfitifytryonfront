@@ -1,0 +1,152 @@
+Perfect — tool-first is the right call for this UI. Here’s a very concrete, no-nonsense prescription you can actually implement.
+
+1. The core decision (clear + final)
+
+Use ONE font family everywhere.
+No serif. No “brand accent” font inside the product.
+
+The clash you’re still feeling is not font choice — it’s role confusion. We fix that with a strict system.
+
+2. Font recommendation (tool-grade)
+✅ Best overall: Inter
+
+Why:
+
+Designed for screens + UI
+
+Neutral enough to disappear
+
+Strong enough weights for hierarchy
+
+Excellent readability at small sizes
+
+Alternatives if you want slightly different flavor:
+
+IBM Plex Sans → more technical
+
+Söhne / similar neo-grotesk → more premium (if licensed)
+
+SF Pro → if you’re already system-first
+
+I’ll describe this assuming Inter, but the system applies to any of these.
+
+3. The real fix: a hard typographic system
+Rule zero (important)
+
+Typography communicates function, not personality, inside the tool.
+Personality lives in layout, color, motion — not fonts.
+
+4. Exact roles + settings (this is the part most teams skip)
+A. Section headers
+
+Examples:
+“Your Outfit”, “Upload Your Photos”, “Add Your Garments”
+
+Font: Inter
+
+Weight: Medium (500)
+
+Case: Sentence case
+
+Letter spacing: 0
+
+Size: ~16–18px
+
+Line-height: ~1.3–1.4
+
+Why: Calm authority. Not editorial. Not shouty.
+
+B. UI labels & controls
+
+Examples:
+POSE, BACKGROUND, GARMENTS, buttons, chips
+
+Font: Inter
+
+Weight: Medium (500)
+
+Case: ALL CAPS
+
+Letter spacing: +4% to +6%
+
+Size: slightly smaller than headers
+
+Hard rule:
+If it’s clickable or functional → it uses THIS style. No exceptions.
+
+This alone removes 70% of the perceived clash.
+
+C. Body / helper text
+
+Examples:
+Instructions, tips, footnotes
+
+Font: Inter
+
+Weight: Regular (400)
+
+Case: Sentence case
+
+Line-height: generous (1.5–1.6)
+
+Why: Quiet, supportive, readable.
+
+5. What to stop doing (this is likely the current issue)
+
+❌ Mixing:
+
+Title case headers + uppercase headers without meaning
+
+Different weights for similar actions
+
+Slight letterspacing “sometimes”
+
+❌ Letting buttons and headings feel typographically similar
+
+If a user has to think whether something is a label or a section — typography failed.
+
+6. Visual hierarchy cheat check (quick test)
+
+Blur the screen slightly and ask:
+
+Can I instantly spot:
+
+Section structure?
+
+Actions?
+
+Explanations?
+
+If not → weights/case are too close.
+
+7. How this aligns with your product
+
+This tool is:
+
+Procedural
+
+Trust-sensitive
+
+Outcome-driven
+
+So the typography should say:
+
+“This is precise. This will work. You’re in control.”
+
+Not:
+
+“This is stylish.”
+
+Your current direction is almost there — it just needs discipline, not reinvention.
+
+Bottom line
+
+Final recommendation:
+
+Inter (or equivalent)
+
+One family
+
+Three roles
+
+Strict rules
