@@ -23,7 +23,7 @@
         <div class="status-item" *ngIf="currentSubscription()?.planName">
           <mat-icon>card_membership</mat-icon>
           <span class="value">{{ currentSubscription()?.planName }}</span>
-          <span class="label">Current Plan ({{ currentSubscription()?.isAnnual ? 'Annual' : 'Monthly' }})</span>
+          <span class="label">Current plan ({{ currentSubscription()?.isAnnual ? 'Annual' : 'Monthly' }})</span>
         </div>
         <div class="status-item" *ngIf="currentSubscription()?.priceAmount">
           <mat-icon>payments</mat-icon>
@@ -50,7 +50,7 @@
     <mat-card-actions *ngIf="currentSubscription()?.subscriptionId">
       <button mat-stroked-button (click)="manageSubscription()">
         <mat-icon>settings</mat-icon>
-        Manage Subscription
+        Manage subscription
       </button>
     </mat-card-actions>
   </mat-card>
@@ -137,12 +137,12 @@
                   *ngIf="!currentSubscription()?.subscriptionId || currentSubscription()?.planName !== plan.name || currentSubscription()?.isAnnual !== (selectedBillingType() === 'annual')"
                   [disabled]="isProcessing()"
                   (click)="selectPlan(plan)">
-            {{ currentSubscription()?.subscriptionId ? 'Switch Plan' : 'Subscribe' }}
+            {{ currentSubscription()?.subscriptionId ? 'Switch plan' : 'Subscribe' }}
           </button>
           <button mat-raised-button
                   *ngIf="currentSubscription()?.subscriptionId && currentSubscription()?.planName === plan.name && currentSubscription()?.isAnnual === (selectedBillingType() === 'annual')"
                   disabled>
-            Current Plan
+            Current plan
           </button>
         </mat-card-actions>
       </mat-card>
@@ -193,7 +193,7 @@
                   [color]="i === 1 ? 'primary' : 'accent'"
                   [disabled]="isProcessing()"
                   (click)="purchasePackage(pkg)">
-            Buy Now
+            Buy now
           </button>
         </mat-card-actions>
       </mat-card>

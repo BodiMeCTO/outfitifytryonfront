@@ -1,5 +1,5 @@
 <h2 mat-dialog-title>
-  Add Garments
+  Add garments
   @if (hasGarments()) {
     <span class="garment-count">{{ pendingGarments().length }} item{{ pendingGarments().length > 1 ? 's' : '' }}</span>
   }
@@ -10,7 +10,7 @@
   <div class="upload-zone" [class.has-items]="hasGarments()">
     <button mat-raised-button color="primary" class="smart-upload-button" (click)="fileInput.click()">
       <mat-icon>add_photo_alternate</mat-icon>
-      {{ hasGarments() ? 'Add More' : 'Select Images' }}
+      {{ hasGarments() ? 'Add more' : 'Select images' }}
     </button>
     <input #fileInput type="file" accept="image/*" multiple hidden (change)="handleFileSelection($event)">
     @if (!hasGarments()) {
@@ -125,7 +125,7 @@
 <mat-dialog-actions align="end">
   @if (hasGarments() && !isSavingAll()) {
     <button mat-button (click)="clearAll()">
-      <mat-icon>delete_sweep</mat-icon> Clear All
+      <mat-icon>delete_sweep</mat-icon> Clear all
     </button>
   }
   <button mat-button (click)="cancel()">
@@ -139,7 +139,7 @@
         <mat-icon class="spinning">sync</mat-icon> Saving...
       } @else {
         <mat-icon>save</mat-icon>
-        Save {{ readyCount() }} Garment{{ readyCount() > 1 ? 's' : '' }}
+        Save {{ readyCount() }} garment{{ readyCount() > 1 ? 's' : '' }}
       }
     </button>
   }

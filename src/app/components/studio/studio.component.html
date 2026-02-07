@@ -223,7 +223,7 @@
           (clicked)="generateOutfit()"
         >
           <mat-icon>auto_awesome</mat-icon>
-          {{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}
+          {{ isGenerating() ? 'Generating...' : 'Generate outfit' }}
         </app-luxe-button>
       </div>
 
@@ -241,7 +241,7 @@
     <div class="desktop-tutorial-banner" *ngIf="isTutorialActive() && isSimplifiedFlow()">
       <mat-icon>school</mat-icon>
       <span>TUTORIAL MODE - Follow the steps to create your first outfit</span>
-      <button class="skip-btn" (click)="skipWalkthrough()">Skip Tutorial</button>
+      <button class="skip-btn" (click)="skipWalkthrough()">Skip tutorial</button>
     </div>
 
     <!-- Walkthrough Header (shows during full walkthrough) -->
@@ -251,7 +251,7 @@
         <span class="walkthrough-step">Step {{ getWalkthroughStepNumber() }} of {{ getTotalWalkthroughSteps() }}</span>
       </div>
       <button class="walkthrough-skip-btn" (click)="skipWalkthrough()">
-        Skip Tour
+        Skip tour
         <mat-icon>close</mat-icon>
       </button>
     </div>
@@ -401,7 +401,7 @@
           </ul>
           <button class="upload-card compact" (click)="modelUploadInput.click()">
             <mat-icon>add_photo_alternate</mat-icon>
-            <span>Upload Photos</span>
+            <span>Upload photos</span>
           </button>
         </div>
       </ng-container>
@@ -587,11 +587,11 @@
           <mat-icon class="tooltip-icon">checkroom</mat-icon>
           <div class="tooltip-text">
             <h4>Add Your Own Garments</h4>
-            <p>Upload photos of any clothing item using the <strong>Add Garment</strong> button. Mix tops, bottoms, jackets, and accessories to create the perfect outfit!</p>
+            <p>Upload photos of any clothing item using the <strong>Add garment</strong> button. Mix tops, bottoms, jackets, and accessories to create the perfect outfit!</p>
           </div>
         </div>
         <button class="tooltip-next-btn tooltip-finish-btn" (click)="nextWalkthroughStep()">
-          Finish Tour
+          Finish tour
           <mat-icon>check</mat-icon>
         </button>
       </div>
@@ -632,7 +632,7 @@
             icon="add_photo_alternate"
             (clicked)="openGarmentUploadDialog()"
           >
-            Add Garment
+            Add garment
           </app-luxe-button>
         </div>
       </div>
@@ -703,7 +703,7 @@
           icon="add_photo_alternate"
           (clicked)="openGarmentUploadDialog()"
         >
-          Add Garment
+          Add garment
         </app-luxe-button>
       </div>
     </section>
@@ -1091,7 +1091,7 @@
         </button>
         <button class="toolbar-btn primary" (click)="openGarmentUploadDialog()">
           <mat-icon>add_photo_alternate</mat-icon>
-          Add Garment
+          Add garment
         </button>
       </div>
 
@@ -1202,7 +1202,7 @@
         <div class="empty-category" *ngIf="mobileGarmentCategory() !== 'all' && (!groups[getMobileGarmentCategory()] || groups[getMobileGarmentCategory()].length === 0)">
           <mat-icon>checkroom</mat-icon>
           <p>No {{ mobileGarmentCategory() }} yet</p>
-          <button class="add-btn" (click)="openGarmentUploadDialog()">Add Garment</button>
+          <button class="add-btn" (click)="openGarmentUploadDialog()">Add garment</button>
         </div>
       </ng-container>
     </div>
@@ -1320,7 +1320,7 @@
       (clicked)="generateOutfit()"
     >
       <span class="mobile-generate-content">
-        <span>{{ isGenerating() ? 'Generating...' : 'Generate Outfit' }}</span>
+        <span>{{ isGenerating() ? 'Generating...' : 'Generate outfit' }}</span>
         <span class="mobile-credit-cost" *ngIf="!isGenerating() && (canGenerate$ | async)">
           <mat-icon>toll</mat-icon>
           {{ generationCreditCost }}

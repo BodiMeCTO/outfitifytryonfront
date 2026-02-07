@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
   <mat-icon>videocam</mat-icon>
-  <span>Create Video</span>
+  <span>Create video</span>
 </h2>
 
 <mat-dialog-content>
@@ -200,7 +200,7 @@
       [disabled]="!canAfford() || (isCustomPreset() && !customPrompt().trim())"
     >
       <mat-icon>videocam</mat-icon>
-      Create Video ({{ creditCost() }} credits)
+      Create video ({{ creditCost() }} credits)
     </button>
   </ng-container>
 
@@ -213,7 +213,7 @@
   <ng-container *ngIf="status() === 'processing'">
     <button mat-raised-button color="primary" (click)="continueInBackground()">
       <mat-icon>open_in_new</mat-icon>
-      Continue in Background
+      Continue in background
     </button>
   </ng-container>
 
@@ -238,7 +238,7 @@
     <button mat-button (click)="close()">Close</button>
     <button mat-raised-button color="primary" (click)="retry()">
       <mat-icon>refresh</mat-icon>
-      Try Again
+      Try again
     </button>
   </ng-container>
 
