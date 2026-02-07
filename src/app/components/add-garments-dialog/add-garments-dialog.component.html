@@ -1,4 +1,10 @@
-<h2 mat-dialog-title>Add Items to Outfit</h2>
+<div class="dialog-header">
+  <h2 mat-dialog-title>Add Items to Outfit</h2>
+  <div class="credit-balance" *ngIf="creditBalance() !== null">
+    <mat-icon>toll</mat-icon>
+    <span>{{ creditBalance() }} credits</span>
+  </div>
+</div>
 
 <mat-dialog-content>
   <!-- Existing garments (read-only) -->
@@ -70,15 +76,29 @@
   </div>
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button (click)="cancel()">Cancel</button>
-  <button
-    mat-flat-button
-    color="primary"
-    [disabled]="!hasSelections() || isCreating()"
-    (click)="createOutfit()"
-  >
-    <mat-icon *ngIf="isCreating()">sync</mat-icon>
-    {{ isCreating() ? 'Creating...' : 'Create New Outfit' }}
-  </button>
+<mat-dialog-actions>
+  <!-- Credit cost info -->
+  <div class="cost-info" *ngIf="hasSelections()">
+    <span class="cost-label">Estimated cost:</span>
+    <span class="cost-value" [class.insufficient]="!hasEnoughCredits()">
+      <mat-icon>toll</mat-icon>
+      {{ estimatedCreditCost() }} credits
+    </span>
+    <span class="insufficient-warning" *ngIf="!hasEnoughCredits()">
+      (insufficient credits)
+    </span>
+  </div>
+
+  <div class="action-buttons">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="!hasSelections() || isCreating() || !hasEnoughCredits()"
+      (click)="createOutfit()"
+    >
+      <mat-icon *ngIf="isCreating()">sync</mat-icon>
+      {{ isCreating() ? 'Creating...' : 'Create (' + estimatedCreditCost() + ' credits)' }}
+    </button>
+  </div>
 </mat-dialog-actions>

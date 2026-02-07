@@ -2,11 +2,39 @@
   display: block;
 }
 
+// Dialog header with title and credit balance
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border, #eee);
+}
+
 h2[mat-dialog-title] {
   margin: 0;
-  padding: 16px 24px;
+  padding: 0;
   font-size: 1.25rem;
   font-weight: 500;
+}
+
+.credit-balance {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: var(--color-bg-secondary, #f5f5f5);
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-accent-gold, #C9A96E);
+  }
 }
 
 mat-dialog-content {
@@ -184,13 +212,58 @@ h3 {
 
 // Dialog actions
 mat-dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 16px 24px;
+  border-top: 1px solid var(--color-border, #eee);
 
   button {
     mat-icon {
       animation: spin 1s linear infinite;
     }
   }
+}
+
+.cost-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+
+  .cost-label {
+    color: var(--color-text-secondary, #666);
+  }
+
+  .cost-value {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    color: var(--color-accent-gold, #C9A96E);
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      animation: none;
+    }
+
+    &.insufficient {
+      color: #d32f2f;
+    }
+  }
+
+  .insufficient-warning {
+    color: #d32f2f;
+    font-size: 0.813rem;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 @keyframes spin {

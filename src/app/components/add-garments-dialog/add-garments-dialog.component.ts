@@ -13,11 +13,14 @@ import { take } from 'rxjs/operators';
 
 import { OutfitifyApiService } from '../../services/outfitify-api.service';
 import { OutfitService } from '../../services/outfit.service';
+import { CreditsService } from '../../services/credits.service';
 import { Garment, GarmentGroup, OutfitGarmentInfo } from '../../models/outfit';
 
 export interface AddGarmentsDialogData {
   outfitId: string;
   existingGarments: OutfitGarmentInfo[];
+  hasPoseChange?: boolean;
+  hasBackgroundChange?: boolean;
 }
 
 export interface AddGarmentsDialogResult {
@@ -47,8 +50,12 @@ export class AddGarmentsDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<AddGarmentsDialogComponent>);
   private readonly apiService = inject(OutfitifyApiService);
   private readonly outfitService = inject(OutfitService);
+  private readonly creditsService = inject(CreditsService);
   private readonly snackBar = inject(MatSnackBar);
   readonly data: AddGarmentsDialogData = inject(MAT_DIALOG_DATA);
+
+  // Current credit balance
+  readonly creditBalance = toSignal(this.creditsService.balance$, { initialValue: null as number | null });
 
   // All available garments
   readonly garments = toSignal(this.outfitService.garments$, { initialValue: [] as Garment[] });
@@ -92,6 +99,37 @@ export class AddGarmentsDialogComponent implements OnInit {
 
   // Check if any garments are selected
   readonly hasSelections = computed(() => this.selectedGarments().length > 0);
+
+  // Check if outfit will have footwear (existing or newly selected)
+  readonly hasFootwear = computed(() => {
+    const existingHasFootwear = this.data.existingGarments.some(g => g.category?.toLowerCase() === 'footwear');
+    const selectedHasFootwear = this.selectedGarments().some(g => g.group === 'footwear');
+    return existingHasFootwear || selectedHasFootwear;
+  });
+
+  /**
+   * Calculate estimated credit cost:
+   * - Base: 2 credits (Vertex AI + face restoration)
+   * - Pose OR Background change: +1 credit
+   * - Footwear: +1 credit
+   */
+  readonly estimatedCreditCost = computed(() => {
+    let cost = 2; // Base cost
+    if (this.data.hasPoseChange || this.data.hasBackgroundChange) {
+      cost += 1;
+    }
+    if (this.hasFootwear()) {
+      cost += 1;
+    }
+    return cost;
+  });
+
+  // Check if user has enough credits
+  readonly hasEnoughCredits = computed(() => {
+    const balance = this.creditBalance();
+    if (balance === null) return true; // Don't block if balance unknown
+    return balance >= this.estimatedCreditCost();
+  });
 
   ngOnInit(): void {
     // Ensure garments are loaded

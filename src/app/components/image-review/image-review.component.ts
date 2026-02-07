@@ -97,6 +97,26 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Calculate credit cost for an outfit based on its settings:
+   * - Base: 2 credits
+   * - Pose OR Background change: +1 credit
+   * - Footwear: +1 credit
+   */
+  private calculateCreditCost(outfit: GeneratedImage): number {
+    let cost = 2; // Base cost
+    const hasPoseChange = !!(outfit.poseName && outfit.poseName.toLowerCase() !== 'original');
+    const hasBackgroundChange = !!(outfit.backgroundName && outfit.backgroundName.toLowerCase() !== 'original');
+    if (hasPoseChange || hasBackgroundChange) {
+      cost += 1;
+    }
+    const hasFootwear = outfit.garments?.some(g => g.category?.toLowerCase() === 'footwear') ?? false;
+    if (hasFootwear) {
+      cost += 1;
+    }
+    return cost;
+  }
+
   // Redo the current outfit (create a new one with same settings)
   redo(): void {
     const current = this.image();
@@ -108,9 +128,20 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Calculate and check credit cost
+    const creditCost = this.calculateCreditCost(current);
+    const balance = this.creditsService.balance;
+    if (balance !== null && balance < creditCost) {
+      this.snackBar.open(`Insufficient credits. You need ${creditCost} but have ${balance}.`, 'Get Credits', { duration: 5000 })
+        .onAction().pipe(take(1)).subscribe(() => {
+          this.router.navigate(['/credits']);
+        });
+      return;
+    }
+
     this.apiService.redoOutfit(current.id).pipe(take(1)).subscribe({
-      next: (newOutfit) => {
-        this.snackBar.open('New outfit queued! Check the gallery for progress.', 'View', { duration: 4000 })
+      next: () => {
+        this.snackBar.open(`New outfit queued! (${creditCost} credits used)`, 'View', { duration: 4000 })
           .onAction().pipe(take(1)).subscribe(() => {
             this.router.navigate(['/generated-gallery']);
           });
@@ -137,13 +168,19 @@ export class ImageReviewComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Determine if pose/background was changed (affects credit cost)
+    const hasPoseChange = !!(current.poseName && current.poseName.toLowerCase() !== 'original');
+    const hasBackgroundChange = !!(current.backgroundName && current.backgroundName.toLowerCase() !== 'original');
+
     const dialogRef = this.dialog.open(AddGarmentsDialogComponent, {
       width: '600px',
       maxWidth: '95vw',
       maxHeight: '90vh',
       data: {
         outfitId: current.id,
-        existingGarments: current.garments ?? []
+        existingGarments: current.garments ?? [],
+        hasPoseChange,
+        hasBackgroundChange
       } as AddGarmentsDialogData
     });
 
