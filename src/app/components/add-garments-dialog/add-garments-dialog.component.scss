@@ -1,3 +1,5 @@
+@use '../../../styles/tokens' as *;
+
 :host {
   display: block;
 }
@@ -7,79 +9,76 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--color-border, #eee);
+  padding: $space-4 $space-6;
+  border-bottom: 1px solid $color-border;
 }
 
 h2[mat-dialog-title] {
   margin: 0;
   padding: 0;
-  font-size: 1.25rem;
-  font-weight: 500;
+  @include type-section-header-lg;
 }
 
 .credit-balance {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  background: var(--color-bg-secondary, #f5f5f5);
-  border-radius: 16px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary, #666);
+  gap: $space-1;
+  padding: $space-1 $space-3;
+  background: $color-bg-secondary;
+  border-radius: $radius-full;
+  @include type-body;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
 
   mat-icon {
     font-size: 16px;
     width: 16px;
     height: 16px;
-    color: var(--color-accent-gold, #C9A96E);
+    color: $color-accent-gold;
   }
 }
 
 mat-dialog-content {
-  padding: 0 24px;
+  padding: 0 $space-6;
   max-height: 60vh;
   overflow-y: auto;
 }
 
+// Section headers within dialog (UI Label style - Role B)
 h3 {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary, #666);
-  margin: 16px 0 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  @include type-ui-label;
+  color: $color-text-secondary;
+  margin: $space-4 0 $space-2;
 }
 
 // Existing garments section
 .existing-section {
-  margin-bottom: 16px;
+  margin-bottom: $space-4;
 }
 
 .existing-garments {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: $space-2;
 }
 
 .existing-garment {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  background: var(--color-bg-secondary, #f5f5f5);
-  border-radius: 4px;
+  gap: $space-2;
+  padding: $space-1 $space-2;
+  background: $color-bg-secondary;
+  border-radius: $radius-sm;
 
   img {
     width: 32px;
     height: 32px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: $radius-sm;
   }
 
   .garment-name {
-    font-size: 0.813rem;
+    @include type-body-sm;
     max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -89,10 +88,10 @@ h3 {
 
 // Selected additional garments
 .selected-section {
-  margin-bottom: 16px;
-  padding: 12px;
-  background: rgba(var(--color-accent-gold-rgb, 201, 169, 110), 0.1);
-  border-radius: 8px;
+  margin-bottom: $space-4;
+  padding: $space-3;
+  background: $color-accent-gold-light;
+  border-radius: $radius-md;
 }
 
 .selected-garments {
@@ -105,31 +104,31 @@ h3 {
   }
 }
 
-// Group tabs
+// Group tabs (UI Label style for clickable controls)
 .group-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: $space-2;
+  margin-bottom: $space-4;
 }
 
 .tab-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border, #ddd);
-  border-radius: 20px;
+  padding: $space-2 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
   background: transparent;
-  font-size: 0.813rem;
+  @include type-ui-label;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all $transition-fast;
 
   &:hover {
-    background: var(--color-bg-secondary, #f5f5f5);
+    background: $color-bg-secondary;
   }
 
   &.active {
-    background: var(--color-accent-gold, #C9A96E);
+    background: $color-accent-gold;
     color: white;
-    border-color: var(--color-accent-gold, #C9A96E);
+    border-color: $color-accent-gold;
   }
 }
 
@@ -137,8 +136,8 @@ h3 {
 .garments-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 12px;
-  padding-bottom: 16px;
+  gap: $space-3;
+  padding-bottom: $space-4;
 }
 
 .garment-card {
@@ -146,31 +145,31 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px;
+  padding: $space-2;
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: $radius-md;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all $transition-fast;
 
   &:hover {
-    background: var(--color-bg-secondary, #f5f5f5);
+    background: $color-bg-secondary;
   }
 
   &.selected {
-    border-color: var(--color-accent-gold, #C9A96E);
-    background: rgba(var(--color-accent-gold-rgb, 201, 169, 110), 0.1);
+    border-color: $color-accent-gold;
+    background: $color-accent-gold-light;
   }
 
   img {
     width: 64px;
     height: 64px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: $radius-sm;
   }
 
   .garment-name {
-    margin-top: 4px;
-    font-size: 0.75rem;
+    margin-top: $space-1;
+    @include type-body-sm;
     text-align: center;
     max-width: 100%;
     overflow: hidden;
@@ -180,10 +179,10 @@ h3 {
 
   .check-icon {
     position: absolute;
-    top: 4px;
-    right: 4px;
+    top: $space-1;
+    right: $space-1;
     font-size: 18px;
-    color: var(--color-accent-gold, #C9A96E);
+    color: $color-accent-gold;
   }
 }
 
@@ -193,20 +192,20 @@ h3 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px;
-  color: var(--color-text-secondary, #666);
+  padding: $space-8;
+  color: $color-text-secondary;
 
   mat-icon {
     font-size: 48px;
     width: 48px;
     height: 48px;
-    margin-bottom: 8px;
+    margin-bottom: $space-2;
     opacity: 0.5;
   }
 
   p {
     margin: 0;
-    font-size: 0.875rem;
+    @include type-body;
   }
 }
 
@@ -214,9 +213,9 @@ h3 {
 mat-dialog-actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--color-border, #eee);
+  gap: $space-3;
+  padding: $space-4 $space-6;
+  border-top: 1px solid $color-border;
 
   button {
     mat-icon {
@@ -228,19 +227,19 @@ mat-dialog-actions {
 .cost-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.875rem;
+  gap: $space-2;
+  @include type-body;
 
   .cost-label {
-    color: var(--color-text-secondary, #666);
+    color: $color-text-secondary;
   }
 
   .cost-value {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-weight: 600;
-    color: var(--color-accent-gold, #C9A96E);
+    gap: $space-1;
+    font-weight: $font-weight-medium;
+    color: $color-accent-gold;
 
     mat-icon {
       font-size: 16px;
@@ -250,20 +249,20 @@ mat-dialog-actions {
     }
 
     &.insufficient {
-      color: #d32f2f;
+      color: $color-error;
     }
   }
 
   .insufficient-warning {
-    color: #d32f2f;
-    font-size: 0.813rem;
+    color: $color-error;
+    @include type-body-sm;
   }
 }
 
 .action-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: $space-2;
 }
 
 @keyframes spin {

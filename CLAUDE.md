@@ -146,6 +146,43 @@ The API has these URLs configured for TryOn billing redirects:
 - Token stored in localStorage (24h expiry)
 - HTTP interceptor attaches token to API requests
 
+## Typography System
+
+The app uses a strict 3-role typography system based on Inter font. Use the mixins from `_tokens.scss` instead of hardcoding font values.
+
+### Typography Roles
+
+| Role | Mixin | Usage | Style |
+|------|-------|-------|-------|
+| Section Headers | `@include type-section-header` | "Your Outfit", "Upload Photos" | Medium 500, sentence case, 16-18px |
+| UI Labels | `@include type-ui-label` | Buttons, tabs, badges, chips | Medium 500, UPPERCASE, 12px, +5% letter-spacing |
+| Body Text | `@include type-body` | Instructions, descriptions | Regular 400, sentence case, 14px |
+
+### Available Mixins
+
+```scss
+@use '../../../styles/tokens' as *;
+
+// Section headers
+@include type-section-header;    // 16px, scales to 18px on desktop
+@include type-section-header-lg; // 18px, scales to 20px on desktop
+
+// UI labels (clickable elements)
+@include type-ui-label;          // 12px uppercase
+@include type-ui-label-lg;       // 14px uppercase
+
+// Body text
+@include type-body;              // 14px
+@include type-body-sm;           // 12px (captions, hints)
+@include type-body-lg;           // 16px
+```
+
+### Key Principle
+
+> If it's clickable or functional → use `type-ui-label`. No exceptions.
+
+This removes role confusion and creates visual consistency across the app.
+
 ## Related Repos
 
 - **OutfitifyAPI**: Backend API (port 5042)

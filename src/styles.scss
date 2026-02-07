@@ -72,19 +72,25 @@ $primary: mat.m2-define-palette($gold-palette, 500);
 $accent: mat.m2-define-palette($neutral-palette, 800);
 $warn: mat.m2-define-palette(mat.$m2-red-palette, 500);
 
-// Custom typography with Helvetica Neue
+// Custom typography with Inter - Tool-First 3-Role System
+// Role A: Section Headers (Medium 500, sentence case)
+// Role B: UI Labels (Medium 500, uppercase, +5% letter-spacing)
+// Role C: Body Text (Regular 400, sentence case)
 $luxe-typography: mat.m2-define-typography-config(
   $font-family: $font-family-primary,
-  $headline-1: mat.m2-define-typography-level(2.5rem, 1.2, 300, $font-family-primary, $letter-spacing-tight),
-  $headline-2: mat.m2-define-typography-level(2rem, 1.2, 300, $font-family-primary, $letter-spacing-tight),
-  $headline-3: mat.m2-define-typography-level(1.5rem, 1.3, 400, $font-family-primary, $letter-spacing-tight),
-  $headline-4: mat.m2-define-typography-level(1.25rem, 1.4, 500, $font-family-primary, $letter-spacing-tight),
-  $headline-5: mat.m2-define-typography-level(1.125rem, 1.4, 500, $font-family-primary, normal),
-  $headline-6: mat.m2-define-typography-level(1rem, 1.5, 600, $font-family-primary, normal),
-  $body-1: mat.m2-define-typography-level(1rem, 1.5, 400, $font-family-primary, normal),
-  $body-2: mat.m2-define-typography-level(0.875rem, 1.5, 400, $font-family-primary, normal),
-  $caption: mat.m2-define-typography-level(0.75rem, 1.4, 400, $font-family-primary, $letter-spacing-wide),
-  $button: mat.m2-define-typography-level(0.875rem, 1, 500, $font-family-primary, $letter-spacing-wide)
+  // Headlines use Section Header style (Medium 500, normal letter-spacing)
+  $headline-1: mat.m2-define-typography-level(2rem, 1.3, 500, $font-family-primary, normal),
+  $headline-2: mat.m2-define-typography-level(1.5rem, 1.3, 500, $font-family-primary, normal),
+  $headline-3: mat.m2-define-typography-level(1.25rem, 1.3, 500, $font-family-primary, normal),
+  $headline-4: mat.m2-define-typography-level(1.125rem, 1.3, 500, $font-family-primary, normal),
+  $headline-5: mat.m2-define-typography-level(1rem, 1.3, 500, $font-family-primary, normal),
+  $headline-6: mat.m2-define-typography-level(0.875rem, 1.3, 500, $font-family-primary, normal),
+  // Body text uses Body style (Regular 400)
+  $body-1: mat.m2-define-typography-level(1rem, 1.6, 400, $font-family-primary, normal),
+  $body-2: mat.m2-define-typography-level(0.875rem, 1.6, 400, $font-family-primary, normal),
+  $caption: mat.m2-define-typography-level(0.75rem, 1.5, 400, $font-family-primary, normal),
+  // Buttons use UI Label style (Medium 500, wide letter-spacing for uppercase)
+  $button: mat.m2-define-typography-level(0.75rem, 1, 500, $font-family-primary, 0.05em)
 );
 
 $luxe-theme: mat.m2-define-light-theme((
@@ -152,21 +158,23 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-// Typography reset
+// Typography reset - Section Headers (Role A)
+// All headings use Medium 500, sentence case, normal letter-spacing
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
   font-weight: $font-weight-medium;
   line-height: $line-height-tight;
-  letter-spacing: $letter-spacing-tight;
+  letter-spacing: $letter-spacing-normal;
   color: $color-text-primary;
+  text-transform: none;
 }
 
-h1 { font-size: $font-size-2xl; font-weight: $font-weight-light; }
-h2 { font-size: $font-size-xl; font-weight: $font-weight-light; }
-h3 { font-size: $font-size-lg; }
-h4 { font-size: $font-size-md; }
-h5 { font-size: $font-size-base; font-weight: $font-weight-semibold; }
-h6 { font-size: $font-size-sm; font-weight: $font-weight-semibold; text-transform: uppercase; letter-spacing: $letter-spacing-wide; }
+h1 { font-size: $font-size-2xl; }   // 32px - Display/Hero
+h2 { font-size: $font-size-xl; }    // 24px - Page titles
+h3 { font-size: $font-size-lg; }    // 20px - Section headers
+h4 { font-size: $font-size-md; }    // 18px - Subsection headers
+h5 { font-size: $font-size-base; }  // 16px - Card headers
+h6 { font-size: $font-size-sm; }    // 14px - Small headers
 
 p {
   margin: 0;
@@ -232,14 +240,13 @@ a {
 }
 
 .card-title {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-medium;
+  @include type-section-header-lg;
   color: $color-text-primary;
   margin-bottom: $space-2;
 }
 
 .card-subtitle {
-  font-size: $font-size-sm;
+  @include type-body;
   color: $color-text-muted;
 }
 
@@ -247,13 +254,12 @@ a {
 // Button Overrides (Material)
 // -----------------------------------------------------------------------------
 
+// Button styles use UI Label typography (Role B)
 .mat-mdc-raised-button.mat-primary {
   background: $color-accent-gold !important;
   color: $color-text-primary !important;
   border-radius: $button-radius !important;
-  font-weight: $font-weight-medium;
-  letter-spacing: $letter-spacing-wide;
-  text-transform: uppercase;
+  @include type-ui-label;
   padding: 0 $button-padding-x;
   height: $button-height-md;
   box-shadow: none !important;
@@ -278,9 +284,7 @@ a {
   border-color: $color-accent-gold !important;
   color: $color-accent-gold !important;
   border-radius: $button-radius !important;
-  font-weight: $font-weight-medium;
-  letter-spacing: $letter-spacing-wide;
-  text-transform: uppercase;
+  @include type-ui-label;
   height: $button-height-md;
   transition: all $transition-fast;
 
@@ -291,9 +295,7 @@ a {
 
 .mat-mdc-button {
   border-radius: $button-radius !important;
-  font-weight: $font-weight-medium;
-  letter-spacing: $letter-spacing-wide;
-  text-transform: uppercase;
+  @include type-ui-label;
   height: $button-height-md;
 }
 
@@ -414,14 +416,15 @@ a {
   border: 1px solid $color-border;
 }
 
+// Card title uses Section Header (Role A)
 .mat-mdc-card-title {
-  font-size: $font-size-lg !important;
-  font-weight: $font-weight-medium !important;
+  @include type-section-header-lg;
   color: $color-text-primary !important;
 }
 
+// Card subtitle uses Body text (Role C)
 .mat-mdc-card-subtitle {
-  font-size: $font-size-sm !important;
+  @include type-body;
   color: $color-text-muted !important;
 }
 
@@ -518,7 +521,7 @@ a {
 }
 
 // -----------------------------------------------------------------------------
-// Section Labels
+// Section Labels - Uses UI Label style (Role B)
 // -----------------------------------------------------------------------------
 
 .section-label {
@@ -526,10 +529,7 @@ a {
   align-items: center;
   gap: $space-3;
   margin-bottom: $space-4;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  text-transform: uppercase;
-  letter-spacing: $letter-spacing-wider;
+  @include type-ui-label;
   color: $color-text-muted;
 
   &::after {
@@ -568,7 +568,7 @@ a {
 }
 
 // -----------------------------------------------------------------------------
-// Badges & Pills
+// Badges & Pills - Uses UI Label style (Role B)
 // -----------------------------------------------------------------------------
 
 .badge {
@@ -576,10 +576,7 @@ a {
   align-items: center;
   gap: $space-1;
   padding: $space-1 $space-3;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  letter-spacing: $letter-spacing-wide;
-  text-transform: uppercase;
+  @include type-ui-label;
   border-radius: $radius-full;
   background: $color-bg-tertiary;
   color: $color-text-secondary;
@@ -597,13 +594,13 @@ a {
   color: darken($color-accent-rose, 30%);
 }
 
-// Credits pill (header)
+// Credits pill (header) - uses body text style (not UI label, since not clickable)
 .credits-pill {
   display: inline-flex;
   align-items: center;
   gap: $space-2;
   padding: $space-2 $space-4;
-  font-size: $font-size-sm;
+  @include type-body;
   font-weight: $font-weight-medium;
   background: $color-accent-gold-light;
   color: $color-accent-gold;

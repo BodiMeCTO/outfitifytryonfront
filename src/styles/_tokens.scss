@@ -54,38 +54,140 @@ $color-warning: #FF9800;
 $color-error: #F44336;
 
 // -----------------------------------------------------------------------------
-// Typography
+// Typography - Strict 3-Role System
 // -----------------------------------------------------------------------------
+// Based on tool-first UI principles:
+// - Section Headers: Calm authority, not editorial
+// - UI Labels: Functional, clickable elements
+// - Body Text: Quiet, supportive, readable
 
-$font-family-primary: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+$font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 $font-family-mono: 'SF Mono', Monaco, 'Courier New', monospace;
 
-// Font weights
-$font-weight-light: 300;
+// Font weights (simplified to 2 primary weights)
 $font-weight-regular: 400;
 $font-weight-medium: 500;
+// Legacy - avoid using, kept for compatibility during migration
+$font-weight-light: 300;
 $font-weight-semibold: 600;
 
-// Font sizes (mobile-first)
-$font-size-xs: 0.75rem;    // 12px
-$font-size-sm: 0.875rem;   // 14px
-$font-size-base: 1rem;     // 16px
-$font-size-md: 1.125rem;   // 18px
-$font-size-lg: 1.25rem;    // 20px
-$font-size-xl: 1.5rem;     // 24px
-$font-size-2xl: 2rem;      // 32px
-$font-size-3xl: 2.5rem;    // 40px
+// Font sizes (simplified scale)
+$font-size-xs: 0.75rem;    // 12px - UI labels
+$font-size-sm: 0.875rem;   // 14px - Body text, small UI
+$font-size-base: 1rem;     // 16px - Body text, section headers
+$font-size-md: 1.125rem;   // 18px - Section headers
+$font-size-lg: 1.25rem;    // 20px - Large headers
+$font-size-xl: 1.5rem;     // 24px - Page titles
+$font-size-2xl: 2rem;      // 32px - Hero text
+$font-size-3xl: 2.5rem;    // 40px - Display
 
 // Line heights
-$line-height-tight: 1.2;
+$line-height-tight: 1.3;
 $line-height-base: 1.5;
-$line-height-relaxed: 1.75;
+$line-height-relaxed: 1.6;
 
 // Letter spacing
-$letter-spacing-tight: -0.02em;
 $letter-spacing-normal: 0;
+$letter-spacing-ui: 0.05em;  // 5% for UI labels
+
+// Legacy - avoid using
+$letter-spacing-tight: -0.02em;
 $letter-spacing-wide: 0.05em;
 $letter-spacing-wider: 0.1em;
+
+// =============================================================================
+// TYPOGRAPHY MIXINS - Use these instead of raw values
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// ROLE A: Section Headers
+// Use for: "Your Outfit", "Upload Your Photos", "Add Your Garments"
+// Calm authority. Not editorial. Not shouty.
+// -----------------------------------------------------------------------------
+@mixin type-section-header {
+  font-family: $font-family-primary;
+  font-size: $font-size-base;  // 16px
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-normal;
+  text-transform: none;
+
+  @include md {
+    font-size: $font-size-md;  // 18px on desktop
+  }
+}
+
+// Larger section header variant (for main page sections)
+@mixin type-section-header-lg {
+  font-family: $font-family-primary;
+  font-size: $font-size-md;  // 18px
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-normal;
+  text-transform: none;
+
+  @include md {
+    font-size: $font-size-lg;  // 20px on desktop
+  }
+}
+
+// -----------------------------------------------------------------------------
+// ROLE B: UI Labels & Controls
+// Use for: POSE, BACKGROUND, GARMENTS, buttons, chips, tabs
+// If it's clickable or functional → use this style. No exceptions.
+// -----------------------------------------------------------------------------
+@mixin type-ui-label {
+  font-family: $font-family-primary;
+  font-size: $font-size-xs;  // 12px
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-ui;
+  text-transform: uppercase;
+}
+
+// Larger UI label (for prominent buttons)
+@mixin type-ui-label-lg {
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;  // 14px
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-ui;
+  text-transform: uppercase;
+}
+
+// -----------------------------------------------------------------------------
+// ROLE C: Body / Helper Text
+// Use for: Instructions, tips, footnotes, descriptions
+// Quiet, supportive, readable.
+// -----------------------------------------------------------------------------
+@mixin type-body {
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;  // 14px
+  font-weight: $font-weight-regular;
+  line-height: $line-height-relaxed;
+  letter-spacing: $letter-spacing-normal;
+  text-transform: none;
+}
+
+// Smaller body text (for captions, hints)
+@mixin type-body-sm {
+  font-family: $font-family-primary;
+  font-size: $font-size-xs;  // 12px
+  font-weight: $font-weight-regular;
+  line-height: $line-height-base;
+  letter-spacing: $letter-spacing-normal;
+  text-transform: none;
+}
+
+// Larger body text
+@mixin type-body-lg {
+  font-family: $font-family-primary;
+  font-size: $font-size-base;  // 16px
+  font-weight: $font-weight-regular;
+  line-height: $line-height-relaxed;
+  letter-spacing: $letter-spacing-normal;
+  text-transform: none;
+}
 
 // -----------------------------------------------------------------------------
 // Spacing
